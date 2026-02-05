@@ -1,0 +1,15 @@
+{
+  "name": "guess-io",
+  "version": "0.1.0",
+  "scripts": {
+    "checkbeauty": "npm run checkbeauty:frontend && npm run checkbeauty:backend",
+    "beautify": "npm run beautify:frontend && npm run beautify:backend",
+    "checkbeauty:frontend": "npm --prefix frontend run lint && npm --prefix frontend run prettier:check",
+    "checkbeauty:backend": "npm --prefix backend run lint && npm --prefix backend run prettier:check",
+    "beautify:frontend": "npm --prefix frontend run lint:fix && npm --prefix frontend run prettier:write",
+    "beautify:backend": "npm --prefix backend run lint:fix && npm --prefix backend run prettier:write"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.1"
+  }
+}
