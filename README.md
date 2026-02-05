@@ -93,3 +93,9 @@ From **frontend/**:
 
 - `npm run dev` - Start Next.js dev server
 - `npm run build` - Build for production
+
+
+## Branches
+- `master` - used for live deployments (never change this directly)
+- `develop`- active development branch
+- `feature/{branch_name}` - create these when you want to add a feature to the develop branch. After merge requests are approved, merge them into develop branch.
