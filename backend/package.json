@@ -13,7 +13,17 @@
     "prettier:check": "prettier --check . --ignore-path ../.prettierignore",
     "prettier:write": "prettier --write . --ignore-path ../.prettierignore",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "db:studio": "prisma studio",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:create": "prisma migrate dev --create-only",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:push": "prisma db push",
+    "db:pull": "prisma db pull",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset",
+    "db:generate": "prisma generate",
+    "db:format": "prisma format"
   },
   "keywords": [],
   "author": "",

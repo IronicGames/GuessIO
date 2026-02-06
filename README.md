@@ -2,100 +2,112 @@
 
 playguess.io is a browser-based online multiplayer game inspired by Guess Who. The goal is to allow players to quickly make their own custom character sets to play privately with their friends or to use our premade character sets to play privately with their friends or in matchmade games against the public.
 
-## Project Structure
-
-```
-guess-io/
-├── frontend/          # Next.js frontend
-├── backend/           # Express backend
-```
-
 ## Tech Stack
 
 - **Frontend**: Next.js, React, TypeScript
-- **Backend**: Node.js, Express, TypeScript
+- **Backend**: Node.js, Express, TypeScript, Prisma
+- **Database**: PostgreSQL (Docker)
 - **Testing**: Vitest
-- **Code Quality**: ESLint, Prettier
 
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
-- npm
+- Node.js
+- Docker Desktop
 
-### Installation
-
-1. Clone the repository:
+### Setup
 
 ```bash
-   git clone
-   cd guessio
+git clone <repo-url>
+cd guess-io
+npm run setup
 ```
 
-2. Install dependencies for both frontend and backend:
+This will:
+
+- Start PostgreSQL in Docker
+- Install all dependencies
+- Run database migrations
+
+### Development
+
+**Start everything(do this from the root directory):**
 
 ```bash
-   cd backend && npm install
-   cd ../frontend && npm install
+npm run dev
 ```
 
-3. Set up environment variables:
+**Or start individually:**
+
+Terminal 1 - Database:
 
 ```bash
-   # Backend
-   cd backend
-   cp .env.example .env
-
-   # Frontend (if needed)
-   cd ../frontend
-   cp .env.local.example .env.local
+npm run docker:up
 ```
 
-### Running Locally
-
-**Backend** (Terminal 1):
+Terminal 2 - Backend:
 
 ```bash
 cd backend
 npm run dev
 ```
 
-Backend runs on `http://localhost:8080`
-
-**Frontend** (Terminal 2):
+Terminal 3 - Frontend:
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Frontend runs on `http://localhost:3000`
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8080
+- Database: localhost:5432
 
-### Important Scripts
+## Useful Commands
 
-From the **root**:
+### From Root
 
-- `npm run checkbeauty` - Check formatting on all code with lint and prettier
-- `npm run beautify` - Fix formatting on all code with lint and prettier
-- `npm run checkbeauty:frontend` - Check formatting on all code with lint and prettier for frontend
-- `npm run checkbeauty:backend` - Check formatting on all code with lint and prettier for backend
-- `npm run beautify:frontend` - Fix formatting on all code with lint and prettier for frontend
-- `npm run beautify:backend` - Fix formatting on all code with lint and prettier for backend
+**Development:**
 
-From **backend/**:
+- `npm run dev` - Start database + backend + frontend
+- `npm run docker:up` - Start database
+- `npm run docker:down` - Stop database
+- `npm run docker:clean` - Reset database (deletes all data)
+- `npm run docker:logs` - View database logs
+
+**Code Quality:**
+
+- `npm run beautify` - Format and fix linting
+- `npm run checkbeauty` - Check formatting and linting
+
+### From Backend
+
+**Development:**
 
 - `npm run dev` - Start dev server with hot reload
-- `npm run build` - Build for production
-- `npm run test:run` - Runs tests.
+- `npm test` - Run tests in watch mode
 
-From **frontend/**:
+**Database:**
+
+- `npm run db:studio` - Open Prisma Studio (visual DB editor)
+- `npm run db:migrate` - Create and run migration
+- `npm run db:seed` - Seed database with test data
+- `npm run db:reset` - Reset database (destructive!)
+
+### From Frontend
+
+**Development:**
 
 - `npm run dev` - Start Next.js dev server
-- `npm run build` - Build for production
+- `npm test` - Run tests in watch mode
 
+## Project Structure
 
-## Branches
-- `master` - used for live deployments (never change this directly)
-- `develop`- active development branch
-- `feature/{branch_name}` - create these when you want to add a feature to the develop branch. After merge requests are approved, merge them into develop branch.
+```
+guess-io/
+├── frontend/          # Next.js app
+├── backend/           # Express API + Prisma
+├── docker-compose.yml # PostgreSQL setup
+└── README.md
+```
