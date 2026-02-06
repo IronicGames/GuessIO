@@ -1,0 +1,7 @@
+{
+  "references": [
+    { "path": "./backend" },
+    { "path": "./frontend" },
+    { "path": "./shared" }
+  ]
+}

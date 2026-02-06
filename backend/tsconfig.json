@@ -3,15 +3,19 @@
     "target": "ES2022",
     "module": "commonjs",
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "../",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["../shared/*"]
+    }
   },
-  "include": ["src/**/*", "src/lib/prisma.ts"],
+  "include": ["src/**/*", "src/lib/prisma.ts", "../shared/dtos"],
   "exclude": ["node_modules", "dist"],
   "references": [{ "path": "./tsconfig.prisma.json" }]
 }

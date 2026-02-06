@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "esnext"],
+    "rootDir": "../",
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -17,7 +18,9 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".",
     "paths": {
+      "@shared/*": ["../shared/*"],
       "@/*": ["./*"]
     },
     "target": "ES2017"
