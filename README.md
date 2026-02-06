@@ -21,8 +21,9 @@ guess-io/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js
 - npm
+- Docker Desktop
 
 ### Installation
 
@@ -72,6 +73,30 @@ npm run dev
 
 Frontend runs on `http://localhost:3000`
 
+### Database Setup
+
+This project uses PostgreSQL running in Docker.
+
+1. **Make sure Docker Desktop is installed and running**
+   - Download from: https://www.docker.com/products/docker-desktop/
+   - Start Docker Desktop
+
+2. **Start the PostgreSQL database**:
+```bash
+   docker-compose up -d
+```
+   This creates and starts a PostgreSQL container in the background.
+
+3. **Set up the database schema**:
+```bash
+   cd backend
+   npx prisma migrate dev
+```
+   This creates the necessary tables in the database.
+4. **Verify the database is running**:
+```bash
+   docker ps
+```
 ### Important Scripts
 
 From the **root**:
