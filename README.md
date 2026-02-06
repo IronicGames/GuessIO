@@ -19,7 +19,7 @@ playguess.io is a browser-based online multiplayer game inspired by Guess Who. T
 ### Setup
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/Peze01/GuessIO.git
 cd guess-io
 npm run setup
 ```
