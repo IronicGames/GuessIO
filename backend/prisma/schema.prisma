@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model CharacterSet {
+  id         String              @id @default(uuid())
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  characters CharacterInstance[]
+
+  @@map("character_sets")
+}
+
+model Character {
+  id        String              @id @default(uuid())
+  name      String
+  imageUrl  String              @map("image_url")
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  instances CharacterInstance[]
+
+  @@map("characters")
+}
+
+model CharacterInstance {
+  id             String       @id @default(uuid())
+  characterId    String       @map("character_id")
+  characterSetId String       @map("character_set_id")
+  createdAt      DateTime     @default(now())
+  character      Character    @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterSet   CharacterSet @relation(fields: [characterSetId], references: [id], onDelete: Cascade)
+
+  @@map("character_instances")
+}

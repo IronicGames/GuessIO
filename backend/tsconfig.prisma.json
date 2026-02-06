@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["prisma/**/*.ts", "prisma.config.ts", "src/constants/env.ts"],
+  "compilerOptions": {
+    "types": ["node"],
+    "composite": true,
+    "rootDir": "."
+  }
+}

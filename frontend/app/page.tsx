@@ -6,27 +6,19 @@ interface HealthResponse {
   status: string;
   timestamp: string;
   service: string;
+  database: string;
 }
 
 export default function Home() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchHealth = async () => {
-      try {
-        const response = await fetch('http://localhost:8080/api/health');
-        if (!response.ok) {
-          throw new Error('Health check failed');
-        }
-        const data = await response.json();
-        setHealth(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-      } finally {
-        setLoading(false);
-      }
+      const response = await fetch('http://localhost:8080/api/health');
+      const data = await response.json();
+      setHealth(data);
+      setLoading(false);
     };
 
     fetchHealth();
@@ -59,25 +51,35 @@ export default function Home() {
 
         {loading && <p>Loading...</p>}
 
-        {error && (
+        {health && health?.database === 'disconnected' ? (
           <div style={{ color: 'red' }}>
-            <p>❌ Error: {error}</p>
+            <p>❌ Error: Database disconnected</p>
             <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
               Make sure the backend is running on port 8080
             </p>
           </div>
-        )}
-
-        {health && (
-          <div style={{ color: 'green' }}>
-            <p>✅ Status: {health.status}</p>
-            <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
-              Service: {health.service}
-            </p>
-            <p style={{ fontSize: '0.8rem', color: '#666' }}>
-              {new Date(health.timestamp).toLocaleString()}
-            </p>
-          </div>
+        ) : (
+          health && (
+            <div style={{ color: 'green' }}>
+              <p>✅ Status: {health.status}</p>
+              <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                Service: {health.service}
+              </p>
+              <p style={{ fontSize: '0.8rem', color: '#666' }}>
+                {new Date(health.timestamp).toLocaleString()}
+              </p>
+              <p
+                style={{
+                  fontSize: '0.8rem',
+                  color: health.database ? 'green' : 'red',
+                }}
+              >
+                {health.database
+                  ? 'Database Connected'
+                  : 'Database Not Connected'}
+              </p>
+            </div>
+          )
         )}
       </div>
 
