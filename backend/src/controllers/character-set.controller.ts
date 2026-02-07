@@ -12,5 +12,5 @@ export const createCharacterSet = async (req: Request, res: Response) => {
   }
   const characterSet: CharacterSetDto = parseResult.data;
 
-  characterSet.characters;
+  console.log(characterSet);
 };
