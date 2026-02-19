@@ -8,9 +8,11 @@ datasource db {
 
 model CharacterSet {
   id         String              @id @default(uuid())
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
+  createdAt  DateTime            @default(now()) @map("created_at")
+  updatedAt  DateTime            @updatedAt @map("updated_at")
   characters CharacterInstance[]
+  userId     String              @map("user_id")
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("character_sets")
 }
@@ -19,8 +21,8 @@ model Character {
   id        String              @id @default(uuid())
   name      String
   imageUrl  String              @map("image_url")
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
+  createdAt  DateTime           @default(now()) @map("created_at")
+  updatedAt  DateTime           @updatedAt @map("updated_at")
   instances CharacterInstance[]
 
   @@map("characters")
@@ -30,9 +32,22 @@ model CharacterInstance {
   id             String       @id @default(uuid())
   characterId    String       @map("character_id")
   characterSetId String       @map("character_set_id")
-  createdAt      DateTime     @default(now())
+  createdAt      DateTime     @default(now()) @map("created_at")
   character      Character    @relation(fields: [characterId], references: [id], onDelete: Cascade)
   characterSet   CharacterSet @relation(fields: [characterSetId], references: [id], onDelete: Cascade)
 
   @@map("character_instances")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  profilePicUrl String?  @map("profile_pic_url")
+  googleId      String?  @unique @map("google_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  characterSets CharacterSet[]
+  @@map("users")
 }
