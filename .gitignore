@@ -17,6 +17,7 @@ backend/dist/
 .env
 .env*.local
 .env.production
+google-auth-info.json
 
 # Logs
 npm-debug.log*
