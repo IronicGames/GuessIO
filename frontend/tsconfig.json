@@ -22,8 +22,7 @@
       "@/*": ["./*"]
     },
     "target": "ES2020",
-    "composite": true,
-    "noEmit": true
+    "composite": true
   },
   "include": [
     "next-env.d.ts",
