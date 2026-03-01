@@ -6,10 +6,12 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "declaration": true,
-    "outDir": "dist",
+    "declarationMap": true,
+    "outDir": "./dist",
+    "rootDir": ".",
     "moduleResolution": "bundler",
     "composite": true
   },
-  "include": ["**/*.ts"],
+  "include": ["dtos/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

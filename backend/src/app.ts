@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import statusRoutes from './routes/status.routes';
-import { API_ROUTES } from './constants/constants';
+import userRoutes from './routes/user.routes';
 
 const app = express();
 
@@ -9,7 +9,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Health check endpoint
-app.use(API_ROUTES.ROOT, statusRoutes);
+// Routes
+app.use('/api', statusRoutes); // /api/health
+app.use('/api/users', userRoutes); // /api/users/*
 
 export default app;

@@ -15,6 +15,7 @@ backend/dist/
 
 # Environment variables
 .env
+.env.test
 .env*.local
 .env.production
 google-auth-info.json
