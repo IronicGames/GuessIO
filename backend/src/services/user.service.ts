@@ -2,28 +2,30 @@ import * as userRepository from '../repositories/user.repository';
 import { UserWithProfilePicture } from '../repositories/user.repository';
 
 export async function createOrGetGoogleUser(
+  googleId: string,
   name: string,
   email?: string,
-  googleId?: string,
   profilePictureUrl?: string
 ): Promise<UserWithProfilePicture> {
-  if (!googleId) {
-    throw new Error('Google ID is required.');
-  }
   let user = await userRepository.getUserByGoogleId(googleId);
+
   if (user) {
     return user;
   }
+
   user = await userRepository.createUser(
     name,
     email,
     googleId,
     profilePictureUrl
   );
+
   return user;
 }
 
-export async function getUserById(id: string): Promise<UserWithProfilePicture> {
+export async function getUserById(
+  id: string
+): Promise<UserWithProfilePicture | null> {
   return await userRepository.getUserById(id);
 }
 

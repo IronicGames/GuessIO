@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import statusRoutes from './routes/status.routes';
-import userRoutes from './routes/user.routes';
+import statusRoutes from './routes/status.routes.js';
+import authRoutes from './routes/auth.routes.js';
 
 const app = express();
 
@@ -11,6 +11,6 @@ app.use(express.json());
 
 // Routes
 app.use('/api', statusRoutes); // /api/health
-app.use('/api/users', userRoutes); // /api/users/*
+app.use('/api/auth', authRoutes); // /api/auth/*
 
 export default app;

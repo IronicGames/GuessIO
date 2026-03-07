@@ -12,7 +12,7 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   name     String
-  email    String? @unique
+  email    String? @unique //TODO: Rethink if we want to keep this as optional.
   googleId String? @unique @map("google_id")
 
   boards         Board[]

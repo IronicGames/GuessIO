@@ -3,11 +3,14 @@ import prisma from '../lib/prisma';
 
 export type UserWithProfilePicture = Prisma.UserGetPayload<{
   include: { profilePicture: true };
-}> | null;
+}>;
 
 export async function getUserByGoogleId(
-  googleId: string
-): Promise<UserWithProfilePicture> {
+  googleId?: string
+): Promise<UserWithProfilePicture | null> {
+  if (!googleId) {
+    return null;
+  }
   return await prisma.user.findFirst({
     where: {
       googleId: googleId,
@@ -43,7 +46,9 @@ export async function createUser(
   });
 }
 
-export async function getUserById(id: string): Promise<UserWithProfilePicture> {
+export async function getUserById(
+  id: string
+): Promise<UserWithProfilePicture | null> {
   return await prisma.user.findFirst({
     where: {
       id: id,
