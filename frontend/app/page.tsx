@@ -1,32 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-interface HealthResponse {
-  status: string;
-  timestamp: string;
-  service: string;
-  database: string;
-}
+import Button from '@/components/ui/Button';
 
 export default function Home() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchHealth = async () => {
-      const response = await fetch('http://localhost:8080/api/health');
-      const data = await response.json();
-      setHealth(data);
-      setLoading(false);
-    };
-
-    fetchHealth();
-  }, []);
 
   return (
-    <div
-      style={{
+    <main style={{
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
@@ -34,58 +14,30 @@ export default function Home() {
         justifyContent: 'center',
         padding: '20px',
         fontFamily: 'system-ui, sans-serif',
-      }}
-    >
-      <h1 style={{ fontSize: '3rem', marginBottom: '2rem' }}>Guess.io</h1>
+      }}>
+        <div className="flex flex-col
+        w-1/3 max-w-100 gap-8">
+          <Button variant="primary"> 
+            Public Match
+          </Button>
+          <Button variant="primary"> 
+            Create Lobby
+          </Button>
+          <Button variant="primary"> 
+            Manage Boards
+          </Button>
+        </div>
 
-      <div
-        style={{
-          padding: '2rem',
-          border: '2px solid #333',
-          borderRadius: '8px',
-          minWidth: '300px',
-          textAlign: 'center',
-        }}
-      >
-        <h2 style={{ marginBottom: '1rem' }}>Backend Health Check</h2>
+        <div className='flex flex-col w-1/3 max-w-100 m-12 gap-8 items-center
+        '>
+          <input className='max-w100 h-15 rounded-md text-blue bg-darkblue text-3xl text-center
+          placeholder:opacity-100 border shadow-lg/30'
+          placeholder='Enter Code'/>
 
-        {loading && <p>Loading...</p>}
-
-        {health && health?.database === 'disconnected' ? (
-          <div style={{ color: 'red' }}>
-            <p>❌ Error: Database disconnected</p>
-            <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
-              Make sure the backend is running on port 8080
-            </p>
-          </div>
-        ) : (
-          health && (
-            <div style={{ color: 'green' }}>
-              <p>✅ Status: {health.status}</p>
-              <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
-                Service: {health.service}
-              </p>
-              <p style={{ fontSize: '0.8rem', color: '#666' }}>
-                {new Date(health.timestamp).toLocaleString()}
-              </p>
-              <p
-                style={{
-                  fontSize: '0.8rem',
-                  color: health.database ? 'green' : 'red',
-                }}
-              >
-                {health.database
-                  ? 'Database Connected'
-                  : 'Database Not Connected'}
-              </p>
-            </div>
-          )
-        )}
-      </div>
-
-      <p style={{ marginTop: '2rem', color: '#666' }}>
-        Frontend → Backend communication working! 🎉
-      </p>
-    </div>
+          <Button variant='secondary' className='text-xl w-1/2 h-12 text-white! font-normal' >
+            Donate
+          </Button>
+        </div>
+    </main>
   );
 }
