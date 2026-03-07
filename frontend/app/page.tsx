@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
+import Header from '@/components/ui/Header';
 
 export default function Home() {
 
   return (
+    <div>
+    <Header></Header>
     <main style={{
         minHeight: '100vh',
         display: 'flex',
@@ -39,5 +42,6 @@ export default function Home() {
           </Button>
         </div>
     </main>
+  </div>
   );
 }

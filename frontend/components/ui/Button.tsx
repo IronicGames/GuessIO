@@ -11,7 +11,7 @@ export default function Button({ className, variant, ...props}: ButtonProps){
 }
 
 const buttonVariants = cva(
-    'max-w-100 h-20 rounded-md font-semibold hover:opacity-80 text-3xl dark-text shadow-lg/30',
+    'max-w-100 h-20 items-center justify-center rounded-xl font-semibold hover:opacity-80 text-3xl dark-text shadow-lg/30',
     {
         variants:{
             variant:{
