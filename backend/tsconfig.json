@@ -15,7 +15,7 @@
     "declaration": true,
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["../shared/dtos/*"]
+      "@shared/*": ["../shared/types/*"]
     }
   },
   "include": ["src/**/*"],

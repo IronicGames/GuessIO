@@ -1,4 +1,4 @@
-import { ImageDto } from './image.dto';
+import { ImageDto } from './image.types';
 
 export interface UserDto {
   id: string;
@@ -17,7 +17,8 @@ export interface CreateUserDto {
   profilePictureUrl?: string;
 }
 
-export interface UpdateUserDto {
-  name?: string;
-  email?: string;
+export interface UserProfile {
+  id: string;
+  name: string;
+  profilePicture: string;
 }

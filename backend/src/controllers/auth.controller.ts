@@ -21,8 +21,14 @@ export const handleGoogleCallback = async (req: Request, res: Response) => {
     const { user, token } = await authService.handleGoogleCallback(code);
 
     const frontendUrl = config.frontendUrl;
+    const profilePictureUrl = user.profilePicture?.imageUrl || '';
+
     res.redirect(
-      `${frontendUrl}/auth/callback?token=${token}&userId=${user.id}&userName=${encodeURIComponent(user.name)}`
+      `${frontendUrl}/auth/callback?` +
+        `token=${token}&` +
+        `userId=${user.id}&` +
+        `userName=${encodeURIComponent(user.name)}&` +
+        `userPicture=${encodeURIComponent(profilePictureUrl)}`
     );
   } catch (_error) {
     const errorMessage =

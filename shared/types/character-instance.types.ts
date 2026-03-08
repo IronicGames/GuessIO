@@ -1,4 +1,4 @@
-import { CharacterDto } from './character.dto';
+import { CharacterDto } from './character.types';
 
 export interface CharacterInstanceDto {
   id: string;

@@ -1,12 +1,15 @@
-
 .bg-radial {
   position: relative;
-  background: 
-   radial-gradient(ellipse at top,rgba(61, 83, 111, 1) 0%,rgba(44, 60, 80, 1) 50%, rgba(27, 36, 48, 1) 100%);
+  background: radial-gradient(
+    ellipse at top,
+    rgba(61, 83, 111, 1) 0%,
+    rgba(44, 60, 80, 1) 50%,
+    rgba(27, 36, 48, 1) 100%
+  );
   overflow: hidden;
 }
 .bg-radial::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -30,16 +33,16 @@
   color: rgba(142, 202, 230, 1);
 }
 .button-text-blue {
-  color: rgba(230, 237, 243, 1)
+  color: rgba(230, 237, 243, 1);
 }
 .button-text-blue:hover {
   opacity: 0.7;
 }
 .card {
-  background-color: rgba(34, 46, 61, 1)
+  background-color: rgba(34, 46, 61, 1);
 }
 .bg-search {
-  background-color: rgba(31, 42, 58, 1)
+  background-color: rgba(31, 42, 58, 1);
 }
 .link {
   color: rgba(142, 202, 230, 1);
