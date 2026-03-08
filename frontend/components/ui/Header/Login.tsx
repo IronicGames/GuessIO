@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import "../../styles/globals.css";
-import Button from "./Button";
-import TextButton from "./TextButton";
-import Logo from "./Logo";
+import "../../../styles/globals.css";
+import Button from "../Button";
+import TextButton from "../TextButton";
 
-export default function Header() {
+export default function Login() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [email, setEmail] = useState("");
@@ -30,18 +29,18 @@ export default function Header() {
         setIsModalOpen(false);
         }, 1500);
     };
+
     const handleLogin = () => {
         window.location.href = 'http://localhost:8080/api/auth/google';
     };
+
   return (
     <main style={{
         width: '100%',
         display: 'flex',
         flexDirection: 'row',
         fontFamily: 'system-ui, sans-serif',
-        backgroundColor: 'red'
       }}>
-        <Logo className="fixed top-0 left-4"/>
         <TextButton className="fixed top-0 right-10"
             onClick={() => setIsModalOpen(true)}>Login
         </TextButton>
@@ -64,13 +63,18 @@ export default function Header() {
               <p className="text-gray-500 text-sm">Sign in to your account</p>
             </div>
             <div>
-                <Button onClick={handleLogin}>
-                    google
+                <Button className="w-full h-10 flex gap-2 py-3 bg-red-300 transition-all text-xl" 
+                onClick={handleLogin}>
+                    Sign in with Google
                 </Button>
             </div>
-            <p>or</p>
+            <div className="flex items-center gap-4 w-full my-2">
+                <hr className="flex-1 border-white/10" />
+                    <span className="text-white text-sm">or</span>
+                <hr className="flex-1 border-white/10" />
+            </div>
             <div className="mb-4">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">
+              <label className="block text-xs font-semibold text-white uppercase tracking-widest mb-2">
                 Email
               </label>
               <input
@@ -84,7 +88,7 @@ export default function Header() {
             </div>
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+                <label className="text-xs font-semibold text-white uppercase tracking-widest">
                   Password
                 </label>
                 <a href="#" className="text-xs text-blue hover:opacity-70 transition-colors">

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
-import Header from '@/components/ui/Header';
+import Header from '@/components/ui/Header/Header';
 
 export default function Home() {
 

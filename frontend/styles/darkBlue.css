@@ -20,6 +20,9 @@
   background-color: rgba(47, 62, 85, 1);
   border-color: rgba(142, 202, 230, 1);
 }
+.bg-red {
+  background-color: rgba(209, 127, 127, 1)
+}
 .dark-text {
   color: rgba(18, 22, 28, 1);
 }
