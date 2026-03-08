@@ -1,12 +1,15 @@
-
 .bg-radial {
   position: relative;
-  background: 
-   radial-gradient(ellipse at top,rgba(61, 83, 111, 1) 0%,rgba(44, 60, 80, 1) 50%, rgba(27, 36, 48, 1) 100%);
+  background: radial-gradient(
+    ellipse at top,
+    rgba(61, 83, 111, 1) 0%,
+    rgba(44, 60, 80, 1) 50%,
+    rgba(27, 36, 48, 1) 100%
+  );
   overflow: hidden;
 }
 .bg-radial::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;

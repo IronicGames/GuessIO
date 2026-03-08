@@ -68,7 +68,7 @@ export class AuthService {
   }
 
   generateToken(userId: string, email: string | null): string {
-    return jwt.sign({ userId, email }, config.jwtSecret, { expiresIn: '7d' });
+    return jwt.sign({ userId, email }, config.jwtSecret);
   }
 
   verifyToken(token: string): { userId: string; email: string | null } {
