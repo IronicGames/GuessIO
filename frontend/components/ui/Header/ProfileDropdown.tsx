@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '../Button';
+import { useAuth } from '@/app/providers/auth-provider';
 
 export const ProfileDropdown = () => {
     const [username, setUsername] = useState("guest");
@@ -8,6 +9,8 @@ export const ProfileDropdown = () => {
     const [isOpen, setIsOpen] = useState(false);
     const router = useRouter();
     const ref = useRef<HTMLDivElement>(null);
+
+    const {logout} = useAuth()
 
     // Close when clicking outside
     useEffect(() => {
@@ -55,7 +58,7 @@ export const ProfileDropdown = () => {
                     <hr className="border-white/10 w-4" />
                     <Button
                         variant='red'
-                        onClick={() => { /* handle logout */ }}
+                        onClick={logout}
                         className="w-full h-10 px-4 py-3 rounded-t-none text-sm text-red-400 hover:bg-white/10 transition-all"
                     >
                         Logout
