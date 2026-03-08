@@ -1,19 +1,14 @@
-import { useEffect, useState } from "react";
-import "../../../styles/globals.css";
-import Button from "../Button";
-import TextButton from "../TextButton";
-import Logo from "../Logo";
-import Login from "./Login";
-import { ProfileDropdown } from "./ProfileDropdown";
-import { useAuth } from "@/app/providers/auth-provider";
+import '../../../styles/globals.css';
+import Logo from '../Logo';
+import Login from './Login';
+import { ProfileDropdown } from './ProfileDropdown';
+import { useAuth } from '@/app/providers/auth-provider';
 
 export default function Header() {
-    const [username, setUsername] = useState("Guest")
-    const [pfp, setpfp] = useState("")
-    const {isLoggedIn} = useAuth()
-
+  const { isLoggedIn } = useAuth();
   return (
-    <main style={{
+    <main
+      style={{
         width: '100%',
         display: 'flex',
         flexDirection: 'row',
