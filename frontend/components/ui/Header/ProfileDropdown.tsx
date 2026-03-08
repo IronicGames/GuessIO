@@ -4,9 +4,9 @@ import Button from '../Button';
 import { useAuth } from '@/app/providers/auth-provider';
 
 export const ProfileDropdown = () => {
+  const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
   // Close when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -63,7 +63,7 @@ export const ProfileDropdown = () => {
           <hr className="border-white/10 w-4" />
           <Button
             variant="red"
-            onClick={useAuth().logout}
+            onClick={logout}
             className="w-full h-10 px-4 py-3 rounded-t-none text-sm text-red-400 hover:bg-white/10 transition-all"
           >
             Logout
