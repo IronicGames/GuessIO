@@ -7,6 +7,7 @@ import {
   ReactNode,
   useEffect,
   useContext,
+  useCallback,
 } from 'react';
 
 interface AuthContextType {
@@ -42,28 +43,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profilePicture: storedUserPicture || '',
       });
     }
-  }, []);
+  }, []); // ← Empty array, runs ONCE
 
-  const login = (
-    token: string,
-    userId: string,
-    userName: string,
-    userPicture: string
-  ) => {
-    setToken(token);
-    setUser({
-      id: userId,
-      name: userName,
-      profilePicture: userPicture,
-    });
+  // Wrap login in useCallback so it doesn't change on every render
+  const login = useCallback(
+    (token: string, userId: string, userName: string, userPicture: string) => {
+      setToken(token);
+      setUser({
+        id: userId,
+        name: userName,
+        profilePicture: userPicture,
+      });
 
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('userId', userId);
-    localStorage.setItem('userName', userName);
-    localStorage.setItem('userPicture', userPicture);
-  };
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('userName', userName);
+      localStorage.setItem('userPicture', userPicture);
+    },
+    []
+  ); // ← Empty dependencies, function never changes
 
-  const logout = () => {
+  // Wrap logout in useCallback too
+  const logout = useCallback(() => {
     setToken(null);
     setUser(null);
 
@@ -71,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('userId');
     localStorage.removeItem('userName');
     localStorage.removeItem('userPicture');
-  };
+  }, []);
 
   const isLoggedIn = !!user && !!token;
 
