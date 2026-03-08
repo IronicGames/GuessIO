@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "../../../styles/globals.css";
 import Button from "../Button";
 import TextButton from "../TextButton";
+import GoogleLogo from "../../../styles/assets/google-logo.svg"
 
 export default function Login() {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -65,6 +66,7 @@ export default function Login() {
             <div>
                 <Button className="w-full h-10 flex gap-2 py-3 bg-red-300 transition-all text-xl" 
                 onClick={handleLogin}>
+                    <img src="../../../styles/assets/google-logo.svg" className="w-5 h-5" />
                     Sign in with Google
                 </Button>
             </div>
