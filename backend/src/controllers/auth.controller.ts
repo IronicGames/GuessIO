@@ -1,9 +1,7 @@
 import { Request, Response } from 'express';
-import { AuthService } from '../services/auth.service.js';
-import * as userService from '../services/user.service.js';
 import { config } from '../constants/env';
-
-const authService = new AuthService();
+import { authService } from 'src/services/auth.service';
+import * as userService from 'src/services/user.service';
 
 export const initiateGoogleLogin = (_req: Request, res: Response) => {
   const authUrl = authService.getGoogleAuthUrl();

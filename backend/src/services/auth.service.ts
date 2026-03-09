@@ -1,14 +1,14 @@
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
-import * as userService from './user.service.js';
 import { config } from '../constants/env';
 import {
   adjectives,
   animals,
   uniqueNamesGenerator,
 } from 'unique-names-generator';
+import * as userService from 'src/services/user.service';
 
-export class AuthService {
+class AuthService {
   private client: OAuth2Client;
 
   constructor() {
@@ -85,3 +85,5 @@ export class AuthService {
     }
   }
 }
+
+export const authService = new AuthService();
