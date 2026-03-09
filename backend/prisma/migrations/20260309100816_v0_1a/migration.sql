@@ -70,9 +70,6 @@ CREATE UNIQUE INDEX "images_character_id_key" ON "images"("character_id");
 -- CreateIndex
 CREATE UNIQUE INDEX "images_board_id_key" ON "images"("board_id");
 
--- CreateIndex
-CREATE UNIQUE INDEX "boards_name_key" ON "boards"("name");
-
 -- AddForeignKey
 ALTER TABLE "images" ADD CONSTRAINT "images_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

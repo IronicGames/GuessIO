@@ -10,13 +10,3 @@ export interface CharacterInstanceDto {
 export interface CharacterInstanceWithDetailsDto extends CharacterInstanceDto {
   character: CharacterDto;
 }
-
-export interface CreateCharacterInstanceDto {
-  boardId: string;
-  characterId: string;
-  tags?: string[];
-}
-
-export interface UpdateCharacterInstanceDto {
-  tags?: string[];
-}

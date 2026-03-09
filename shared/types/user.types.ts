@@ -20,5 +20,5 @@ export interface CreateUserDto {
 export interface UserProfile {
   id: string;
   name: string;
-  profilePicture: string;
+  profilePicture?: string;
 }

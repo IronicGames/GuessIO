@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import '../styles/globals.css';
 import { AuthProvider } from './providers/auth-provider';
+import { AlertProvider } from './providers/alert-provider';
+import AlertUrlHandler from '@/components/ui/Alert/AlertHandler';
 
 export const metadata: Metadata = {
   title: 'Guess.io',
@@ -15,7 +17,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-dvh bg-radial text-white">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <AlertProvider>
+            <AlertUrlHandler />
+            {children}
+          </AlertProvider>
+        </AuthProvider>
       </body>
     </html>
   );

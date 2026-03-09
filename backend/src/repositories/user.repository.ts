@@ -104,3 +104,20 @@ export async function deleteUserById(id: string) {
     where: { id },
   });
 }
+
+export async function getUserProfile(id: string) {
+  return await prisma.user.findFirst({
+    where: {
+      id: id,
+    },
+    select: {
+      id: true,
+      name: true,
+      profilePicture: {
+        select: {
+          imageUrl: true,
+        },
+      },
+    },
+  });
+}

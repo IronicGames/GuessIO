@@ -1,5 +1,7 @@
+import { NotFoundError } from 'src/errors/app-error';
 import * as userRepository from '../repositories/user.repository';
 import { UserWithProfilePicture } from '../repositories/user.repository';
+import { UserProfile } from '@shared/user.types';
 
 export async function createOrGetGoogleUser(
   googleId: string,
@@ -26,7 +28,11 @@ export async function createOrGetGoogleUser(
 export async function getUserById(
   id: string
 ): Promise<UserWithProfilePicture | null> {
-  return await userRepository.getUserById(id);
+  const user = await userRepository.getUserById(id);
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+  return user;
 }
 
 export async function getAllUsers(): Promise<UserWithProfilePicture[]> {
@@ -51,4 +57,18 @@ export async function updateUserById(
 
 export async function deleteUserById(id: string) {
   return await userRepository.deleteUserById(id);
+}
+
+export async function getUserProfile(id: string): Promise<UserProfile> {
+  const userProfile = await userRepository.getUserProfile(id);
+
+  if (!userProfile) {
+    throw new NotFoundError('User not found');
+  }
+
+  return {
+    id: userProfile.id,
+    name: userProfile.name,
+    profilePicture: userProfile.profilePicture?.imageUrl,
+  };
 }

@@ -9,18 +9,15 @@ import {
   useContext,
   useCallback,
 } from 'react';
+import { api } from '../../lib/api';
 
 interface AuthContextType {
   user: UserProfile | null;
   token: string | null;
   isLoggedIn: boolean;
-  login: (
-    token: string,
-    userId: string,
-    userName: string,
-    userPicture: string
-  ) => void;
+  login: (token: string) => Promise<void>;
   logout: () => void;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,56 +25,80 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('authToken');
-    const storedUserId = localStorage.getItem('userId');
-    const storedUserName = localStorage.getItem('userName');
-    const storedUserPicture = localStorage.getItem('userPicture');
 
-    if (storedToken && storedUserId && storedUserName) {
+    if (storedToken) {
       setToken(storedToken);
-      setUser({
-        id: storedUserId,
-        name: storedUserName,
-        profilePicture: storedUserPicture || '',
-      });
+
+      api.auth
+        .getUserProfile()
+        .then((profileData) => {
+          setUser({
+            id: profileData.id,
+            name: profileData.name,
+            profilePicture: profileData.profilePicture,
+          });
+        })
+        .catch((error) => {
+          localStorage.removeItem('authToken');
+          setToken(null);
+          setUser(null);
+          throw error;
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
     }
-  }, []); // ← Empty array, runs ONCE
+  }, []);
 
-  // Wrap login in useCallback so it doesn't change on every render
-  const login = useCallback(
-    (token: string, userId: string, userName: string, userPicture: string) => {
-      setToken(token);
+  const login = useCallback(async (newToken: string) => {
+    setToken(newToken);
+    localStorage.setItem('authToken', newToken);
+
+    try {
+      const profileData = await api.auth.getUserProfile(newToken);
+
       setUser({
-        id: userId,
-        name: userName,
-        profilePicture: userPicture,
+        id: profileData.id,
+        name: profileData.name,
+        profilePicture: profileData.profilePicture,
       });
+    } catch (error) {
+      console.error('❌ Login failed:', error);
 
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('userId', userId);
-      localStorage.setItem('userName', userName);
-      localStorage.setItem('userPicture', userPicture);
-    },
-    []
-  ); // ← Empty dependencies, function never changes
+      localStorage.removeItem('authToken');
+      setToken(null);
+      throw error;
+    }
+  }, []);
 
-  // Wrap logout in useCallback too
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
 
     localStorage.removeItem('authToken');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userPicture');
+    window.location.href = '/?success=logout';
   }, []);
 
   const isLoggedIn = !!user && !!token;
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
   return (
-    <AuthContext.Provider value={{ user, token, isLoggedIn, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, token, isLoggedIn, login, logout, loading }}
+    >
       {children}
     </AuthContext.Provider>
   );
