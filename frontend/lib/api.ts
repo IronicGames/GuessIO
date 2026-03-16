@@ -1,3 +1,4 @@
+/* global RequestInit */
 import { UserProfile } from '@shared/user.types';
 import {
   BoardDto,
@@ -11,7 +12,7 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
-    public data?: any
+    public data?: unknown
   ) {
     super(message);
     this.name = 'ApiError';
@@ -77,23 +78,25 @@ export const api = {
       return response.json();
     },
     createBoard: async (createBoardDto: CreateBoardDto): Promise<string> => {
-      const response = await fetchWithAuth('/api/boards/create', {
+      const response = await fetchWithAuth('/api/boards', {
         method: 'POST',
         body: JSON.stringify(createBoardDto),
       });
       return response.json();
     },
-    updateBoard: async (updateBoardDto: UpdateBoardDto): Promise<string> => {
-      const response = await fetchWithAuth('/api/boards/update', {
+    updateBoard: async (
+      id: string,
+      updateBoardDto: UpdateBoardDto
+    ): Promise<string> => {
+      const response = await fetchWithAuth(`/api/boards/${id}`, {
         method: 'PUT',
         body: JSON.stringify(updateBoardDto),
       });
       return response.json();
     },
     deleteBoard: async (id: string): Promise<string> => {
-      const response = await fetchWithAuth('/api/boards/delete', {
+      const response = await fetchWithAuth(`/api/boards/${id}`, {
         method: 'DELETE',
-        body: JSON.stringify({ id: id }),
       });
       return response.json();
     },

@@ -13,9 +13,10 @@ export default function Header() {
         display: 'flex',
         flexDirection: 'row',
         fontFamily: 'system-ui, sans-serif',
-      }}>
-        <Logo className="fixed top-0 left-4"/>
-        {isLoggedIn ? <ProfileDropdown/> : <Login/>}
+      }}
+    >
+      <Logo className="fixed top-0 left-4" />
+      {isLoggedIn ? <ProfileDropdown /> : <Login />}
     </main>
   );
 }

@@ -20,3 +20,23 @@ export interface UpdateCharacterDto {
   description?: string;
   imageUrl?: string;
 }
+
+export function ToCharacterDto(
+  character: {
+    name: string;
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    description: string | null;
+  } | null
+): CharacterDto | null {
+  return character
+    ? ({
+        id: character.id,
+        name: character.id,
+        createdAt: character.createdAt.toString(),
+        updatedAt: character.updatedAt.toString(),
+        description: character.description,
+      } as CharacterDto)
+    : null;
+}

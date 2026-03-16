@@ -7,7 +7,7 @@ const adapter = new PrismaPg({
 });
 const prisma = new PrismaClient({
   adapter,
-  log: ['error', 'warn'],
+  log: ['warn'],
 });
 
 export default prisma;

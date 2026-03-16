@@ -1,4 +1,4 @@
-import { NotFoundError } from 'src/errors/app-error';
+import { NotFoundError } from '../errors/app-error';
 import * as userRepository from '../repositories/user.repository';
 import { UserWithProfilePicture } from '../repositories/user.repository';
 import { UserProfile } from '@shared/user.types';

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from '../services/auth.service';
-import { UnauthorizedError } from 'src/errors/app-error';
+import { UnauthorizedError } from '../errors/app-error';
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
@@ -11,11 +11,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 
   const token = authHeader.substring(7);
 
-  try {
-    const decodedToken = authService.verifyToken(token);
-    req.userId = decodedToken.userId;
-    next();
-  } catch (_) {
-    throw new UnauthorizedError('Invalid or expired token');
-  }
+  const decodedToken = authService.verifyToken(token);
+  req.userId = decodedToken.userId;
+  next();
 }

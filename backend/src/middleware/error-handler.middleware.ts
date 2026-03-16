@@ -1,7 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../errors/app-error.js';
+import { Prisma } from '@prisma/client';
 
-export function errorHandler(err: Error, req: Request, res: Response) {
+export function errorHandler(
+  err: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  // Prevent header modification after response sent
+  if (res.headersSent) {
+    return next(err);
+  }
+
   // Log error
   console.error('Error:', {
     name: err.name,
@@ -19,6 +30,23 @@ export function errorHandler(err: Error, req: Request, res: Response) {
     });
   }
 
+  // Handle Prisma errors
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === 'P2025') {
+      return res.status(404).json({
+        error: 'Board not found',
+        status: 404,
+      });
+    }
+
+    if (err.code === 'P2002') {
+      return res.status(409).json({
+        error: 'Resource already exists',
+        status: 409,
+      });
+    }
+  }
+
   // Handle JWT errors
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
@@ -34,24 +62,6 @@ export function errorHandler(err: Error, req: Request, res: Response) {
     });
   }
 
-  // Handle Prisma errors
-  if (err.name === 'PrismaClientKnownRequestError') {
-    // @ts-expect-error
-    if (err.code === 'P2002') {
-      return res.status(409).json({
-        error: 'Resource already exists',
-        status: 409,
-      });
-    }
-    // @ts-expect-error
-    if (err.code === 'P2025') {
-      return res.status(404).json({
-        error: 'Resource not found',
-        status: 404,
-      });
-    }
-  }
-
   // Unknown errors (500)
   return res.status(500).json({
     error: 'Internal server error',
@@ -59,8 +69,9 @@ export function errorHandler(err: Error, req: Request, res: Response) {
   });
 }
 
+// Async error wrapper
 export function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>
 ) {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);

@@ -1,14 +1,17 @@
 import { Prisma } from '@prisma/client';
 import { CreateBoardDto, UpdateBoardDto } from '@shared/board.types';
-import prisma from 'src/lib/prisma';
+import prisma from '../lib/prisma';
 
-export type BoardWithImageAndCharacterInstances = Prisma.BoardGetPayload<{
-  include: { image: true; characterInstances: true };
+export type FullBoard = Prisma.BoardGetPayload<{
+  include: {
+    image: true;
+    characterInstances: { include: { character: true } };
+  };
 }> | null;
 
 export async function createBoard(
   createBoardDto: CreateBoardDto
-): Promise<string | null> {
+): Promise<string> {
   const createdBoard = await prisma.board.create({
     data: {
       name: createBoardDto.name,
@@ -23,31 +26,23 @@ export async function createBoard(
         : undefined,
       userId: createBoardDto.userId,
     },
-    include: {
-      image: true,
-      characterInstances: true,
-    },
   });
-  return createdBoard?.id;
+  return createdBoard.id;
 }
 
-export async function getBoard(
-  id: string
-): Promise<BoardWithImageAndCharacterInstances> {
+export async function getBoard(id: string): Promise<FullBoard> {
   return await prisma.board.findFirst({
     where: {
       id: id,
     },
     include: {
       image: true,
-      characterInstances: true,
+      characterInstances: { include: { character: true } },
     },
   });
 }
 
-export async function getBoardsForUser(
-  id: string
-): Promise<BoardWithImageAndCharacterInstances[]> {
+export async function getBoardsForUser(id: string): Promise<FullBoard[]> {
   return await prisma.board.findMany({
     where: {
       user: {
@@ -56,17 +51,18 @@ export async function getBoardsForUser(
     },
     include: {
       image: true,
-      characterInstances: true,
+      characterInstances: { include: { character: true } },
     },
   });
 }
 
 export async function updateBoard(
+  id: string,
   updateBoardDto: UpdateBoardDto
-): Promise<string | null> {
+): Promise<string> {
   const updatedBoard = await prisma.board.update({
     where: {
-      id: updateBoardDto.id,
+      id: id,
     },
     data: {
       name: updateBoardDto.name,
@@ -85,19 +81,15 @@ export async function updateBoard(
         : undefined,
       isPublic: updateBoardDto.isPublic,
     },
-    include: {
-      image: true,
-      characterInstances: true,
-    },
   });
-  return updatedBoard?.id;
+  return updatedBoard.id;
 }
 
-export async function deleteBoard(id: string): Promise<string | null> {
+export async function deleteBoard(id: string): Promise<string> {
   const deletedBoard = await prisma.board.delete({
     where: {
       id: id,
     },
   });
-  return deletedBoard?.id;
+  return deletedBoard.id;
 }

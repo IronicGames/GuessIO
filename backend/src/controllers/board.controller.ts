@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import * as boardService from '../services/board.service';
-import { BadRequestError } from 'src/errors/app-error';
-import { asyncHandler } from 'src/middleware/error-handler.middleware';
+import { BadRequestError } from '../errors/app-error';
+import { asyncHandler } from '../middleware/error-handler.middleware';
+import { CreateBoardDto, UpdateBoardDto } from '@shared/board.types';
 
 export const getBoardsForUser = asyncHandler(
   async (req: Request, res: Response) => {
@@ -33,13 +34,13 @@ export const createBoard = asyncHandler(async (req: Request, res: Response) => {
     description: req.body.description,
     isPublic: req.body.isPublic,
     imageUrl: req.body.imageUrl,
-  });
+  } as CreateBoardDto);
   res.json({ id: createdBoard });
 });
 
 export const updateBoard = asyncHandler(async (req: Request, res: Response) => {
   const name = req.body.name;
-  const id = req.body.id;
+  const id = req.params.id as string;
   if (!id) {
     throw new BadRequestError('Board ID not found');
   }
@@ -48,18 +49,17 @@ export const updateBoard = asyncHandler(async (req: Request, res: Response) => {
     throw new BadRequestError('Board name is required');
   }
 
-  const updatedBoard = await boardService.updateBoard({
-    id,
+  const updatedBoard = await boardService.updateBoard(id, {
     name,
     description: req.body.description,
     isPublic: req.body.isPublic,
     imageUrl: req.body.imageUrl,
-  });
+  } as UpdateBoardDto);
   res.json({ id: updatedBoard });
 });
 
 export const deleteBoard = asyncHandler(async (req: Request, res: Response) => {
-  const id = req.body.id;
+  const id = req.params.id as string;
   if (!id) {
     throw new BadRequestError('Board ID not found');
   }

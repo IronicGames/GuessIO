@@ -6,8 +6,8 @@ import {
   animals,
   uniqueNamesGenerator,
 } from 'unique-names-generator';
-import * as userService from 'src/services/user.service';
-import { InternalServerError } from 'src/errors/app-error';
+import * as userService from '../services/user.service';
+import { InternalServerError } from '../errors/app-error';
 
 class AuthService {
   private client: OAuth2Client;
