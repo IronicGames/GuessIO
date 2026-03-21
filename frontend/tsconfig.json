@@ -24,7 +24,6 @@
       "@hooks/*": ["./app/hooks/*"],
       "@providers/*": ["./app/providers/*"],
       "@styles/*": ["./styles/*"],
-      "@ui/*": ["./components/ui/*"],
       "@lib/*": ["./lib/*"],
       "@app/*": ["./app/*"],
       "@/*": ["./*"]

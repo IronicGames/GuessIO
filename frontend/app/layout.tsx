@@ -1,30 +1,32 @@
-import type { Metadata } from 'next';
-import '../styles/globals.css';
-import { AuthProvider } from './providers/auth-provider';
-import { AlertProvider } from './providers/alert-provider';
-import AlertUrlHandler from '@/components/ui/Alert/AlertHandler';
-import { MantineProvider } from '@mantine/core';
 import '@mantine/core/styles.css';
-
-export const metadata: Metadata = {
-  title: 'Guess.io',
-  description: 'A multiplayer character guessing game.',
-};
+import { MantineProvider } from '@mantine/core';
+import { AppHeader } from '@components/Header/AppHeader';
+import { AuthProvider } from '@providers/auth-provider';
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <body className="min-h-dvh bg-radial text-white">
-        <MantineProvider>
+      <body style={{ margin: 0 }}>
+        <MantineProvider defaultColorScheme="dark">
           <AuthProvider>
-            <AlertProvider>
-              <AlertUrlHandler />
-              {children}
-            </AlertProvider>
+            <div
+              style={{
+                minHeight: '100vh',
+                background: 'radial-gradient(#394d67 0%, #1b2430 100%)',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              {/* Persistent Header */}
+              <AppHeader />
+
+              {/* Main Content */}
+              <main style={{ flex: 1 }}>{children}</main>
+            </div>
           </AuthProvider>
         </MantineProvider>
       </body>

@@ -1,53 +1,64 @@
 'use client';
+import HomePageButton from '@components/Home/HomePageButton';
+import { Stack, TextInput, Container, Flex } from '@mantine/core';
+import { useAuth } from '@providers/auth-provider';
+import { useRouter } from 'next/navigation';
 
-import Button from '@/components/ui/Button';
-import Header from '@/components/ui/Header/Header';
-import Link from 'next/link';
-
-export default function Home() {
+export default function HomePage() {
+  const router = useRouter();
+  const { isLoggedIn } = useAuth();
   return (
-    <div>
-      <Header/>
-      <main
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        fontFamily: 'system-ui, sans-serif',
-      }}
-    >
-      <div
-        className="flex flex-col
-      w-1/3 max-w-100 gap-8"
+    <Container size="md" h="100%">
+      <Flex
+        h="calc(100vh - 80px)" // Full height minus header
+        direction="column"
+        justify="center"
+        align="center"
+        gap={{ base: 'lg', sm: 'xl' }}
+        px={{ base: 'md', sm: 'lg' }}
       >
-        <Button variant="primary">Public Match</Button>
-        <Button variant="primary">Create Lobby</Button>
-        <Link href="/boards">
-          <Button variant="primary">Manage Boards</Button>
-        </Link>
-      </div>
+        {/* Menu Buttons */}
+        <Stack w="100%" maw={600} align="center">
+          <HomePageButton href="/boards" text="Public Match" />
+          <HomePageButton href="/boards" text="Create Lobby" />
+          {isLoggedIn ? (
+            <HomePageButton href="/boards" text="Manage Boards" />
+          ) : null}
 
-      <div
-        className="flex flex-col w-1/3 max-w-100 m-12 gap-8 items-center
-      "
-      >
-        <input
-          className="max-w100 h-15 rounded-md text-blue bg-darkblue text-3xl text-center
-        placeholder:opacity-100 border shadow-lg/30"
-          placeholder="Enter Code"
-        />
+          {/* Enter Code Input */}
+          <TextInput
+            w="100%"
+            placeholder="Enter Code"
+            radius="lg"
+            maw={600}
+            styles={{
+              input: {
+                height: 'auto',
+                fontSize: 'clamp(1.25rem, 3vw, 1.75rem)',
+                padding: '1rem 1.5rem',
+                textAlign: 'center',
+                backgroundColor: 'var(--mantine-color-dark-6)',
+                border: '2px solid var(--mantine-color-dark-4)',
+                '&::placeholder': {
+                  color: 'var(--mantine-color-cyan-3)',
+                  opacity: 0.6,
+                },
+              },
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const code = (e.target as HTMLInputElement).value;
+                if (code) {
+                  router.push(`/lobby/${code}`);
+                }
+              }
+            }}
+          />
 
-        <Button
-          variant="secondary"
-          className="text-xl w-1/2 h-12 text-white! font-normal"
-        >
-          Donate
-        </Button>
-      </div>
-    </main>
-    </div>
+          {/* Donate */}
+          <HomePageButton href="/boards" text="Donate" alternate={true} />
+        </Stack>
+      </Flex>
+    </Container>
   );
 }
