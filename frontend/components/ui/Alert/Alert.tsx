@@ -46,23 +46,27 @@ export default function Alert({
     warning: '⚠️',
   };
 
+  const shouldShow = false;
+
   return (
-    <div
-      className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 border rounded-lg shadow-lg max-w-md ${styles[type]}`}
-      role="alert"
-    >
-      <span className="text-xl">{icons[type]}</span>
-      <p className="flex-1">{message}</p>
-      <button
-        onClick={() => {
-          setIsVisible(false);
-          onClose?.();
-        }}
-        className="text-xl hover:opacity-70"
-        aria-label="Close"
+    shouldShow && (
+      <div
+        className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 border rounded-lg shadow-lg max-w-md ${styles[type]}`}
+        role="alert"
       >
-        ×
-      </button>
-    </div>
+        <span className="text-xl">{icons[type]}</span>
+        <p className="flex-1">{message}</p>
+        <button
+          onClick={() => {
+            setIsVisible(false);
+            onClose?.();
+          }}
+          className="text-xl hover:opacity-70"
+          aria-label="Close"
+        >
+          ×
+        </button>
+      </div>
+    )
   );
 }
