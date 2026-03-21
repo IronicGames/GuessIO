@@ -2,7 +2,7 @@ import { BoardDto, CreateBoardDto, UpdateBoardDto } from '@shared/board.types';
 import { NotFoundError } from '../errors/app-error';
 import * as boardRepository from '../repositories/board.repository';
 import { ToImageDto } from '../../../shared/types/image.types';
-import { ToCharacterInstanceDtos } from '../../../shared/types/character-instance.types';
+import { ToCharacterDto } from '../../../shared/types/character.types';
 
 export async function getBoardsForUser(userId: string): Promise<BoardDto[]> {
   const boards = await boardRepository.getBoardsForUser(userId);
@@ -18,7 +18,9 @@ export async function getBoardsForUser(userId: string): Promise<BoardDto[]> {
         createdAt: board.createdAt.toString(),
         updatedAt: board.updatedAt.toString(),
         image: ToImageDto(board.image),
-        characterInstances: ToCharacterInstanceDtos(board.characterInstances),
+        characters: board.characters.map((character) =>
+          ToCharacterDto(character)
+        ),
       } as BoardDto;
     });
   return boardDtos;

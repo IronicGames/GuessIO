@@ -178,8 +178,8 @@ describe('Board Service Unit Tests', () => {
       expect(board).toBeDefined();
       expect(board!.image).not.toBeNull();
       expect(board!.image!.imageUrl).toBe(imageUrl);
-      expect(board!.characterInstances).toBeDefined();
-      expect(Array.isArray(board!.characterInstances)).toBe(true);
+      expect(board!.characters).toBeDefined();
+      expect(Array.isArray(board!.characters)).toBe(true);
     });
   });
 });

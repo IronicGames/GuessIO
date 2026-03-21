@@ -1,4 +1,4 @@
-import { CharacterInstanceDto } from './character-instance.types';
+import { CharacterDto } from './character.types';
 import { ImageDto } from './image.types';
 
 export interface BoardDto {
@@ -8,7 +8,7 @@ export interface BoardDto {
   isPublic: boolean;
   image: ImageDto;
   userId: string;
-  characterInstances: CharacterInstanceDto[];
+  characters: CharacterDto[];
   createdAt: string;
   updatedAt: string;
 }

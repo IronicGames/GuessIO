@@ -9,9 +9,9 @@ import { requireAuth } from '../middleware/auth.middleware';
 
 const router = Router();
 
-router.get('/', requireAuth, getBoardsForUser); // GET /api/boards
-router.post('/', requireAuth, createBoard); // POST /api/boards/
-router.put('/:id', requireAuth, updateBoard); // PUT /api/boards/
-router.delete('/:id', requireAuth, deleteBoard); // DELETE /api/boards/
+router.get('/', requireAuth, getBoardsForUser); // GET /api/board/
+router.post('/', requireAuth, createBoard); // POST /api/board/
+router.put('/:id', requireAuth, updateBoard); // PUT /api/board/
+router.delete('/:id', requireAuth, deleteBoard); // DELETE /api/board/
 
 export default router;

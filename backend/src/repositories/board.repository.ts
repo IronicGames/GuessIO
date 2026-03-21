@@ -2,10 +2,10 @@ import { Prisma } from '@prisma/client';
 import { CreateBoardDto, UpdateBoardDto } from '@shared/board.types';
 import prisma from '../lib/prisma';
 
-export type FullBoard = Prisma.BoardGetPayload<{
+export type BoardWithCharacters = Prisma.BoardGetPayload<{
   include: {
     image: true;
-    characterInstances: { include: { character: true } };
+    characters: { include: { image: true } };
   };
 }> | null;
 
@@ -30,19 +30,21 @@ export async function createBoard(
   return createdBoard.id;
 }
 
-export async function getBoard(id: string): Promise<FullBoard> {
+export async function getBoard(id: string): Promise<BoardWithCharacters> {
   return await prisma.board.findFirst({
     where: {
       id: id,
     },
     include: {
       image: true,
-      characterInstances: { include: { character: true } },
+      characters: { include: { image: true } },
     },
   });
 }
 
-export async function getBoardsForUser(id: string): Promise<FullBoard[]> {
+export async function getBoardsForUser(
+  id: string
+): Promise<BoardWithCharacters[]> {
   return await prisma.board.findMany({
     where: {
       user: {
@@ -51,7 +53,7 @@ export async function getBoardsForUser(id: string): Promise<FullBoard[]> {
     },
     include: {
       image: true,
-      characterInstances: { include: { character: true } },
+      characters: { include: { image: true } },
     },
   });
 }

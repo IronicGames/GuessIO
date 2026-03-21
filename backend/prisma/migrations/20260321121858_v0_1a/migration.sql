@@ -28,6 +28,8 @@ CREATE TABLE "characters" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
+    "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "board_id" TEXT NOT NULL,
 
     CONSTRAINT "characters_pkey" PRIMARY KEY ("id")
 );
@@ -43,16 +45,6 @@ CREATE TABLE "boards" (
     "user_id" TEXT,
 
     CONSTRAINT "boards_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "character_instances" (
-    "id" TEXT NOT NULL,
-    "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
-    "board_id" TEXT NOT NULL,
-    "character_id" TEXT NOT NULL,
-
-    CONSTRAINT "character_instances_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -80,10 +72,7 @@ ALTER TABLE "images" ADD CONSTRAINT "images_character_id_fkey" FOREIGN KEY ("cha
 ALTER TABLE "images" ADD CONSTRAINT "images_board_id_fkey" FOREIGN KEY ("board_id") REFERENCES "boards"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "characters" ADD CONSTRAINT "characters_board_id_fkey" FOREIGN KEY ("board_id") REFERENCES "boards"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "boards" ADD CONSTRAINT "boards_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "character_instances" ADD CONSTRAINT "character_instances_board_id_fkey" FOREIGN KEY ("board_id") REFERENCES "boards"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "character_instances" ADD CONSTRAINT "character_instances_character_id_fkey" FOREIGN KEY ("character_id") REFERENCES "characters"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -74,11 +74,11 @@ export const api = {
 
   boards: {
     getBoardsForUser: async (): Promise<BoardDto[]> => {
-      const response = await fetchWithAuth('/api/boards');
+      const response = await fetchWithAuth('/api/board');
       return response.json();
     },
     createBoard: async (createBoardDto: CreateBoardDto): Promise<string> => {
-      const response = await fetchWithAuth('/api/boards', {
+      const response = await fetchWithAuth('/api/board', {
         method: 'POST',
         body: JSON.stringify(createBoardDto),
       });
@@ -88,14 +88,14 @@ export const api = {
       id: string,
       updateBoardDto: UpdateBoardDto
     ): Promise<string> => {
-      const response = await fetchWithAuth(`/api/boards/${id}`, {
+      const response = await fetchWithAuth(`/api/board/${id}`, {
         method: 'PUT',
         body: JSON.stringify(updateBoardDto),
       });
       return response.json();
     },
     deleteBoard: async (id: string): Promise<string> => {
-      const response = await fetchWithAuth(`/api/boards/${id}`, {
+      const response = await fetchWithAuth(`/api/board/${id}`, {
         method: 'DELETE',
       });
       return response.json();

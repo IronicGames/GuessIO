@@ -37,7 +37,7 @@ describe('Board Integration Tests', () => {
     // otherUserToken = authService.generateToken(otherUser.id);
   });
 
-  describe('POST /api/boards', () => {
+  describe('POST /api/board', () => {
     it('should create a board with valid data', async () => {
       const uniqueName = `Pokemon Board ${crypto.randomUUID()}`;
       const boardData = {
@@ -47,7 +47,7 @@ describe('Board Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/boards')
+        .post('/api/board')
         .set('Authorization', `Bearer ${userToken}`)
         .send(boardData)
         .expect(200);
@@ -77,7 +77,7 @@ describe('Board Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/boards')
+        .post('/api/board')
         .set('Authorization', `Bearer ${userToken}`)
         .send(boardData)
         .expect(200);
@@ -99,7 +99,7 @@ describe('Board Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/boards')
+        .post('/api/board')
         .set('Authorization', `Bearer ${userToken}`)
         .send(boardData)
         .expect(400);
@@ -114,7 +114,7 @@ describe('Board Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/boards')
+        .post('/api/board')
         .send(boardData)
         .expect(401);
 
@@ -128,7 +128,7 @@ describe('Board Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/boards')
+        .post('/api/board')
         .set('Authorization', 'Bearer invalid-token')
         .send(boardData)
         .expect(401);
@@ -137,7 +137,7 @@ describe('Board Integration Tests', () => {
     });
   });
 
-  describe('GET /api/boards', () => {
+  describe('GET /api/board', () => {
     it('should return all boards for authenticated user', async () => {
       // Create multiple boards for user with unique names
       const board1Name = `Board 1 ${crypto.randomUUID()}`;
@@ -161,7 +161,7 @@ describe('Board Integration Tests', () => {
       });
 
       const response = await request(app)
-        .get('/api/boards')
+        .get('/api/board')
         .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
 
@@ -193,7 +193,7 @@ describe('Board Integration Tests', () => {
       });
 
       const response = await request(app)
-        .get('/api/boards')
+        .get('/api/board')
         .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
 
@@ -206,11 +206,11 @@ describe('Board Integration Tests', () => {
     });
 
     it('should return 401 when no auth token is provided', async () => {
-      await request(app).get('/api/boards').expect(401);
+      await request(app).get('/api/board').expect(401);
     });
   });
 
-  describe('PUT /api/boards/:id', () => {
+  describe('PUT /api/board/:id', () => {
     let boardId: string;
     let originalName: string;
     beforeEach(async () => {
@@ -236,7 +236,7 @@ describe('Board Integration Tests', () => {
       };
 
       const response = await request(app)
-        .put(`/api/boards/${boardId}`)
+        .put(`/api/board/${boardId}`)
         .set('Authorization', `Bearer ${userToken}`)
         .send(updateData)
         .expect(200);
@@ -262,7 +262,7 @@ describe('Board Integration Tests', () => {
       };
 
       await request(app)
-        .put(`/api/boards/${boardId}`)
+        .put(`/api/board/${boardId}`)
         .set('Authorization', `Bearer ${userToken}`)
         .send(updateData)
         .expect(200);
@@ -283,7 +283,7 @@ describe('Board Integration Tests', () => {
       };
 
       const response = await request(app)
-        .put(`/api/boards/${boardId}`)
+        .put(`/api/board/${boardId}`)
         .set('Authorization', `Bearer ${userToken}`)
         .send(updateData)
         .expect(400);
@@ -298,7 +298,7 @@ describe('Board Integration Tests', () => {
       };
 
       const response = await request(app)
-        .put(`/api/boards/${fakeId}`)
+        .put(`/api/board/${fakeId}`)
         .set('Authorization', `Bearer ${userToken}`)
         .send(updateData)
         .expect(404);
@@ -307,7 +307,7 @@ describe('Board Integration Tests', () => {
     });
   });
 
-  describe('DELETE /api/boards/:id', () => {
+  describe('DELETE /api/board/:id', () => {
     let boardId: string;
 
     beforeEach(async () => {
@@ -323,7 +323,7 @@ describe('Board Integration Tests', () => {
 
     it('should delete a board', async () => {
       const response = await request(app)
-        .delete(`/api/boards/${boardId}`)
+        .delete(`/api/board/${boardId}`)
         .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
 
@@ -341,7 +341,7 @@ describe('Board Integration Tests', () => {
       const fakeId = crypto.randomUUID();
 
       const response = await request(app)
-        .delete(`/api/boards/${fakeId}`)
+        .delete(`/api/board/${fakeId}`)
         .set('Authorization', `Bearer ${userToken}`)
         .expect(404);
 

@@ -1,14 +1,14 @@
 import { CreateBoardDto } from './../../shared/types/board.types';
 import prisma from '../src/lib/prisma';
 import { createBoard } from '../src/services/board.service';
-import { createCharacterInstance } from '../src/repositories/character.repository';
+import { createCharacter } from '../src/services/character.service';
 import { createUser } from '../src/repositories/user.repository';
 
 async function main() {
   // Create Users
   const user1 = await createUser(
     'prince',
-    'prince@ironic.com',
+    `prince-${crypto.randomUUID()}@ironic.com`,
     'googleId1',
     'images.com/prince.jpg'
   );
@@ -17,69 +17,64 @@ async function main() {
   const user2ID = user2!.id;
 
   // Create Boards
-  const board1 = await createBoard({
-    name: 'Board 1',
-    userId: user1ID,
-    description: 'A default board for testing',
-    isPublic: true,
-    imageUrl: 'images.com/board1.jpg',
-  } as CreateBoardDto);
-  const board2 = await createBoard({
-    name: 'Board 2',
-    userId: user2ID,
-  } as CreateBoardDto);
+  const boards = [
+    await createBoard({
+      name: 'Board 1',
+      userId: user1ID,
+      description: 'A default board for testing',
+      isPublic: true,
+      imageUrl: 'images.com/board1.jpg',
+    }),
+    await createBoard({
+      name: 'Board 2',
+      userId: user2ID,
+    }),
+  ];
 
-  // Create CharacterInstances
-  const characterInstances = await Promise.all([
-    createCharacterInstance(
-      board1!,
-      undefined,
-      'Alpha',
-      'First character',
-      'images.com/alpha.jpg',
-      ['tag1', 'tag2']
-    ),
-    createCharacterInstance(
-      board1!,
-      undefined,
-      'Bravo',
-      'Second character',
-      'images.com/bravo.jpg'
-    ),
-    createCharacterInstance(
-      board1!,
-      undefined,
-      'Charlie',
-      'Third character',
-      'images.com/charlie.jpg',
-      ['tag3', 'tag4']
-    ),
-    createCharacterInstance(board1!, undefined, 'Delta'),
-    createCharacterInstance(board1!, undefined, 'Echo'),
-    createCharacterInstance(board1!, undefined, 'Foxtrot'),
-    createCharacterInstance(board1!, undefined, 'Golf'),
-    createCharacterInstance(board1!, undefined, 'Hotel'),
-    createCharacterInstance(board1!, undefined, 'India'),
-    createCharacterInstance(board1!, undefined, 'Juliet'),
-    createCharacterInstance(board1!, undefined, 'Kilo'),
-    createCharacterInstance(board1!, undefined, 'Lima'),
-    createCharacterInstance(board1!, undefined, 'Mike'),
-    createCharacterInstance(board1!, undefined, 'November'),
-    createCharacterInstance(board1!, undefined, 'Oscar'),
-    createCharacterInstance(board1!, undefined, 'Papa'),
-    createCharacterInstance(board1!, undefined, 'Quebec'),
-    createCharacterInstance(board1!, undefined, 'Romeo'),
-    createCharacterInstance(board1!, undefined, 'Sierra'),
-    createCharacterInstance(board1!, undefined, 'Tango'),
-    createCharacterInstance(board1!, undefined, 'Uniform'),
-    createCharacterInstance(board1!, undefined, 'Victor'),
-    createCharacterInstance(board1!, undefined, 'Whiskey'),
-    createCharacterInstance(board1!, undefined, 'Xray'),
-  ]);
-
-  characterInstances.forEach((ci) => {
-    createCharacterInstance(board2!, ci!.characterId);
-  });
+  // Create Characters
+  for (const boardId of boards) {
+    await createCharacter({
+      boardId: boardId!,
+      name: 'Alpha',
+      description: 'First character',
+      imageUrl: 'images.com/alpha.jpg',
+      tags: ['tag', 'tag2'],
+    });
+    await createCharacter({
+      boardId: boardId!,
+      name: 'Bravo',
+      description: 'Second character',
+      imageUrl: 'images.com/bravo.jpg',
+    });
+    await createCharacter({
+      boardId: boardId!,
+      name: 'Charlie',
+      description: 'Third character',
+      imageUrl: 'images.com/charlie.jpg',
+      tags: ['tag3', 'tag4'],
+    });
+    await createCharacter({ boardId: boardId!, name: 'Delta' });
+    await createCharacter({ boardId: boardId!, name: 'Echo' });
+    await createCharacter({ boardId: boardId!, name: 'Foxtrot' });
+    await createCharacter({ boardId: boardId!, name: 'Golf' });
+    await createCharacter({ boardId: boardId!, name: 'Hotel' });
+    await createCharacter({ boardId: boardId!, name: 'India' });
+    await createCharacter({ boardId: boardId!, name: 'Juliet' });
+    await createCharacter({ boardId: boardId!, name: 'Kilo' });
+    await createCharacter({ boardId: boardId!, name: 'Lima' });
+    await createCharacter({ boardId: boardId!, name: 'Mike' });
+    await createCharacter({ boardId: boardId!, name: 'November' });
+    await createCharacter({ boardId: boardId!, name: 'Oscar' });
+    await createCharacter({ boardId: boardId!, name: 'Papa' });
+    await createCharacter({ boardId: boardId!, name: 'Quebec' });
+    await createCharacter({ boardId: boardId!, name: 'Romeo' });
+    await createCharacter({ boardId: boardId!, name: 'Sierra' });
+    await createCharacter({ boardId: boardId!, name: 'Tango' });
+    await createCharacter({ boardId: boardId!, name: 'Uniform' });
+    await createCharacter({ boardId: boardId!, name: 'Victor' });
+    await createCharacter({ boardId: boardId!, name: 'Whiskey' });
+    await createCharacter({ boardId: boardId!, name: 'Xray' });
+  }
 }
 
 main()

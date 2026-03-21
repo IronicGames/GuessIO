@@ -28,7 +28,7 @@ describe('Board Functional Tests', () => {
 
     // 1. Create board
     const createResponse = await request(app)
-      .post('/api/boards')
+      .post('/api/board')
       .set('Authorization', `Bearer ${userToken}`)
       .send({
         name: uniqueName,
@@ -42,7 +42,7 @@ describe('Board Functional Tests', () => {
 
     // 2. Get boards - verify it exists
     const getResponse = await request(app)
-      .get('/api/boards')
+      .get('/api/board')
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
@@ -54,7 +54,7 @@ describe('Board Functional Tests', () => {
 
     // 3. Update board - verify changes
     await request(app)
-      .put(`/api/boards/${boardId}`)
+      .put(`/api/board/${boardId}`)
       .set('Authorization', `Bearer ${userToken}`)
       .send({
         name: updatedName,
@@ -64,7 +64,7 @@ describe('Board Functional Tests', () => {
       .expect(200);
 
     const getAfterUpdate = await request(app)
-      .get('/api/boards')
+      .get('/api/board')
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
@@ -77,13 +77,13 @@ describe('Board Functional Tests', () => {
 
     // 4. Delete board - verify gone
     await request(app)
-      .delete(`/api/boards/${boardId}`)
+      .delete(`/api/board/${boardId}`)
       .set('Authorization', `Bearer ${userToken}`)
       .send({ id: boardId })
       .expect(200);
 
     const getAfterDelete = await request(app)
-      .get('/api/boards')
+      .get('/api/board')
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
@@ -100,19 +100,19 @@ describe('Board Functional Tests', () => {
 
     // Create 3 boards
     const board1 = await request(app)
-      .post('/api/boards')
+      .post('/api/board')
       .set('Authorization', `Bearer ${userToken}`)
       .send({ name: board1Name })
       .expect(200);
 
     const board2 = await request(app)
-      .post('/api/boards')
+      .post('/api/board')
       .set('Authorization', `Bearer ${userToken}`)
       .send({ name: board2Name, isPublic: true })
       .expect(200);
 
     const board3 = await request(app)
-      .post('/api/boards')
+      .post('/api/board')
       .set('Authorization', `Bearer ${userToken}`)
       .send({ name: board3Name, description: 'Superheroes' })
       .expect(200);
@@ -121,7 +121,7 @@ describe('Board Functional Tests', () => {
 
     // Get all boards
     const response = await request(app)
-      .get('/api/boards')
+      .get('/api/board')
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
@@ -150,7 +150,7 @@ describe('Board Functional Tests', () => {
 
     // Create board with image
     const createResponse = await request(app)
-      .post('/api/boards')
+      .post('/api/board')
       .set('Authorization', `Bearer ${userToken}`)
       .send({
         name: boardName,
@@ -162,7 +162,7 @@ describe('Board Functional Tests', () => {
 
     // Get boards - verify image exists
     const getResponse = await request(app)
-      .get('/api/boards')
+      .get('/api/board')
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
@@ -174,7 +174,7 @@ describe('Board Functional Tests', () => {
 
     // Update image
     await request(app)
-      .put(`/api/boards/${boardId}`)
+      .put(`/api/board/${boardId}`)
       .set('Authorization', `Bearer ${userToken}`)
       .send({
         name: boardName + 'updated',
@@ -184,7 +184,7 @@ describe('Board Functional Tests', () => {
 
     // Verify image updated
     const getAfterUpdate = await request(app)
-      .get('/api/boards')
+      .get('/api/board')
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
@@ -195,13 +195,13 @@ describe('Board Functional Tests', () => {
 
     // Delete board - verify board is gone
     await request(app)
-      .delete(`/api/boards/${boardId}`)
+      .delete(`/api/board/${boardId}`)
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
     // Board should be gone
     const finalGet = await request(app)
-      .get('/api/boards')
+      .get('/api/board')
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 

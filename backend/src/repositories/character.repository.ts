@@ -1,74 +1,84 @@
 import { Prisma } from '@prisma/client';
-import prisma from 'src/lib/prisma';
+import {
+  CreateCharacterDto,
+  UpdateCharacterDto,
+} from '../../../shared/types/character.types';
+import prisma from '../lib/prisma';
 
-type CharacterInstance = Prisma.CharacterInstanceGetPayload<{
+type Character = Prisma.CharacterGetPayload<{
   include: {
-    character: {
-      include: {
-        image: true;
-      };
-    };
+    image: true;
+    board: true;
   };
 }> | null;
-export async function createCharacterInstance(
-  boardId: string,
-  characterId?: string,
-  name?: string,
-  description?: string,
-  imageUrl?: string,
-  tags?: string[]
-): Promise<CharacterInstance> {
-  return await prisma.$transaction(async (tx) => {
-    let resolvedCharacterId: string;
-    if (characterId) {
-      resolvedCharacterId = characterId;
-    } else {
-      const character = await tx.character.create({
-        data: {
-          name: name ?? '',
-          description,
-          image: imageUrl
-            ? {
-                create: {
-                  imageUrl,
-                },
-              }
-            : undefined,
-        },
-      });
-      resolvedCharacterId = character.id;
-    }
-    const characterInstance = await tx.characterInstance.create({
-      data: {
-        boardId,
-        characterId: resolvedCharacterId,
-        tags: tags ?? [],
-      },
-      include: {
-        character: {
-          include: {
-            image: true,
-          },
-        },
-      },
-    });
-    return characterInstance;
+
+export async function createCharacter(
+  createCharacterDto: CreateCharacterDto
+): Promise<string> {
+  const createdCharacter = await prisma.character.create({
+    data: {
+      boardId: createCharacterDto.boardId,
+      name: createCharacterDto.name,
+      description: createCharacterDto.description,
+      image: createCharacterDto.imageUrl
+        ? {
+            create: {
+              imageUrl: createCharacterDto.imageUrl,
+            },
+          }
+        : undefined,
+      tags: createCharacterDto.tags,
+    },
   });
+  return createdCharacter.id;
 }
 
-export async function getCharacterInstance(
-  id: string
-): Promise<CharacterInstance> {
-  return await prisma.characterInstance.findFirst({
+export async function getCharacter(id: string): Promise<Character> {
+  return await prisma.character.findFirst({
     where: {
       id: id,
     },
     include: {
-      character: {
-        include: {
-          image: true,
-        },
-      },
+      image: true,
+      board: true,
     },
   });
+}
+
+export async function updateCharacter(
+  id: string,
+  updateCharacterDto: UpdateCharacterDto
+): Promise<string> {
+  const updatedCharacter = await prisma.character.update({
+    where: {
+      id: id,
+    },
+    data: {
+      name: updateCharacterDto.name,
+      description: updateCharacterDto.description,
+      tags: updateCharacterDto.tags,
+      image: updateCharacterDto.imageUrl
+        ? {
+            upsert: {
+              create: {
+                imageUrl: updateCharacterDto.imageUrl,
+              },
+              update: {
+                imageUrl: updateCharacterDto.imageUrl,
+              },
+            },
+          }
+        : undefined,
+    },
+  });
+  return updatedCharacter.id;
+}
+
+export async function deleteCharacter(id: string): Promise<string> {
+  const deletedBoard = await prisma.character.delete({
+    where: {
+      id,
+    },
+  });
+  return deletedBoard.id;
 }

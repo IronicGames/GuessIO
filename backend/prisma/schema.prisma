@@ -43,9 +43,12 @@ model Character {
 
   name        String
   description String?
+  tags        String[] @default([]) @map("tags")
 
-  image              Image?
-  characterInstances CharacterInstance[]
+  boardId String @map("board_id")
+
+  board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  image Image?
 
   @@map("characters")
 }
@@ -61,23 +64,9 @@ model Board {
 
   userId String? @map("user_id")
 
-  image              Image?
-  user               User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  characterInstances CharacterInstance[]
+  image      Image?
+  user       User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  characters Character[]
 
   @@map("boards")
-}
-
-model CharacterInstance {
-  id        String   @id @default(uuid())
-
-  tags      String[] @default([]) @map("tags")
-
-  boardId     String @map("board_id")
-  characterId String @map("character_id")
-
-  board     Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  character Character @relation(fields: [characterId], references: [id])
-
-  @@map("character_instances")
 }
