@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import * as boardService from '../../services/board.service.js';
-import { NotFoundError } from '../../errors/app-error.js';
-import * as userService from '../../services/user.service.js';
-import { generateUniqueUserData } from '../helpers/test-data.js';
+import * as boardService from '@services/board.service';
+import { NotFoundError } from '@errors/app-error';
+import * as userService from '@services/user.service';
+import { generateUniqueUserData } from '@tests/helpers/test-data';
 
 describe('Board Service Unit Tests', () => {
   let userId: string;

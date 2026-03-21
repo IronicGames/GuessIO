@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import { config } from '../utils/constants/env';
-import { authService } from '../services/auth.service';
-import * as userService from '../services/user.service';
-import { BadRequestError } from '../errors/app-error';
-import { asyncHandler } from '../middleware/error-handler.middleware';
-import { redirectToFrontendWithError } from '../utils/error/redirect-with-error';
+import { config } from '@utils/constants/env';
+import { authService } from '@services/auth.service';
+import * as userService from '@services/user.service';
+import { BadRequestError } from '@errors/app-error';
+import { asyncHandler } from '@middleware/error-handler.middleware';
+import { redirectToFrontendWithError } from '@utils/error/redirect-with-error';
 
 export const initiateGoogleLogin = (req: Request, res: Response) => {
   const authUrl = authService.getGoogleAuthUrl();

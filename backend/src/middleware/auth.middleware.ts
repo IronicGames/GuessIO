@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { authService } from '../services/auth.service';
-import { UnauthorizedError } from '../errors/app-error';
+import { authService } from '@services/auth.service';
+import { UnauthorizedError } from '@errors/app-error';
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;

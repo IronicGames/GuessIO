@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { AppError } from '../errors/app-error.js';
+import { AppError } from '@errors/app-error';
 import { Prisma } from '@prisma/client';
 
 export function errorHandler(

@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { config } from '../constants/env.js';
+import { config } from '@utils/constants/env';
 
 export function redirectToFrontendWithError(
   res: Response,

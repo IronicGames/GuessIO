@@ -2,8 +2,8 @@ import { Prisma } from '@prisma/client';
 import {
   CreateCharacterDto,
   UpdateCharacterDto,
-} from '../../../shared/types/character.types';
-import prisma from '../lib/prisma';
+} from '@shared/character.types';
+import prisma from '@lib/prisma';
 
 type Character = Prisma.CharacterGetPayload<{
   include: {

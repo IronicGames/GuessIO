@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
-import app from '../../app.js';
-import * as userService from '../../services/user.service.js';
-import { authService } from '../../services/auth.service.js';
-import { generateUniqueUserData } from '../helpers/test-data.js';
-import { BoardDto } from '@shared/board.types.js';
+import app from '@backend/app';
+import * as userService from '@services/user.service';
+import { authService } from '@services/auth.service';
+import { generateUniqueUserData } from '@tests/helpers/test-data';
+import { BoardDto } from '@shared/board.types';
 
 describe('Board Functional Tests', () => {
   let userToken: string;

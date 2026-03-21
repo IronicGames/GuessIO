@@ -1,8 +1,8 @@
 import { BoardDto, CreateBoardDto, UpdateBoardDto } from '@shared/board.types';
-import { NotFoundError } from '../errors/app-error';
-import * as boardRepository from '../repositories/board.repository';
-import { ToImageDto } from '../../../shared/types/image.types';
-import { ToCharacterDto } from '../../../shared/types/character.types';
+import { NotFoundError } from '@errors/app-error';
+import * as boardRepository from '@repositories/board.repository';
+import { ToCharacterDto } from '@shared/character.types';
+import { ToImageDto } from '@shared/image.types';
 
 export async function getBoardsForUser(userId: string): Promise<BoardDto[]> {
   const boards = await boardRepository.getBoardsForUser(userId);

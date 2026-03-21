@@ -9,7 +9,7 @@ import {
   useContext,
   useCallback,
 } from 'react';
-import { api } from '../../lib/api';
+import { api } from '@lib/api';
 
 interface AuthContextType {
   user: UserProfile | null;

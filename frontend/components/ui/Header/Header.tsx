@@ -1,7 +1,7 @@
-import '../../../styles/globals.css';
-import Logo from '../Logo';
-import Login from './Login';
-import { ProfileDropdown } from './ProfileDropdown';
+import '@styles/globals.css';
+import Logo from '@ui/Logo';
+import Login from '@components/ui/Header/Login';
+import { ProfileDropdown } from '@components/ui/Header/ProfileDropdown';
 import { useAuth } from '@/app/providers/auth-provider';
 
 export default function Header() {

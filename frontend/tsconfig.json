@@ -20,6 +20,13 @@
     "baseUrl": ".",
     "paths": {
       "@shared/*": ["../shared/types/*"],
+      "@components/*": ["./components/*"],
+      "@hooks/*": ["./app/hooks/*"],
+      "@providers/*": ["./app/providers/*"],
+      "@styles/*": ["./styles/*"],
+      "@ui/*": ["./components/ui/*"],
+      "@lib/*": ["./lib/*"],
+      "@app/*": ["./app/*"],
       "@/*": ["./*"]
     },
     "target": "ES2020"

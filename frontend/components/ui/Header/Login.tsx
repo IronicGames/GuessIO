@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import '../../../styles/globals.css';
-import Button from '../Button';
-import TextButton from '../TextButton';
+import '@styles/globals.css';
+import Button from '@ui/Button';
+import TextButton from '@ui/TextButton';
 import Image from 'next/image';
 export default function Login() {
   const [isModalOpen, setIsModalOpen] = useState(false);
