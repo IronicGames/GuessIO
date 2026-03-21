@@ -4,7 +4,6 @@
     "module": "ESNext",
     "lib": ["ES2022"],
     "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -15,10 +14,20 @@
     "declaration": true,
     "baseUrl": ".",
     "paths": {
+      "@backend/*": ["./src/*"],
+      "@controllers/*": ["./src/controllers/*"],
+      "@services/*": ["./src/services/*"],
+      "@repositories/*": ["./src/repositories/*"],
+      "@middleware/*": ["./src/middleware/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@lib/*": ["./src/lib/*"],
+      "@errors/*": ["./src/errors/*"],
+      "@routes/*": ["./src/routes/*"],
+      "@tests/*": ["./src/tests/*"],
       "@shared/*": ["../shared/types/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "prisma/**/*.ts"],
   "exclude": ["node_modules", "dist"],
   "references": [{ "path": "../shared" }]
 }

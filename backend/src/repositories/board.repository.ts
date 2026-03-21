@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { CreateBoardDto, UpdateBoardDto } from '@shared/board.types';
-import prisma from '../lib/prisma';
+import prisma from '@lib/prisma';
 
 export type BoardWithCharacters = Prisma.BoardGetPayload<{
   include: {

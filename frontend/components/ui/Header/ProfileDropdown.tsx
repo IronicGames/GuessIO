@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import Button from '../Button';
+import Button from '@ui/Button';
 import { useAuth } from '@/app/providers/auth-provider';
 
 export const ProfileDropdown = () => {

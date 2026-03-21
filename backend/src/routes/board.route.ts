@@ -5,7 +5,7 @@ import {
   deleteBoard,
 } from './../controllers/board.controller';
 import { Router } from 'express';
-import { requireAuth } from '../middleware/auth.middleware';
+import { requireAuth } from '@middleware/auth.middleware';
 
 const router = Router();
 

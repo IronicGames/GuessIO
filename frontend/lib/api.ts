@@ -1,10 +1,6 @@
 /* global RequestInit */
 import { UserProfile } from '@shared/user.types';
-import {
-  BoardDto,
-  CreateBoardDto,
-  UpdateBoardDto,
-} from '../../shared/types/board.types';
+import { BoardDto, CreateBoardDto, UpdateBoardDto } from '@shared/board.types';
 
 const API_URL = 'http://localhost:8080';
 

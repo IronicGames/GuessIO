@@ -1,8 +1,8 @@
-import { NotFoundError } from '..//errors/app-error';
+import { NotFoundError } from '../errors/app-error';
 import {
   CreateCharacterDto,
   UpdateCharacterDto,
-} from '../../../shared/types/character.types';
+} from '@shared/character.types';
 import * as characterRepository from '../repositories/character.repository';
 
 export async function createCharacter(

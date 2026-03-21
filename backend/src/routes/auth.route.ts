@@ -4,8 +4,8 @@ import {
   handleGoogleCallback,
   getCurrentUser,
   getUserProfile,
-} from '../controllers/auth.controller.js';
-import { requireAuth } from '../middleware/auth.middleware.js';
+} from '@controllers/auth.controller';
+import { requireAuth } from '@middleware/auth.middleware';
 
 const router = Router();
 

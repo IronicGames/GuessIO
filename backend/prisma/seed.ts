@@ -1,4 +1,3 @@
-import { CreateBoardDto } from './../../shared/types/board.types';
 import prisma from '../src/lib/prisma';
 import { createBoard } from '../src/services/board.service';
 import { createCharacter } from '../src/services/character.service';

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import * as userService from '../../services/user.service.js';
-import prisma from '../../lib/prisma.js';
+import * as userService from '@services/user.service';
+import prisma from '@lib/prisma';
 
 describe('User Service Tests', () => {
   describe('createOrGetGoogleUser', () => {

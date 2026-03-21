@@ -1,13 +1,13 @@
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
-import { config } from '../utils/constants/env';
+import { config } from '@utils/constants/env';
 import {
   adjectives,
   animals,
   uniqueNamesGenerator,
 } from 'unique-names-generator';
-import * as userService from '../services/user.service';
-import { InternalServerError } from '../errors/app-error';
+import * as userService from '@services/user.service';
+import { InternalServerError } from '@errors/app-error';
 
 class AuthService {
   private client: OAuth2Client;

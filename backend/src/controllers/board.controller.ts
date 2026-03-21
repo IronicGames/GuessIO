@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import * as boardService from '../services/board.service';
-import { BadRequestError } from '../errors/app-error';
-import { asyncHandler } from '../middleware/error-handler.middleware';
+import * as boardService from '@services/board.service';
+import { BadRequestError } from '@errors/app-error';
+import { asyncHandler } from '@middleware/error-handler.middleware';
 
 export const getBoardsForUser = asyncHandler(
   async (req: Request, res: Response) => {

@@ -1,5 +1,5 @@
 import { beforeAll, afterAll } from 'vitest';
-import prisma from '../lib/prisma';
+import prisma from '@lib/prisma';
 
 beforeAll(async () => {
   try {

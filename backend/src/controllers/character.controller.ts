@@ -1,7 +1,7 @@
-import { asyncHandler } from '../middleware/error-handler.middleware';
+import { asyncHandler } from '@middleware/error-handler.middleware';
 import { Request, Response } from 'express';
-import * as characterService from '../services/character.service';
-import { BadRequestError } from '../errors/app-error';
+import * as characterService from '@services/character.service';
+import { BadRequestError } from '@errors/app-error';
 
 export const createCharacter = asyncHandler(
   async (req: Request, res: Response) => {

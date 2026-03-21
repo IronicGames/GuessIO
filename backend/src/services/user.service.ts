@@ -1,6 +1,6 @@
-import { NotFoundError } from '../errors/app-error';
-import * as userRepository from '../repositories/user.repository';
-import { UserWithProfilePicture } from '../repositories/user.repository';
+import { NotFoundError } from '@errors/app-error';
+import * as userRepository from '@repositories/user.repository';
+import { UserWithProfilePicture } from '@repositories/user.repository';
 import { UserProfile } from '@shared/user.types';
 
 export async function createOrGetGoogleUser(
