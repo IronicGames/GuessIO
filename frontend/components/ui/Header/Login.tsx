@@ -3,6 +3,7 @@ import '../../../styles/globals.css';
 import Button from '../Button';
 import TextButton from '../TextButton';
 import Image from 'next/image';
+import Input from '../Input';
 export default function Login() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   // const [scrolled, setScrolled] = useState(false);
@@ -92,13 +93,12 @@ export default function Login() {
               <label className="block text-xs font-semibold text-white uppercase tracking-widest mb-2">
                 Email
               </label>
-              <input
+              <Input
                 type="email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 focus: focus:bg-violet-500/5 rounded-xl px-4 py-3 
-                text-sm text-white placeholder-gray-600 outline-none transition-all"
+                className="text-sm text-white outline-none transition-all"
               />
             </div>
             <div className="mb-6">
@@ -113,13 +113,12 @@ export default function Login() {
                   Forgot?
                 </a>
               </div>
-              <input
+              <Input
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 focus:border-violet-500/60 focus:bg-violet-500/5 rounded-xl px-4 py-3 
-                text-sm text-white placeholder-gray-600 outline-none transition-all"
+                className="text-sm text-white outline-none transition-all"
               />
             </div>
 

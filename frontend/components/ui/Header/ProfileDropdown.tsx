@@ -19,7 +19,7 @@ export const ProfileDropdown = () => {
   }, []);
 
   return (
-    <div ref={ref} className="fixed top-0 right-10 z-50">
+    <div ref={ref} className="fixed top-3 right-10 z-50">
       {/* Avatar / trigger */}
       <button
         onClick={() => setIsOpen(!isOpen)}
