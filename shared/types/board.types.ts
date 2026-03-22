@@ -14,7 +14,6 @@ export interface BoardDto {
 }
 
 export interface CreateBoardDto {
-  userId: string;
   name: string;
   description?: string;
   isPublic?: boolean;

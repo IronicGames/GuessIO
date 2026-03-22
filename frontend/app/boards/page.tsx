@@ -1,79 +1,88 @@
 'use client';
 
-import BoardGrid from '@components/Board/BoardGrid';
 import { api } from '@lib/api';
-import {
-  Box,
-  Center,
-  Container,
-  Flex,
-  Paper,
-  SimpleGrid,
-  Text,
-  TextInput,
-} from '@mantine/core';
-import { BoardDto } from '@shared/board.types';
-import Link from 'next/link';
+import { Flex } from '@mantine/core';
+import { useBoardContext } from '@providers/board-provider';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { GridItemData } from '@components/Board/GridCard';
+import GridContainer from '@components/Board/GridContainer';
+import ItemGrid from '@components/Board/ItemGrid';
 
-export default function Boards() {
-  const [boards, setBoards] = useState<BoardDto[]>([]);
+export default function BoardsPage() {
+  const router = useRouter();
+  const { boards, setBoards, setSelectedBoard, refreshBoards } =
+    useBoardContext();
+  const [filteredBoards, setFilteredBoards] = useState<GridItemData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading) return;
     api.boards
       .getBoardsForUser()
       .then((data) => {
-        setBoards(data);
+        setBoards(data); // Store full BoardDto objects in context
+
+        const boardItems = data.map((board) => ({
+          id: board.id,
+          name: board.name,
+          imageUrl: board.image?.imageUrl,
+        }));
+        setFilteredBoards(boardItems);
         setLoading(false);
       })
       .catch((err) => {
         console.error(err);
         setLoading(false);
       });
-    console.log('boards: ', boards);
-  }, [loading]);
+  }, [refreshBoards, loading]); // Re-fetch when refresh is triggered
+
+  const handleSearch = (value: string) => {
+    const filtered = boards
+      .filter((board) => board.name.toLowerCase().includes(value.toLowerCase()))
+      .map((board) => ({
+        id: board.id,
+        name: board.name,
+        imageUrl: board.image?.imageUrl,
+      }));
+    setFilteredBoards(filtered);
+  };
+
+  const handleAddBoard = () => {
+    router.push('/boards/create');
+  };
+
+  const handleBoardClick = (boardItem: GridItemData) => {
+    // Find the full board data
+    const fullBoard = boards.find((b) => b.id === boardItem.id);
+
+    if (fullBoard) {
+      // Store in context for edit page
+      setSelectedBoard(fullBoard);
+      router.push(`/boards/${boardItem.id}`);
+    }
+  };
 
   return (
-    <>
-      <Flex h="90vh" w="100vw" justify={'center'} align={'center'}>
-        <Paper
-          p="lg"
-          w={'50%'}
-          h={'90%'}
-          withBorder
-          shadow="xl"
-          radius="md"
-          bg="#243040"
-          style={{
-            borderColor: '#33465f',
-            borderWidth: 1,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <TextInput
-            styles={{
-              input: { backgroundColor: '#1f2a3a', borderColor: '#33465f' },
-            }}
-            placeholder="Board Name"
-            size="xl"
-            mb="md"
-            style={{ position: 'sticky', top: 0, zIndex: 10 }}
-          />
-          <Box style={{ flex: 1, overflow: 'auto' }}>
-            <BoardGrid
-              cards={boards.map((board) => ({
-                id: board.id,
-                name: board.name,
-                imageUrl: board.image.imageUrl,
-              }))}
-              addButton={true}
-            />
-          </Box>
-        </Paper>
-      </Flex>
-    </>
+    <Flex h="90vh" w="100vw" justify="center" align="center">
+      <GridContainer
+        showSearch={true}
+        searchPlaceholder="Search boards..."
+        onSearchChange={handleSearch}
+        scrollable={true}
+        height="90%"
+        width="50%"
+      >
+        <ItemGrid
+          items={filteredBoards}
+          columns={4}
+          showAddButton={true}
+          onAddClick={handleAddBoard}
+          onItemClick={handleBoardClick}
+          imageHeight={200}
+          showNames={true}
+          spacing="md"
+        />
+      </GridContainer>
+    </Flex>
   );
 }

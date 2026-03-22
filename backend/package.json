@@ -23,7 +23,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset",
     "db:generate": "prisma generate",
-    "db:format": "prisma format"
+    "db:format": "prisma format",
+    "db:fullreset": "npm run db:reset && npm run db:migrate && npm run db:generate"
   },
   "keywords": [],
   "author": "",

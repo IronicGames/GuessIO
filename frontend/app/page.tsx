@@ -56,7 +56,7 @@ export default function HomePage() {
           />
 
           {/* Donate */}
-          <HomePageButton href="/boards" text="Donate" alternate={true} />
+          <HomePageButton href="/boards" text="Donate" alternate />
         </Stack>
       </Flex>
     </Container>
