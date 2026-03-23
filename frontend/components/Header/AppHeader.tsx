@@ -3,12 +3,7 @@
 import { GoogleIcon } from '@components/Home/GoogleIcon';
 import { Group, Text, Avatar, Button, Container, Menu } from '@mantine/core';
 import { useAuth } from '@providers/auth-provider';
-import {
-  IconBrandGoogle,
-  IconLogout,
-  IconSettings,
-  IconUser,
-} from '@tabler/icons-react';
+import { IconLogout, IconSettings, IconUser } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 
 export function AppHeader() {

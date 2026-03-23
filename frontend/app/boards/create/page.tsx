@@ -1,34 +1,33 @@
 'use client';
 
-import GridContainer from '@components/Board/GridContainer';
 import ItemForm from '@components/Board/ItemForm';
+import ContentPaper from '@components/ContentPaper';
 import { api } from '@lib/api';
 import { Flex } from '@mantine/core';
+import { useBoardContext } from '@providers/board-provider';
 import { useRouter } from 'next/navigation';
 
 export default function CreateBoardPage() {
   const router = useRouter();
-
+  const { getBoards } = useBoardContext();
   const handleSubmit = async (data: {
     name: string;
     description?: string;
     imageUrl?: string;
   }) => {
     try {
-      // TODO: Upload image to S3 first if needed, then get URL
-
-      const response = await api.boards.createBoard({
+      const createdBoard = await api.boards.createBoard({
         name: data.name,
         description: data.description,
         isPublic: false,
         imageUrl: data.imageUrl,
       });
-
-      console.log('Board created:', response);
-      router.push('/boards');
+      const retrievedBoards = await getBoards();
+      if (retrievedBoards.find((b) => b.id == createdBoard.id)) {
+        router.push(`/boards/${createdBoard.id}`);
+      }
     } catch (error) {
       console.error('Failed to create board:', error);
-      // TODO: Show error toast/notification
     }
   };
 
@@ -37,23 +36,19 @@ export default function CreateBoardPage() {
   };
 
   return (
-    <Flex h="90vh" w="100vw" justify="center" align="center">
-      <GridContainer
-        showSearch={false}
-        scrollable={false}
-        height="auto"
-        width="50%"
-      >
+    <Flex justify="center" p="md">
+      <ContentPaper w={{ base: '60%', md: '50%', lg: '40%' }} h="70vh">
         <ItemForm
           title="Create New Board"
           namePlaceholder="Enter board name..."
           descriptionPlaceholder="Describe your board..."
           onSubmit={handleSubmit}
           onCancel={handleCancel}
-          submitText="Create Board"
-          cancelText="Cancel"
         />
-      </GridContainer>
+      </ContentPaper>
     </Flex>
   );
+}
+function useAuth(): { isLoggedIn: any } {
+  throw new Error('Function not implemented.');
 }

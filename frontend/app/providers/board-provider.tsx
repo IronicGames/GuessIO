@@ -1,37 +1,43 @@
 'use client';
 
+import { api } from '@lib/api';
 import { BoardDto } from '@shared/board.types';
 import { createContext, useContext, useState, ReactNode } from 'react';
 
 interface BoardContextType {
   boards: BoardDto[];
-  setBoards: (boards: BoardDto[]) => void;
-  selectedBoard: BoardDto | null;
-  setSelectedBoard: (board: BoardDto | null) => void;
-  refreshBoards: boolean;
-  triggerRefresh: () => void;
+  loading: boolean;
+  getBoards: () => Promise<BoardDto[]>;
 }
 
 const BoardContext = createContext<BoardContextType | undefined>(undefined);
 
 export function BoardProvider({ children }: { children: ReactNode }) {
   const [boards, setBoards] = useState<BoardDto[]>([]);
-  const [selectedBoard, setSelectedBoard] = useState<BoardDto | null>(null);
-  const [refreshBoards, setRefreshBoards] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const triggerRefresh = () => {
-    setRefreshBoards((prev) => !prev);
+  const getBoards = async () => {
+    setLoading(true);
+    let retrievedBoards: BoardDto[] = [];
+    await api.boards
+      .getBoardsForUser()
+      .then((data) => {
+        retrievedBoards = data;
+        setBoards(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+    return retrievedBoards;
   };
-
   return (
     <BoardContext.Provider
       value={{
         boards,
-        setBoards,
-        selectedBoard,
-        setSelectedBoard,
-        refreshBoards,
-        triggerRefresh,
+        getBoards,
+        loading,
       }}
     >
       {children}

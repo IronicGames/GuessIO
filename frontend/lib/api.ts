@@ -73,7 +73,9 @@ export const api = {
       const response = await fetchWithAuth('/api/board');
       return response.json();
     },
-    createBoard: async (createBoardDto: CreateBoardDto): Promise<string> => {
+    createBoard: async (
+      createBoardDto: CreateBoardDto
+    ): Promise<{ id: string }> => {
       const response = await fetchWithAuth('/api/board', {
         method: 'POST',
         body: JSON.stringify(createBoardDto),

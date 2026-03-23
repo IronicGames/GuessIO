@@ -8,9 +8,8 @@ export default function HomePage() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
   return (
-    <Container size="md" h="100%">
+    <Container size="md" h="70vh">
       <Flex
-        h="calc(100vh - 80px)" // Full height minus header
         direction="column"
         justify="center"
         align="center"

@@ -25,7 +25,14 @@ export default function RootLayout({
               <AppHeader />
 
               {/* Main Content */}
-              <main style={{ flex: 1 }}>{children}</main>
+              <main
+                style={{
+                  flex: 1,
+                  alignContent: 'center',
+                }}
+              >
+                {children}
+              </main>
             </div>
           </AuthProvider>
         </MantineProvider>

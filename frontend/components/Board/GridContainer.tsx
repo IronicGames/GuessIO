@@ -1,84 +1,96 @@
-import { Box, Paper, TextInput } from '@mantine/core';
+'use client';
+
+import { Box, TextInput } from '@mantine/core';
 import { IconSearch } from '@tabler/icons-react';
-import { ReactNode, useState } from 'react';
+import { useState } from 'react';
+import ItemGrid from './ItemGrid';
+import { GridItemData } from './GridCard';
 
 interface GridContainerProps {
-  children: ReactNode;
+  items: GridItemData[];
   showSearch?: boolean;
   searchPlaceholder?: string;
-  onSearchChange?: (value: string) => void;
-  scrollable?: boolean; // Make grid scrollable or fixed
-  height?: string | number; // Container height
-  width?: string | number; // Container width
+  showAddButton?: boolean;
+  onAddClick?: () => void;
+  onItemClick?: (item: GridItemData) => void;
+  colCount?: number;
 }
 
 export default function GridContainer({
-  children,
+  items,
   showSearch = true,
   searchPlaceholder = 'Search...',
-  onSearchChange,
-  scrollable = true,
-  height = '90%',
-  width = '50%',
+  showAddButton = false,
+  onAddClick,
+  onItemClick,
+  colCount = 5,
 }: GridContainerProps) {
   const [searchValue, setSearchValue] = useState('');
 
-  const handleSearchChange = (value: string) => {
-    setSearchValue(value);
-    onSearchChange?.(value);
+  // Filter items based on search
+  const filteredItems = items.filter((item) =>
+    item.name.toLowerCase().includes(searchValue.toLowerCase())
+  );
+
+  // Responsive columns based on colCount
+  const columns = {
+    base: Math.min(2, colCount),
+    sm: Math.min(3, colCount),
+    md: Math.min(4, colCount),
+    lg: colCount,
   };
 
   return (
-    <Paper
-      p="lg"
-      w={width}
-      h={height}
-      withBorder
-      shadow="xl"
-      radius="md"
-      bg="#243040"
+    <Box
       style={{
-        borderColor: '#33465f',
-        borderWidth: 1,
         display: 'flex',
         flexDirection: 'column',
+        height: '100%',
+        overflow: 'hidden',
       }}
+      p="lg"
     >
-      {/* Search Bar */}
+      {/* Search Bar (Sticky) */}
       {showSearch && (
-        <TextInput
-          leftSection={<IconSearch size={20} />}
-          styles={{
-            input: { 
-              backgroundColor: '#1f2a3a', 
-              borderColor: '#33465f' 
-            },
-          }}
-          placeholder={searchPlaceholder}
-          size="xl"
-          mb="md"
-          value={searchValue}
-          onChange={(e) => handleSearchChange(e.currentTarget.value)}
-          style={{ 
-            position: 'sticky', 
-            top: 0, 
+        <Box
+          style={{
+            position: 'sticky',
+            top: 0,
             zIndex: 10,
-            flexShrink: 0,
+            backgroundColor: '#243040',
+            paddingBottom: '1rem',
           }}
-        />
+        >
+          <TextInput
+            leftSection={<IconSearch size={20} />}
+            placeholder={searchPlaceholder}
+            size="lg"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.currentTarget.value)}
+            styles={{
+              input: {
+                backgroundColor: '#1f2a3a',
+                borderColor: '#33465f',
+                color: 'white',
+              },
+            }}
+          />
+        </Box>
       )}
 
-      {/* Content Area */}
-      <Box 
-        style={{ 
-          flex: 1, 
-          overflow: scrollable ? 'auto' : 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
+      <Box
+        style={{
+          flex: 1,
         }}
       >
-        {children}
+        <ItemGrid
+          items={filteredItems}
+          showAddButton={showAddButton}
+          onAddClick={onAddClick}
+          onItemClick={onItemClick}
+          columns={columns}
+        />
       </Box>
-    </Paper>
+    </Box>
   );
 }
