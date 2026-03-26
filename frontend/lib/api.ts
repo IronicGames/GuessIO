@@ -76,6 +76,10 @@ export const api = {
       const response = await fetchWithAuth(API_ENDPOINTS.boards.root);
       return response.json();
     },
+    getBoard: async (boardId: string): Promise<BoardDto> => {
+      const response = await fetchWithAuth(API_ENDPOINTS.boards.byId(boardId));
+      return response.json();
+    },
     createBoard: async (
       createBoardDto: CreateBoardDto
     ): Promise<{ id: string }> => {

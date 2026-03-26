@@ -4,13 +4,14 @@ import { GridItemData } from '@components/Board/GridCard';
 import GridContainer from '@components/Board/GridContainer';
 import ItemForm from '@components/Board/ItemForm';
 import ContentPaper from '@components/ContentPaper';
+import StatusScreen from '@components/StatusScreen';
 import { api } from '@lib/api';
 import { Group, Flex } from '@mantine/core';
 import { useAuth } from '@providers/auth-provider';
-import { useBoardContext } from '@providers/board-provider';
-import { BoardDto } from '@shared/types/board.types';
+import { UpdateBoardDto } from '@shared/types/board.types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useEffect, use, useState } from 'react';
+import { use } from 'react';
 
 export default function EditBoardPage({
   params,
@@ -18,72 +19,66 @@ export default function EditBoardPage({
   params: Promise<{ boardId: string }>;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { boardId } = use(params);
-  const { getBoards } = useBoardContext();
-  const [boardData, setBoardData] = useState<BoardDto | undefined>(undefined);
   const { user } = useAuth();
 
-  useEffect(() => {
-    const loadBoard = async () => {
-      try {
-        if (!boardId && !boardData) {
-          router.push('/boards');
-          return;
-        }
+  const {
+    data: board,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['board', boardId],
+    queryFn: () => api.boards.getBoard(boardId),
+  });
 
-        const retrievedBoards = await getBoards();
-        const board = retrievedBoards.find((b) => b.id === boardId);
-
-        if (!board || (board && board.userId != user?.id)) {
-          router.push('/boards');
-          return;
-        }
-
-        setBoardData(board);
-      } catch (error) {
-        console.error('Failed to load board:', error);
-        router.push('/boards');
-      }
-    };
-
-    loadBoard();
-  }, []);
-
-  // Convert characters to GridItemData
-  const characterItems: GridItemData[] = boardData?.characters
-    ? boardData.characters.map((char) => ({
-        id: char.id,
-        name: char.name,
-        imageUrl: char.image?.imageUrl,
-      }))
-    : [];
+  const { mutate: updateBoard } = useMutation({
+    mutationFn: (dto: UpdateBoardDto) => api.boards.updateBoard(boardId, dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      queryClient.invalidateQueries({ queryKey: ['board', boardId] });
+      router.push('/boards');
+    },
+    onError: (error) => console.error('Failed to update board:', error),
+  });
 
   const handleSubmit = async (data: {
     name: string;
     description?: string;
     imageUrl?: string;
   }) => {
-    try {
-      await api.boards.updateBoard(boardId, {
-        name: data.name,
-        description: data.description,
-        imageUrl: data.imageUrl,
-      });
-
-      router.push('/boards');
-    } catch (error) {
-      console.error('Failed to update board:', error);
-    }
+    updateBoard({
+      name: data.name,
+      description: data.description,
+      imageUrl: data.imageUrl,
+    });
   };
+
+  const { mutate: deleteBoard } = useMutation({
+    mutationFn: () => api.boards.deleteBoard(boardId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      queryClient.invalidateQueries({ queryKey: ['board', boardId] });
+      router.push('/boards');
+    },
+    onError: (error) => console.error('Failed to delete board:', error),
+  });
 
   const handleDelete = async () => {
-    try {
-      await api.boards.deleteBoard(boardId);
-      router.push('/boards');
-    } catch (error) {
-      console.error('Failed to delete board:', error);
-    }
+    deleteBoard();
   };
+
+  const characterItems: GridItemData[] = board?.characters
+    ? board.characters.map((char) => ({
+        id: char.id,
+        name: char.name,
+        imageUrl: char.image?.imageUrl,
+      }))
+    : [];
+  if (user?.id !== board?.userId)
+    <StatusScreen text="This board does not belong to you" />;
+  if (isLoading) return <StatusScreen />;
+  if (error || !board) return <StatusScreen text="Error loading board" />;
 
   const handleCancel = () => {
     router.push('/boards');
@@ -98,14 +93,6 @@ export default function EditBoardPage({
     // TODO: Implement character editing
     console.log('Character clicked:', character);
   };
-
-  if (!boardData) {
-    return (
-      <Flex justify="center" align="center">
-        <div>Loading...</div>
-      </Flex>
-    );
-  }
 
   return (
     <Flex justify="center" p="md">
@@ -123,9 +110,9 @@ export default function EditBoardPage({
             namePlaceholder="Enter board name..."
             descriptionPlaceholder="Describe your board..."
             initialData={{
-              name: boardData.name,
-              description: boardData.description,
-              imageUrl: boardData.image?.imageUrl,
+              name: board.name,
+              description: board.description,
+              imageUrl: board.image?.imageUrl,
             }}
             onSubmit={handleSubmit}
             onCancel={handleCancel}

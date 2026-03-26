@@ -1,38 +1,44 @@
 'use client';
 
 import { Flex } from '@mantine/core';
-import { useBoardContext } from '@providers/board-provider';
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { GridItemData } from '@components/Board/GridCard';
 import GridContainer from '@components/Board/GridContainer';
 import ContentPaper from '@components/ContentPaper';
+import { api } from '@lib/api';
+import { useQuery } from '@tanstack/react-query';
+import StatusScreen from '@components/StatusScreen';
 
 export default function BoardsPage() {
   const router = useRouter();
-  const { boards, getBoards, loading } = useBoardContext();
-
-  useEffect(() => {
-    if (!loading) {
-      getBoards();
-    }
-  }, [loading]);
-
-  // Convert boards to GridItemData
+  const {
+    data: boards,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['boards'],
+    queryFn: api.boards.getBoardsForUser,
+  });
+  if (isLoading) return <StatusScreen />;
+  if (error || !boards) return <StatusScreen text="Error loading board" />;
   // TODO: order by updatedAt
-  const gridItems: GridItemData[] = boards.map((board) => ({
-    id: board.id,
-    name: board.name,
-    imageUrl: board.image?.imageUrl,
-  }));
+  const gridItems: GridItemData[] =
+    boards
+      ?.sort((a, b) =>
+        a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0
+      )
+      .map((board) => ({
+        id: board.id,
+        name: board.name,
+        imageUrl: board.image?.imageUrl,
+      })) ?? [];
 
   const handleAddBoard = () => {
     router.push('/boards/create');
   };
 
   const handleBoardClick = (boardItem: GridItemData) => {
-    const fullBoard = boards.find((b) => b.id === boardItem.id);
-    if (fullBoard) {
+    if (boardItem.id) {
       router.push(`/boards/${boardItem.id}`);
     }
   };

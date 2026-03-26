@@ -4,31 +4,38 @@ import ItemForm from '@components/Board/ItemForm';
 import ContentPaper from '@components/ContentPaper';
 import { api } from '@lib/api';
 import { Flex } from '@mantine/core';
-import { useBoardContext } from '@providers/board-provider';
+import { useAuth } from '@providers/auth-provider';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
 export default function CreateBoardPage() {
   const router = useRouter();
-  const { getBoards } = useBoardContext();
-  const handleSubmit = async (data: {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  if (!user?.id) router.push('/');
+
+  const { mutate: createBoard } = useMutation({
+    mutationFn: api.boards.createBoard,
+    onSuccess: (createdBoard) => {
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      router.push(`/boards/${createdBoard.id}`);
+    },
+    onError: (error) => {
+      console.error('Failed to create board:', error);
+    },
+  });
+
+  const handleSubmit = (data: {
     name: string;
     description?: string;
     imageUrl?: string;
   }) => {
-    try {
-      const createdBoard = await api.boards.createBoard({
-        name: data.name,
-        description: data.description,
-        isPublic: false,
-        imageUrl: data.imageUrl,
-      });
-      const retrievedBoards = await getBoards();
-      if (retrievedBoards.find((b) => b.id == createdBoard.id)) {
-        router.push(`/boards/${createdBoard.id}`);
-      }
-    } catch (error) {
-      console.error('Failed to create board:', error);
-    }
+    createBoard({
+      name: data.name,
+      description: data.description,
+      isPublic: false,
+      imageUrl: data.imageUrl,
+    });
   };
 
   const handleCancel = () => {

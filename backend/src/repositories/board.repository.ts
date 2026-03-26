@@ -63,6 +63,9 @@ export async function updateBoard(
   id: string,
   updateBoardDto: UpdateBoardDto
 ): Promise<string> {
+  if (!updateBoardDto.imageUrl) {
+    await prisma.image.deleteMany({ where: { boardId: id } });
+  }
   const updatedBoard = await prisma.board.update({
     where: {
       id: id,

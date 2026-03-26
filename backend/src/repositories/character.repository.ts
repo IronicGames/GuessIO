@@ -54,6 +54,9 @@ export async function updateCharacter(
   characterId: string,
   dto: UpdateCharacterDto
 ): Promise<string> {
+  if (!dto.imageUrl) {
+    await prisma.image.deleteMany({ where: { characterId: characterId } });
+  }
   const character = await prisma.character.update({
     where: { id: characterId },
     data: {
