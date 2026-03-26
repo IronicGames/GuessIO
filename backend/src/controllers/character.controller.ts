@@ -5,56 +5,54 @@ import { BadRequestError } from '@errors/app-error';
 
 export const createCharacter = asyncHandler(
   async (req: Request, res: Response) => {
-    const name = req.body.name;
-    const boardId = req.params.id;
-    if (!name) {
-      throw new BadRequestError('Board name is required');
-    }
-    if (!boardId) {
-      throw new BadRequestError('Board ID is required');
+    const { boardId } = req.params as { boardId: string };
+    const { characterId, name, description, imageUrl, tags } = req.body;
+
+    if (!characterId && !name) {
+      throw new BadRequestError('Character name is required');
     }
 
-    const createdCharacter = await characterService.createCharacter({
-      boardId: req.body.boardId,
-      name: req.body.name,
-      description: req.body.description,
-      imageUrl: req.body.imageUrl,
-      tags: req.body.tags,
+    const result = await characterService.createCharacter(boardId, {
+      characterId,
+      name,
+      description,
+      imageUrl,
+      tags,
     });
-    res.json({ id: createdCharacter });
+
+    res.json(result);
   }
 );
 
 export const updateCharacter = asyncHandler(
   async (req: Request, res: Response) => {
-    const name = req.body.name;
-    const id = req.params.id as string;
-    if (!id) {
-      throw new BadRequestError('Character ID not found');
-    }
+    const { characterId } = req.params as { characterId: string };
+    const { name, description, imageUrl, tags } = req.body;
 
     if (!name) {
       throw new BadRequestError('Character name is required');
     }
 
-    const updatedCharacter = await characterService.updateCharacter(id, {
+    const result = await characterService.updateCharacter(characterId, {
       name,
-      description: req.body.description,
-      imageUrl: req.body.imageUrl,
-      tags: req.body.tags,
+      description,
+      imageUrl,
+      tags,
     });
-    res.json({ id: updatedCharacter });
+
+    res.json(result);
   }
 );
 
 export const deleteCharacter = asyncHandler(
   async (req: Request, res: Response) => {
-    const id = req.params.id as string;
-    if (!id) {
-      throw new BadRequestError('Character ID not found');
-    }
+    const { boardId, characterId } = req.params as {
+      boardId: string;
+      characterId: string;
+    };
 
-    const deletedCharacter = await characterService.deleteCharacter(id);
-    res.json({ id: deletedCharacter });
+    const result = await characterService.deleteCharacter(characterId, boardId);
+
+    res.json(result);
   }
 );

@@ -8,18 +8,18 @@ import { api } from '@lib/api';
 import { Group, Flex } from '@mantine/core';
 import { useAuth } from '@providers/auth-provider';
 import { useBoardContext } from '@providers/board-provider';
-import { BoardDto } from '@shared/board.types';
+import { BoardDto } from '@shared/types/board.types';
 import { useRouter } from 'next/navigation';
 import { useEffect, use, useState } from 'react';
 
 export default function EditBoardPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ boardId: string }>;
 }) {
   const router = useRouter();
-  const { id: boardId } = use(params);
-  const { boards, getBoards } = useBoardContext();
+  const { boardId } = use(params);
+  const { getBoards } = useBoardContext();
   const [boardData, setBoardData] = useState<BoardDto | undefined>(undefined);
   const { user } = useAuth();
 

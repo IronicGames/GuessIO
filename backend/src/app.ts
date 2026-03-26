@@ -15,7 +15,7 @@ app.use(express.json());
 // Routes
 app.use('/api', statusRoutes); // /api/health
 app.use('/api/auth', authRoutes); // /api/auth/*
-app.use('/api/board', boardRoutes); // /api/board/*
+app.use('/api/boards', boardRoutes); // /api/board/*
 app.use('/api/character', characterRoutes); // /api/character/*
 
 app.use(errorHandler);

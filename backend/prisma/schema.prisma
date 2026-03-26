@@ -45,10 +45,8 @@ model Character {
   description String?
   tags        String[] @default([]) @map("tags")
 
-  boardId String @map("board_id")
-
-  board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
   image Image?
+  boards    Board[]
 
   @@map("characters")
 }
@@ -64,8 +62,8 @@ model Board {
 
   userId String? @map("user_id")
 
-  image      Image?
   user       User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  image      Image?
   characters Character[]
 
   @@map("boards")

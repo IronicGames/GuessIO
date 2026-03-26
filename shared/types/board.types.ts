@@ -1,16 +1,18 @@
 import { CharacterDto } from './character.types';
 import { ImageDto } from './image.types';
 
-export interface BoardDto {
+export interface BoardSummaryDto {
   id: string;
   name: string;
   description?: string;
   isPublic: boolean;
   image: ImageDto;
   userId: string;
-  characters: CharacterDto[];
   createdAt: string;
   updatedAt: string;
+}
+export interface BoardDto extends BoardSummaryDto {
+  characters: CharacterDto[];
 }
 
 export interface CreateBoardDto {

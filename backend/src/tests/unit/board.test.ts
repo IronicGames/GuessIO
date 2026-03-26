@@ -8,7 +8,6 @@ describe('Board Service Unit Tests', () => {
   let userId: string;
 
   beforeEach(async () => {
-    // Create a user for testing
     const userData = generateUniqueUserData();
     const user = await userService.createOrGetGoogleUser(
       userData.googleId,
@@ -21,10 +20,8 @@ describe('Board Service Unit Tests', () => {
 
   describe('createBoard', () => {
     it('should return board ID when creation succeeds', async () => {
-      const uniqueName = `Successful Board ${crypto.randomUUID()}`;
-      const boardId = await boardService.createBoard({
-        userId,
-        name: uniqueName,
+      const boardId = await boardService.createBoard(userId, {
+        name: `Successful Board ${crypto.randomUUID()}`,
         description: 'Test',
         isPublic: false,
       });
@@ -34,10 +31,8 @@ describe('Board Service Unit Tests', () => {
     });
 
     it('should create board with only required fields', async () => {
-      const uniqueName = `Minimal Board ${crypto.randomUUID()}`;
-      const boardId = await boardService.createBoard({
-        userId,
-        name: uniqueName,
+      const boardId = await boardService.createBoard(userId, {
+        name: `Minimal Board ${crypto.randomUUID()}`,
       });
 
       expect(typeof boardId).toBe('string');
@@ -47,27 +42,20 @@ describe('Board Service Unit Tests', () => {
 
   describe('updateBoard', () => {
     it('should throw NotFoundError when board does not exist', async () => {
-      const fakeId = crypto.randomUUID();
-
       await expect(
-        boardService.updateBoard(fakeId, {
+        boardService.updateBoard(crypto.randomUUID(), {
           name: 'Non-existent Board',
         })
       ).rejects.toThrow(NotFoundError);
     });
 
     it('should successfully update existing board', async () => {
-      // First create a board
-      const createName = `Board to Update ${crypto.randomUUID()}`;
-      const boardId = await boardService.createBoard({
-        userId,
-        name: createName,
+      const boardId = await boardService.createBoard(userId, {
+        name: `Board to Update ${crypto.randomUUID()}`,
       });
 
-      // Then update it
-      const updateName = `Updated Board ${crypto.randomUUID()}`;
       const updatedId = await boardService.updateBoard(boardId, {
-        name: updateName,
+        name: `Updated Board ${crypto.randomUUID()}`,
         description: 'Updated description',
       });
 
@@ -77,27 +65,19 @@ describe('Board Service Unit Tests', () => {
 
   describe('deleteBoard', () => {
     it('should throw NotFoundError when board does not exist', async () => {
-      const fakeId = crypto.randomUUID();
-
-      await expect(boardService.deleteBoard(fakeId)).rejects.toThrow(
-        NotFoundError
-      );
+      await expect(
+        boardService.deleteBoard(crypto.randomUUID())
+      ).rejects.toThrow(NotFoundError);
     });
 
     it('should successfully delete existing board', async () => {
-      // First create a board
-      const boardName = `Board to Delete ${crypto.randomUUID()}`;
-      const boardId = await boardService.createBoard({
-        userId,
-        name: boardName,
+      const boardId = await boardService.createBoard(userId, {
+        name: `Board to Delete ${crypto.randomUUID()}`,
       });
 
-      // Then delete it
       const deletedId = await boardService.deleteBoard(boardId);
-
       expect(deletedId).toBe(boardId);
 
-      // Verify it's gone
       await expect(boardService.deleteBoard(boardId)).rejects.toThrow(
         NotFoundError
       );
@@ -106,7 +86,6 @@ describe('Board Service Unit Tests', () => {
 
   describe('getBoardsForUser', () => {
     it('should return empty array when user has no boards', async () => {
-      // Create a new user who has no boards
       const newUserData = generateUniqueUserData();
       const newUser = await userService.createOrGetGoogleUser(
         newUserData.googleId,
@@ -116,26 +95,18 @@ describe('Board Service Unit Tests', () => {
       );
 
       const boards = await boardService.getBoardsForUser(newUser.id);
-
       expect(Array.isArray(boards)).toBe(true);
       expect(boards).toHaveLength(0);
     });
 
     it('should return only boards belonging to the user', async () => {
-      const board1Name = `User Board 1 ${crypto.randomUUID()}`;
-      const board2Name = `User Board 2 ${crypto.randomUUID()}`;
-
-      // Create boards for this user
-      const board1Id = await boardService.createBoard({
-        userId,
-        name: board1Name,
+      const board1Id = await boardService.createBoard(userId, {
+        name: `User Board 1 ${crypto.randomUUID()}`,
       });
-      const board2Id = await boardService.createBoard({
-        userId,
-        name: board2Name,
+      const board2Id = await boardService.createBoard(userId, {
+        name: `User Board 2 ${crypto.randomUUID()}`,
       });
 
-      // Create another user and their board
       const otherUserData = generateUniqueUserData();
       const otherUser = await userService.createOrGetGoogleUser(
         otherUserData.googleId,
@@ -143,15 +114,11 @@ describe('Board Service Unit Tests', () => {
         otherUserData.email,
         otherUserData.profilePictureUrl
       );
-      await boardService.createBoard({
-        userId: otherUser.id,
+      await boardService.createBoard(otherUser.id, {
         name: `Other User Board ${crypto.randomUUID()}`,
       });
 
-      // Get boards for original user
       const boards = await boardService.getBoardsForUser(userId);
-
-      // Filter to only boards created in this test
       const testBoards = boards.filter(
         (b) => b!.id === board1Id || b!.id === board2Id
       );
@@ -160,18 +127,13 @@ describe('Board Service Unit Tests', () => {
       expect(testBoards.every((b) => b!.userId === userId)).toBe(true);
     });
 
-    it('should include image and characterInstances relations', async () => {
+    it('should include image and characters relations', async () => {
       const imageUrl = `https://example.com/image-${crypto.randomUUID()}.jpg`;
-      const boardName = `Board with Relations ${crypto.randomUUID()}`;
-
-      // Create board with image
-      const boardId = await boardService.createBoard({
-        userId,
-        name: boardName,
+      const boardId = await boardService.createBoard(userId, {
+        name: `Board with Relations ${crypto.randomUUID()}`,
         imageUrl,
       });
 
-      // Get boards
       const boards = await boardService.getBoardsForUser(userId);
       const board = boards.find((b) => b!.id === boardId);
 

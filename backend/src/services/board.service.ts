@@ -1,8 +1,13 @@
-import { BoardDto, CreateBoardDto, UpdateBoardDto } from '@shared/board.types';
+import {
+  BoardDto,
+  CreateBoardDto,
+  UpdateBoardDto,
+} from '@shared/types/board.types';
 import { NotFoundError } from '@errors/app-error';
 import * as boardRepository from '@repositories/board.repository';
-import { ToCharacterDto } from '@shared/character.types';
-import { ToImageDto } from '@shared/image.types';
+import { CharacterDto } from '@shared/types/character.types';
+import { ToImageDto } from '@shared/types/image.types';
+import { Character, Board, Image } from '@prisma/client';
 
 export async function getBoardsForUser(userId: string): Promise<BoardDto[]> {
   const boards = await boardRepository.getBoardsForUser(userId);
@@ -27,9 +32,13 @@ export async function getBoardsForUser(userId: string): Promise<BoardDto[]> {
 }
 
 export async function createBoard(
+  userId: string,
   createBoardDto: CreateBoardDto
 ): Promise<string> {
-  const createdBoardId = await boardRepository.createBoard(createBoardDto);
+  const createdBoardId = await boardRepository.createBoard(
+    userId,
+    createBoardDto
+  );
   if (!createdBoardId) {
     throw new NotFoundError('Board not found');
   }
@@ -57,4 +66,26 @@ export async function deleteBoard(id: string): Promise<string> {
     throw new NotFoundError('Board not found');
   }
   return deletedBoardId;
+}
+
+type CharacterWithBoardsAndImage = Character & {
+  boards: Board[];
+  image: Image | null;
+};
+
+export function ToCharacterDto(
+  character: CharacterWithBoardsAndImage | null
+): CharacterDto | null {
+  return character
+    ? {
+        id: character.id,
+        name: character.name,
+        createdAt: character.createdAt.toISOString(),
+        updatedAt: character.updatedAt.toISOString(),
+        description: character.description,
+        tags: character.tags ?? [],
+        image: ToImageDto(character.image),
+        boardIds: character.boards.map((board) => board.id),
+      }
+    : null;
 }

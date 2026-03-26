@@ -6,10 +6,10 @@ import {
 import { Router } from 'express';
 import { requireAuth } from '@middleware/auth.middleware';
 
-const router = Router();
+const router = Router({ mergeParams: true }); // mergeParams gives access to :boardId from parent
 
-router.post('/', requireAuth, createCharacter); // POST /api/character/
-router.put('/:id', requireAuth, updateCharacter); // PUT /api/character/
-router.delete('/:id', requireAuth, deleteCharacter); // DELETE /api/character/
+router.post('/', requireAuth, createCharacter); // POST   /api/boards/:boardId/characters
+router.put('/:characterId', requireAuth, updateCharacter); // PUT    /api/boards/:boardId/characters/:characterId
+router.delete('/:characterId', requireAuth, deleteCharacter); // DELETE /api/boards/:boardId/characters/:characterId
 
 export default router;

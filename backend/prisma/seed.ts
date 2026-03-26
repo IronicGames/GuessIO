@@ -2,6 +2,7 @@ import prisma from '../src/lib/prisma';
 import { createBoard } from '../src/services/board.service';
 import { createCharacter } from '../src/services/character.service';
 import { createUser } from '../src/repositories/user.repository';
+import { CreateCharacterDto } from '@shared/types/character.types';
 
 async function main() {
   // Create Users
@@ -11,68 +12,70 @@ async function main() {
     'googleId1',
     'images.com/prince.jpg'
   );
-  const user1ID = user1!.id;
   const user2 = await createUser('kevin');
-  const user2ID = user2!.id;
 
   // Create Boards
-  const boards = [
-    await createBoard({
-      name: 'Board 1',
-      userId: user1ID,
-      description: 'A default board for testing',
-      isPublic: true,
-      imageUrl: 'images.com/board1.jpg',
-    }),
-    await createBoard({
-      name: 'Board 2',
-      userId: user2ID,
-    }),
-  ];
+  const board1 = await createBoard(user1!.id, {
+    name: 'Board 1',
+    description: 'A default board for testing',
+    isPublic: true,
+    imageUrl: 'images.com/board1.jpg',
+  });
+  const board2 = await createBoard(user2!.id, {
+    name: 'Board 2',
+  });
 
-  // Create Characters
-  for (const boardId of boards) {
-    await createCharacter({
-      boardId: boardId!,
+  const board1Id = board1!;
+  const board2Id = board2!;
+
+  // Create Characters on board1, then add them to board2
+  const characterDtos = [
+    {
       name: 'Alpha',
       description: 'First character',
       imageUrl: 'images.com/alpha.jpg',
       tags: ['tag', 'tag2'],
-    });
-    await createCharacter({
-      boardId: boardId!,
+    },
+    {
       name: 'Bravo',
       description: 'Second character',
       imageUrl: 'images.com/bravo.jpg',
-    });
-    await createCharacter({
-      boardId: boardId!,
+    },
+    {
       name: 'Charlie',
       description: 'Third character',
       imageUrl: 'images.com/charlie.jpg',
       tags: ['tag3', 'tag4'],
-    });
-    await createCharacter({ boardId: boardId!, name: 'Delta' });
-    await createCharacter({ boardId: boardId!, name: 'Echo' });
-    await createCharacter({ boardId: boardId!, name: 'Foxtrot' });
-    await createCharacter({ boardId: boardId!, name: 'Golf' });
-    await createCharacter({ boardId: boardId!, name: 'Hotel' });
-    await createCharacter({ boardId: boardId!, name: 'India' });
-    await createCharacter({ boardId: boardId!, name: 'Juliet' });
-    await createCharacter({ boardId: boardId!, name: 'Kilo' });
-    await createCharacter({ boardId: boardId!, name: 'Lima' });
-    await createCharacter({ boardId: boardId!, name: 'Mike' });
-    await createCharacter({ boardId: boardId!, name: 'November' });
-    await createCharacter({ boardId: boardId!, name: 'Oscar' });
-    await createCharacter({ boardId: boardId!, name: 'Papa' });
-    await createCharacter({ boardId: boardId!, name: 'Quebec' });
-    await createCharacter({ boardId: boardId!, name: 'Romeo' });
-    await createCharacter({ boardId: boardId!, name: 'Sierra' });
-    await createCharacter({ boardId: boardId!, name: 'Tango' });
-    await createCharacter({ boardId: boardId!, name: 'Uniform' });
-    await createCharacter({ boardId: boardId!, name: 'Victor' });
-    await createCharacter({ boardId: boardId!, name: 'Whiskey' });
-    await createCharacter({ boardId: boardId!, name: 'Xray' });
+    },
+    { name: 'Delta' },
+    { name: 'Echo' },
+    { name: 'Foxtrot' },
+    { name: 'Golf' },
+    { name: 'Hotel' },
+    { name: 'India' },
+    { name: 'Juliet' },
+    { name: 'Kilo' },
+    { name: 'Lima' },
+    { name: 'Mike' },
+    { name: 'November' },
+    { name: 'Oscar' },
+    { name: 'Papa' },
+    { name: 'Quebec' },
+    { name: 'Romeo' },
+    { name: 'Sierra' },
+    { name: 'Tango' },
+    { name: 'Uniform' },
+    { name: 'Victor' },
+    { name: 'Whiskey' },
+    { name: 'Xray' },
+  ] as CreateCharacterDto[];
+
+  for (const dto of characterDtos) {
+    // Create on board1
+    const { characterId } = await createCharacter(board1Id, dto);
+
+    // Add the same character to board2
+    await createCharacter(board2Id, { characterId });
   }
 }
 

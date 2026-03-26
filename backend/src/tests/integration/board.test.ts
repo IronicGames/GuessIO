@@ -5,16 +5,15 @@ import * as userService from '@services/user.service';
 import { authService } from '@services/auth.service';
 import prisma from '@lib/prisma';
 import { generateUniqueUserData } from '@tests/helpers/test-data';
-import { BoardDto } from '@shared/board.types';
+import { BoardDto } from '@shared/types/board.types';
+import { API_ENDPOINTS } from '@shared/endpoints';
 
 describe('Board Integration Tests', () => {
   let userToken: string;
   let userId: string;
-  // let otherUserToken: string;
   let otherUserId: string;
 
   beforeEach(async () => {
-    // Create first user with unique data
     const userData = generateUniqueUserData();
     const user = await userService.createOrGetGoogleUser(
       userData.googleId,
@@ -25,7 +24,6 @@ describe('Board Integration Tests', () => {
     userId = user.id;
     userToken = authService.generateToken(user.id);
 
-    // Create second user for authorization tests
     const otherUserData = generateUniqueUserData();
     const otherUser = await userService.createOrGetGoogleUser(
       otherUserData.googleId,
@@ -34,32 +32,28 @@ describe('Board Integration Tests', () => {
       otherUserData.profilePictureUrl
     );
     otherUserId = otherUser.id;
-    // otherUserToken = authService.generateToken(otherUser.id);
   });
 
-  describe('POST /api/board', () => {
+  describe(`POST ${API_ENDPOINTS.boards.root}`, () => {
     it('should create a board with valid data', async () => {
       const uniqueName = `Pokemon Board ${crypto.randomUUID()}`;
-      const boardData = {
-        name: uniqueName,
-        description: 'All 151 original pokemon',
-        isPublic: false,
-      };
 
       const response = await request(app)
-        .post('/api/board')
+        .post(API_ENDPOINTS.boards.root)
         .set('Authorization', `Bearer ${userToken}`)
-        .send(boardData)
+        .send({
+          name: uniqueName,
+          description: 'All 151 original pokemon',
+          isPublic: false,
+        })
         .expect(200);
 
       expect(response.body).toHaveProperty('id');
       expect(typeof response.body.id).toBe('string');
 
-      // Verify in database
       const boardInDb = await prisma.board.findUnique({
         where: { id: response.body.id },
       });
-
       expect(boardInDb).not.toBeNull();
       expect(boardInDb!.name).toBe(uniqueName);
       expect(boardInDb!.description).toBe('All 151 original pokemon');
@@ -68,21 +62,19 @@ describe('Board Integration Tests', () => {
     });
 
     it('should create a board with image URL', async () => {
-      const uniqueName = `Board with Image ${crypto.randomUUID()}`;
       const boardData = {
-        name: uniqueName,
+        name: `Board with Image ${crypto.randomUUID()}`,
         description: 'Has an image',
         isPublic: true,
         imageUrl: `https://example.com/board-image-${crypto.randomUUID()}.jpg`,
       };
 
       const response = await request(app)
-        .post('/api/board')
+        .post(API_ENDPOINTS.boards.root)
         .set('Authorization', `Bearer ${userToken}`)
         .send(boardData)
         .expect(200);
 
-      // Verify image was created
       const boardInDb = await prisma.board.findUnique({
         where: { id: response.body.id },
         include: { image: true },
@@ -93,15 +85,10 @@ describe('Board Integration Tests', () => {
     });
 
     it('should return 400 when name is missing', async () => {
-      const boardData = {
-        description: 'Missing name',
-        isPublic: false,
-      };
-
       const response = await request(app)
-        .post('/api/board')
+        .post(API_ENDPOINTS.boards.root)
         .set('Authorization', `Bearer ${userToken}`)
-        .send(boardData)
+        .send({ description: 'Missing name', isPublic: false })
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
@@ -109,13 +96,9 @@ describe('Board Integration Tests', () => {
     });
 
     it('should return 401 when no auth token is provided', async () => {
-      const boardData = {
-        name: 'Unauthorized Board',
-      };
-
       const response = await request(app)
-        .post('/api/board')
-        .send(boardData)
+        .post(API_ENDPOINTS.boards.root)
+        .send({ name: 'Unauthorized Board' })
         .expect(401);
 
       expect(response.body).toHaveProperty('error');
@@ -123,23 +106,18 @@ describe('Board Integration Tests', () => {
     });
 
     it('should return 401 when invalid token is provided', async () => {
-      const boardData = {
-        name: 'Invalid Token Board',
-      };
-
       const response = await request(app)
-        .post('/api/board')
+        .post(API_ENDPOINTS.boards.root)
         .set('Authorization', 'Bearer invalid-token')
-        .send(boardData)
+        .send({ name: 'Invalid Token Board' })
         .expect(401);
 
       expect(response.body).toHaveProperty('error');
     });
   });
 
-  describe('GET /api/board', () => {
+  describe(`GET ${API_ENDPOINTS.boards.root}`, () => {
     it('should return all boards for authenticated user', async () => {
-      // Create multiple boards for user with unique names
       const board1Name = `Board 1 ${crypto.randomUUID()}`;
       const board2Name = `Board 2 ${crypto.randomUUID()}`;
       const board3Name = `Board 3 ${crypto.randomUUID()}`;
@@ -152,7 +130,6 @@ describe('Board Integration Tests', () => {
         ],
       });
 
-      // Create boards for other user
       await prisma.board.createMany({
         data: [
           { name: `Other Board 1 ${crypto.randomUUID()}`, userId: otherUserId },
@@ -161,14 +138,12 @@ describe('Board Integration Tests', () => {
       });
 
       const response = await request(app)
-        .get('/api/board')
+        .get(API_ENDPOINTS.boards.root)
         .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.length).toBeGreaterThanOrEqual(3);
 
-      // Filter to only boards created in this test
       const testBoards = response.body.filter(
         (board: BoardDto) =>
           board.name === board1Name ||
@@ -183,17 +158,13 @@ describe('Board Integration Tests', () => {
     });
 
     it('should not return other users boards', async () => {
-      // Create board for other user
       const otherUserBoardName = `Other User Board ${crypto.randomUUID()}`;
       await prisma.board.create({
-        data: {
-          name: otherUserBoardName,
-          userId: otherUserId,
-        },
+        data: { name: otherUserBoardName, userId: otherUserId },
       });
 
       const response = await request(app)
-        .get('/api/board')
+        .get(API_ENDPOINTS.boards.root)
         .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
 
@@ -206,19 +177,17 @@ describe('Board Integration Tests', () => {
     });
 
     it('should return 401 when no auth token is provided', async () => {
-      await request(app).get('/api/board').expect(401);
+      await request(app).get(API_ENDPOINTS.boards.root).expect(401);
     });
   });
 
-  describe('PUT /api/board/:id', () => {
+  describe('PUT /api/boards/:boardId', () => {
     let boardId: string;
-    let originalName: string;
+
     beforeEach(async () => {
-      originalName = `Original Board ${crypto.randomUUID()}`;
-      // Create a board for testing updates
       const board = await prisma.board.create({
         data: {
-          name: originalName,
+          name: `Original Board ${crypto.randomUUID()}`,
           description: 'Original description',
           isPublic: false,
           userId,
@@ -229,26 +198,23 @@ describe('Board Integration Tests', () => {
 
     it('should update a board with valid data', async () => {
       const updatedName = `Updated Board ${crypto.randomUUID()}`;
-      const updateData = {
-        name: updatedName,
-        description: 'Updated description',
-        isPublic: true,
-      };
 
       const response = await request(app)
-        .put(`/api/board/${boardId}`)
+        .put(API_ENDPOINTS.boards.byId(boardId))
         .set('Authorization', `Bearer ${userToken}`)
-        .send(updateData)
+        .send({
+          name: updatedName,
+          description: 'Updated description',
+          isPublic: true,
+        })
         .expect(200);
 
       expect(response.body).toHaveProperty('id');
       expect(response.body.id).toBe(boardId);
 
-      // Verify in database
       const boardInDb = await prisma.board.findUnique({
         where: { id: boardId },
       });
-
       expect(boardInDb!.name).toBe(updatedName);
       expect(boardInDb!.description).toBe('Updated description');
       expect(boardInDb!.isPublic).toBe(true);
@@ -256,18 +222,13 @@ describe('Board Integration Tests', () => {
 
     it('should update board image URL', async () => {
       const imageUrl = `https://example.com/new-image-${crypto.randomUUID()}.jpg`;
-      const updateData = {
-        name: `Board with New Image ${crypto.randomUUID()}`,
-        imageUrl,
-      };
 
       await request(app)
-        .put(`/api/board/${boardId}`)
+        .put(API_ENDPOINTS.boards.byId(boardId))
         .set('Authorization', `Bearer ${userToken}`)
-        .send(updateData)
+        .send({ name: `Board with New Image ${crypto.randomUUID()}`, imageUrl })
         .expect(200);
 
-      // Verify image was created/updated
       const boardInDb = await prisma.board.findUnique({
         where: { id: boardId },
         include: { image: true },
@@ -278,59 +239,45 @@ describe('Board Integration Tests', () => {
     });
 
     it('should return 400 when name is missing', async () => {
-      const updateData = {
-        description: 'Missing name',
-      };
-
       const response = await request(app)
-        .put(`/api/board/${boardId}`)
+        .put(API_ENDPOINTS.boards.byId(boardId))
         .set('Authorization', `Bearer ${userToken}`)
-        .send(updateData)
+        .send({ description: 'Missing name' })
         .expect(400);
 
       expect(response.body.error).toBe('Board name is required');
     });
 
     it('should return 404 when board does not exist', async () => {
-      const fakeId = crypto.randomUUID();
-      const updateData = {
-        name: 'Non-existent Board',
-      };
-
       const response = await request(app)
-        .put(`/api/board/${fakeId}`)
+        .put(API_ENDPOINTS.boards.byId(crypto.randomUUID()))
         .set('Authorization', `Bearer ${userToken}`)
-        .send(updateData)
+        .send({ name: 'Non-existent Board' })
         .expect(404);
 
       expect(response.body.error).toBe('Board not found');
     });
   });
 
-  describe('DELETE /api/board/:id', () => {
+  describe('DELETE /api/boards/:boardId', () => {
     let boardId: string;
 
     beforeEach(async () => {
-      // Create a board for testing deletion
       const board = await prisma.board.create({
-        data: {
-          name: `Board to Delete ${crypto.randomUUID()}`,
-          userId,
-        },
+        data: { name: `Board to Delete ${crypto.randomUUID()}`, userId },
       });
       boardId = board.id;
     });
 
     it('should delete a board', async () => {
       const response = await request(app)
-        .delete(`/api/board/${boardId}`)
+        .delete(API_ENDPOINTS.boards.byId(boardId))
         .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
 
       expect(response.body).toHaveProperty('id');
       expect(response.body.id).toBe(boardId);
 
-      // Verify board was deleted
       const boardInDb = await prisma.board.findUnique({
         where: { id: boardId },
       });
@@ -338,10 +285,8 @@ describe('Board Integration Tests', () => {
     });
 
     it('should return 404 when board does not exist', async () => {
-      const fakeId = crypto.randomUUID();
-
       const response = await request(app)
-        .delete(`/api/board/${fakeId}`)
+        .delete(API_ENDPOINTS.boards.byId(crypto.randomUUID()))
         .set('Authorization', `Bearer ${userToken}`)
         .expect(404);
 

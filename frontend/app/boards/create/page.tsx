@@ -49,6 +49,3 @@ export default function CreateBoardPage() {
     </Flex>
   );
 }
-function useAuth(): { isLoggedIn: any } {
-  throw new Error('Function not implemented.');
-}

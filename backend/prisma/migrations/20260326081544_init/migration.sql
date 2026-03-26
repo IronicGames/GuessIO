@@ -29,7 +29,6 @@ CREATE TABLE "characters" (
     "name" TEXT NOT NULL,
     "description" TEXT,
     "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
-    "board_id" TEXT NOT NULL,
 
     CONSTRAINT "characters_pkey" PRIMARY KEY ("id")
 );
@@ -47,6 +46,14 @@ CREATE TABLE "boards" (
     CONSTRAINT "boards_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "_BoardToCharacter" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL,
+
+    CONSTRAINT "_BoardToCharacter_AB_pkey" PRIMARY KEY ("A","B")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
@@ -62,6 +69,9 @@ CREATE UNIQUE INDEX "images_character_id_key" ON "images"("character_id");
 -- CreateIndex
 CREATE UNIQUE INDEX "images_board_id_key" ON "images"("board_id");
 
+-- CreateIndex
+CREATE INDEX "_BoardToCharacter_B_index" ON "_BoardToCharacter"("B");
+
 -- AddForeignKey
 ALTER TABLE "images" ADD CONSTRAINT "images_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -72,7 +82,10 @@ ALTER TABLE "images" ADD CONSTRAINT "images_character_id_fkey" FOREIGN KEY ("cha
 ALTER TABLE "images" ADD CONSTRAINT "images_board_id_fkey" FOREIGN KEY ("board_id") REFERENCES "boards"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "characters" ADD CONSTRAINT "characters_board_id_fkey" FOREIGN KEY ("board_id") REFERENCES "boards"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "boards" ADD CONSTRAINT "boards_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "boards" ADD CONSTRAINT "boards_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "_BoardToCharacter" ADD CONSTRAINT "_BoardToCharacter_A_fkey" FOREIGN KEY ("A") REFERENCES "boards"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_BoardToCharacter" ADD CONSTRAINT "_BoardToCharacter_B_fkey" FOREIGN KEY ("B") REFERENCES "characters"("id") ON DELETE CASCADE ON UPDATE CASCADE;

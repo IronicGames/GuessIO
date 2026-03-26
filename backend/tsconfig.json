@@ -24,10 +24,10 @@
       "@errors/*": ["./src/errors/*"],
       "@routes/*": ["./src/routes/*"],
       "@tests/*": ["./src/tests/*"],
-      "@shared/*": ["../shared/types/*"]
+      "@shared/*": ["../shared/*"]
     }
   },
-  "include": ["src/**/*", "prisma/**/*.ts"],
+  "include": ["src/**/*", "prisma/**/*.ts", "../shared/**/*.ts"],
   "exclude": ["node_modules", "dist"],
   "references": [{ "path": "../shared" }]
 }

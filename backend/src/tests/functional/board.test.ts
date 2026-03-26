@@ -4,7 +4,8 @@ import app from '@backend/app';
 import * as userService from '@services/user.service';
 import { authService } from '@services/auth.service';
 import { generateUniqueUserData } from '@tests/helpers/test-data';
-import { BoardDto } from '@shared/board.types';
+import { BoardDto } from '@shared/types/board.types';
+import { API_ENDPOINTS } from '@shared/endpoints';
 
 describe('Board Functional Tests', () => {
   let userToken: string;
@@ -28,7 +29,7 @@ describe('Board Functional Tests', () => {
 
     // 1. Create board
     const createResponse = await request(app)
-      .post('/api/board')
+      .post(API_ENDPOINTS.boards.root)
       .set('Authorization', `Bearer ${userToken}`)
       .send({
         name: uniqueName,
@@ -42,7 +43,7 @@ describe('Board Functional Tests', () => {
 
     // 2. Get boards - verify it exists
     const getResponse = await request(app)
-      .get('/api/board')
+      .get(API_ENDPOINTS.boards.root)
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
@@ -54,7 +55,7 @@ describe('Board Functional Tests', () => {
 
     // 3. Update board - verify changes
     await request(app)
-      .put(`/api/board/${boardId}`)
+      .put(API_ENDPOINTS.boards.byId(boardId))
       .set('Authorization', `Bearer ${userToken}`)
       .send({
         name: updatedName,
@@ -64,7 +65,7 @@ describe('Board Functional Tests', () => {
       .expect(200);
 
     const getAfterUpdate = await request(app)
-      .get('/api/board')
+      .get(API_ENDPOINTS.boards.root)
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
@@ -77,13 +78,12 @@ describe('Board Functional Tests', () => {
 
     // 4. Delete board - verify gone
     await request(app)
-      .delete(`/api/board/${boardId}`)
+      .delete(API_ENDPOINTS.boards.byId(boardId))
       .set('Authorization', `Bearer ${userToken}`)
-      .send({ id: boardId })
       .expect(200);
 
     const getAfterDelete = await request(app)
-      .get('/api/board')
+      .get(API_ENDPOINTS.boards.root)
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
@@ -98,34 +98,31 @@ describe('Board Functional Tests', () => {
     const board2Name = `Star Wars Board ${crypto.randomUUID()}`;
     const board3Name = `Marvel Board ${crypto.randomUUID()}`;
 
-    // Create 3 boards
     const board1 = await request(app)
-      .post('/api/board')
+      .post(API_ENDPOINTS.boards.root)
       .set('Authorization', `Bearer ${userToken}`)
       .send({ name: board1Name })
       .expect(200);
 
     const board2 = await request(app)
-      .post('/api/board')
+      .post(API_ENDPOINTS.boards.root)
       .set('Authorization', `Bearer ${userToken}`)
       .send({ name: board2Name, isPublic: true })
       .expect(200);
 
     const board3 = await request(app)
-      .post('/api/board')
+      .post(API_ENDPOINTS.boards.root)
       .set('Authorization', `Bearer ${userToken}`)
       .send({ name: board3Name, description: 'Superheroes' })
       .expect(200);
 
     const boardIds = [board1.body.id, board2.body.id, board3.body.id];
 
-    // Get all boards
     const response = await request(app)
-      .get('/api/board')
+      .get(API_ENDPOINTS.boards.root)
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
-    // Filter to only the boards we just created
     const createdBoards = response.body.filter((b: { id: string }) =>
       boardIds.includes(b.id)
     );
@@ -136,8 +133,6 @@ describe('Board Functional Tests', () => {
     expect(boardNames).toContain(board1Name);
     expect(boardNames).toContain(board2Name);
     expect(boardNames).toContain(board3Name);
-
-    // Verify all have correct userId
     expect(createdBoards.every((b: BoardDto) => b.userId === userId)).toBe(
       true
     );
@@ -148,21 +143,16 @@ describe('Board Functional Tests', () => {
     const newImageUrl = `https://example.com/new-image-${crypto.randomUUID()}.jpg`;
     const boardName = `Board with Image ${crypto.randomUUID()}`;
 
-    // Create board with image
     const createResponse = await request(app)
-      .post('/api/board')
+      .post(API_ENDPOINTS.boards.root)
       .set('Authorization', `Bearer ${userToken}`)
-      .send({
-        name: boardName,
-        imageUrl,
-      })
+      .send({ name: boardName, imageUrl })
       .expect(200);
 
     const boardId = createResponse.body.id;
 
-    // Get boards - verify image exists
     const getResponse = await request(app)
-      .get('/api/board')
+      .get(API_ENDPOINTS.boards.root)
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
@@ -172,19 +162,14 @@ describe('Board Functional Tests', () => {
     expect(createdBoard.image).not.toBeNull();
     expect(createdBoard.image.imageUrl).toBe(imageUrl);
 
-    // Update image
     await request(app)
-      .put(`/api/board/${boardId}`)
+      .put(API_ENDPOINTS.boards.byId(boardId))
       .set('Authorization', `Bearer ${userToken}`)
-      .send({
-        name: boardName + 'updated',
-        imageUrl: newImageUrl,
-      })
+      .send({ name: boardName + ' updated', imageUrl: newImageUrl })
       .expect(200);
 
-    // Verify image updated
     const getAfterUpdate = await request(app)
-      .get('/api/board')
+      .get(API_ENDPOINTS.boards.root)
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
@@ -193,15 +178,13 @@ describe('Board Functional Tests', () => {
     );
     expect(updatedBoard.image.imageUrl).toBe(newImageUrl);
 
-    // Delete board - verify board is gone
     await request(app)
-      .delete(`/api/board/${boardId}`)
+      .delete(API_ENDPOINTS.boards.byId(boardId))
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
-    // Board should be gone
     const finalGet = await request(app)
-      .get('/api/board')
+      .get(API_ENDPOINTS.boards.root)
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 

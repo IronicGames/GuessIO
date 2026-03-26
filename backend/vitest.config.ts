@@ -19,7 +19,7 @@ export default defineConfig({
       '@errors': resolve(__dirname, './src/errors'),
       '@routes': resolve(__dirname, './src/routes'),
       '@tests': resolve(__dirname, './src/tests'),
-      '@shared': resolve(__dirname, '../shared/types'),
+      '@shared': resolve(__dirname, '../shared'),
     },
   },
 });

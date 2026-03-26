@@ -2,42 +2,62 @@ import { NotFoundError } from '../errors/app-error';
 import {
   CreateCharacterDto,
   UpdateCharacterDto,
-} from '@shared/character.types';
+} from '@shared/types/character.types';
 import * as characterRepository from '../repositories/character.repository';
 
 export async function createCharacter(
-  createCharacterDto: CreateCharacterDto
-): Promise<string> {
-  const createdCharacterId =
-    await characterRepository.createCharacter(createCharacterDto);
-  if (!createdCharacterId) {
-    throw new NotFoundError('Character not found');
+  boardId: string,
+  dto: CreateCharacterDto
+): Promise<{ characterId: string; boardId: string }> {
+  if (dto.characterId) {
+    return characterRepository.addCharacterToBoard(dto.characterId, boardId);
   }
-  return createdCharacterId;
+
+  const characterId = await characterRepository.createCharacter(boardId, dto);
+  return { characterId, boardId };
 }
 
 export async function updateCharacter(
-  id: string,
-  updateCharacterDto: UpdateCharacterDto
-): Promise<string> {
-  let updatedCharacterId: string;
-  try {
-    updatedCharacterId = await characterRepository.updateCharacter(
-      id,
-      updateCharacterDto
-    );
-  } catch {
+  characterId: string,
+  dto: UpdateCharacterDto
+): Promise<{ characterId: string }> {
+  const character = await characterRepository.getCharacter(characterId);
+  if (!character) {
     throw new NotFoundError('Character not found');
   }
-  return updatedCharacterId;
+
+  const updatedCharacterId = await characterRepository.updateCharacter(
+    characterId,
+    dto
+  );
+  return { characterId: updatedCharacterId };
 }
 
-export async function deleteCharacter(id: string): Promise<string> {
-  let deletedCharacterId: string;
-  try {
-    deletedCharacterId = await characterRepository.deleteCharacter(id);
-  } catch {
+export async function deleteCharacter(
+  characterId: string,
+  boardId: string
+): Promise<{ characterId: string; boardId: string }> {
+  const character = await characterRepository.getCharacter(characterId);
+  if (!character) {
     throw new NotFoundError('Character not found');
   }
-  return deletedCharacterId;
+
+  if (character.boards.length === 1) {
+    const deletedCharacterId =
+      await characterRepository.deleteCharacter(characterId);
+    return { characterId: deletedCharacterId, boardId };
+  }
+
+  return characterRepository.removeCharacterFromBoard(characterId, boardId);
+}
+
+export async function getCharacter(
+  characterId: string
+): Promise<characterRepository.Character> {
+  const character = await characterRepository.getCharacter(characterId);
+  if (!character) {
+    throw new NotFoundError('Character not found');
+  }
+
+  return character;
 }

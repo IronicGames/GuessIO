@@ -1,7 +1,7 @@
 'use client';
 
 import { api } from '@lib/api';
-import { BoardDto } from '@shared/board.types';
+import { BoardDto } from '@shared/types/board.types';
 import { createContext, useContext, useState, ReactNode } from 'react';
 
 interface BoardContextType {

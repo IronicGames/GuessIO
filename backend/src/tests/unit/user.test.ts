@@ -19,7 +19,6 @@ describe('User Service Tests', () => {
       expect(user.email).toBe(`test-${uniqueId}@test.com`);
       expect(user.googleId).toBe(uniqueId);
 
-      // Verify in database
       const userInDb = await prisma.user.findUnique({
         where: { googleId: uniqueId },
         include: { profilePicture: true },
@@ -35,7 +34,6 @@ describe('User Service Tests', () => {
     it('should return existing user when googleId already exists', async () => {
       const uniqueId = crypto.randomUUID();
 
-      // Create user first time
       const firstUser = await userService.createOrGetGoogleUser(
         uniqueId,
         'Test User',
@@ -43,7 +41,6 @@ describe('User Service Tests', () => {
         'http://example.com/profile.jpg'
       );
 
-      // Try to create same user again
       const secondUser = await userService.createOrGetGoogleUser(
         uniqueId,
         'Different Name',
@@ -51,12 +48,10 @@ describe('User Service Tests', () => {
         'http://example.com/different.jpg'
       );
 
-      // Should return the same user (same ID)
       expect(secondUser.id).toBe(firstUser.id);
-      expect(secondUser.name).toBe('Test User'); // Original name
-      expect(secondUser.email).toBe(`test-${uniqueId}@test.com`); // Original email
+      expect(secondUser.name).toBe('Test User');
+      expect(secondUser.email).toBe(`test-${uniqueId}@test.com`);
 
-      // Verify only one user exists
       const allUsers = await prisma.user.findMany({
         where: { googleId: uniqueId },
       });

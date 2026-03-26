@@ -1,6 +1,6 @@
 'use client';
 
-import { UserProfile } from '@shared/user.types';
+import { UserProfile } from '@shared/types/user.types';
 import {
   createContext,
   useState,
