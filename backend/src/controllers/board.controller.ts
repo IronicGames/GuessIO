@@ -14,6 +14,18 @@ export const getBoardsForUser = asyncHandler(
   }
 );
 
+export const getBoard = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.userId;
+  const { boardId } = req.params as { boardId: string };
+
+  if (!userId) {
+    throw new BadRequestError('User ID not found');
+  }
+
+  const board = await boardService.getBoard(userId, boardId);
+  res.json(board);
+});
+
 export const createBoard = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.userId;
   const { name, description, isPublic, imageUrl } = req.body;
