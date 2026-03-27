@@ -18,6 +18,7 @@ app.use(
   }),
 );
 app.use(cookieParser());
+app.use(express.json());
 
 // Routes
 app.use('/api', statusRoutes); // /api/health

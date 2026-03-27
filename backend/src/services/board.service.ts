@@ -82,8 +82,8 @@ export function ToBoardDto(board: BoardWithCharactersAndImage): BoardDto {
     description: board.description,
     isPublic: board.isPublic,
     userId: board.userId,
-    createdAt: board.createdAt.toString(),
-    updatedAt: board.updatedAt.toString(),
+    createdAt: board.createdAt.toISOString(),
+    updatedAt: board.updatedAt.toISOString(),
     image: ToImageDto(board.image),
     characters: board.characters.map((character) => ToCharacterDto(character)),
   } as BoardDto;

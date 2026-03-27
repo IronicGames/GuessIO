@@ -1,4 +1,4 @@
-import { Card, Center, Text, AspectRatio } from '@mantine/core';
+import { Card, Center, Text, AspectRatio, Box } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
 
 export interface GridItemData {
@@ -52,6 +52,7 @@ export default function GridCard({ item, onClick }: GridCardProps) {
               style={{
                 width: '100%',
                 height: '100%',
+                objectFit: 'contain',
               }}
             />
           ) : (
