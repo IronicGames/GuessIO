@@ -15,12 +15,7 @@ export function AppHeader() {
       <Container size="xl" py="md">
         <Group justify="space-between" align="center">
           {/* Logo */}
-          <Text
-            size="xl"
-            fw={700}
-            style={{ cursor: 'pointer' }}
-            onClick={() => router.push('/')}
-          >
+          <Text size="xl" fw={700} style={{ cursor: 'pointer' }} onClick={() => router.push('/')}>
             GUESS.IO
           </Text>
 
@@ -48,11 +43,7 @@ export function AppHeader() {
                   Settings
                 </Menu.Item>
                 <Menu.Divider />
-                <Menu.Item
-                  leftSection={<IconLogout size={16} />}
-                  color="red"
-                  onClick={logout}
-                >
+                <Menu.Item leftSection={<IconLogout size={16} />} color="red" onClick={logout}>
                   Logout
                 </Menu.Item>
               </Menu.Dropdown>
@@ -63,9 +54,7 @@ export function AppHeader() {
               color="#8ecae6"
               c="black"
               size="md"
-              onClick={() =>
-                (window.location.href = 'http://localhost:8080/api/auth/google')
-              }
+              onClick={() => (window.location.href = 'http://localhost:8080/api/auth/google')}
             >
               Login with Google
             </Button>

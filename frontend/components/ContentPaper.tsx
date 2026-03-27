@@ -1,5 +1,5 @@
 import { Paper, Stack } from '@mantine/core';
-import { ReactNode, CSSProperties } from 'react';
+import { type ReactNode, type CSSProperties } from 'react';
 
 interface ContentPaperProps {
   children: ReactNode;

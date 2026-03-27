@@ -20,9 +20,7 @@ export default function HomePage() {
         <Stack w="100%" maw={600} align="center">
           <HomePageButton href="/boards" text="Public Match" />
           <HomePageButton href="/boards" text="Create Lobby" />
-          {isLoggedIn ? (
-            <HomePageButton href="/boards" text="Manage Boards" />
-          ) : null}
+          {isLoggedIn ? <HomePageButton href="/boards" text="Manage Boards" /> : null}
 
           {/* Enter Code Input */}
           <TextInput

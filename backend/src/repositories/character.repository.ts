@@ -1,18 +1,12 @@
-import { Prisma } from '@prisma/client';
-import {
-  CreateCharacterDto,
-  UpdateCharacterDto,
-} from '@shared/types/character.types';
+import { type Prisma } from '@prisma/client';
+import { type CreateCharacterDto, type UpdateCharacterDto } from '@shared/types/character.types';
 import prisma from '@lib/prisma';
 
 export type Character = Prisma.CharacterGetPayload<{
   include: { image: true; boards: true };
 }> | null;
 
-export async function createCharacter(
-  boardId: string,
-  dto: CreateCharacterDto
-): Promise<string> {
+export async function createCharacter(boardId: string, dto: CreateCharacterDto): Promise<string> {
   const character = await prisma.character.create({
     data: {
       name: dto.name!,
@@ -28,7 +22,7 @@ export async function createCharacter(
 
 export async function addCharacterToBoard(
   characterId: string,
-  boardId: string
+  boardId: string,
 ): Promise<{ characterId: string; boardId: string }> {
   await prisma.character.update({
     where: { id: characterId },
@@ -40,7 +34,7 @@ export async function addCharacterToBoard(
 
 export async function removeCharacterFromBoard(
   characterId: string,
-  boardId: string
+  boardId: string,
 ): Promise<{ characterId: string; boardId: string }> {
   await prisma.character.update({
     where: { id: characterId },
@@ -52,7 +46,7 @@ export async function removeCharacterFromBoard(
 
 export async function updateCharacter(
   characterId: string,
-  dto: UpdateCharacterDto
+  dto: UpdateCharacterDto,
 ): Promise<string> {
   if (!dto.imageUrl) {
     await prisma.image.deleteMany({ where: { characterId: characterId } });

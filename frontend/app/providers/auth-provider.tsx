@@ -1,21 +1,14 @@
 'use client';
 
-import { UserProfile } from '@shared/types/user.types';
-import {
-  createContext,
-  useState,
-  ReactNode,
-  useEffect,
-  useContext,
-  useCallback,
-} from 'react';
+import { type UserProfile } from '@shared/types/user.types';
+import { createContext, useState, type ReactNode, useEffect, useContext, useCallback } from 'react';
 import { api } from '@lib/api';
+import StatusScreen from '@components/StatusScreen';
 
 interface AuthContextType {
   user: UserProfile | null;
-  token: string | null;
   isLoggedIn: boolean;
-  login: (token: string) => Promise<void>;
+  login: () => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
@@ -24,44 +17,30 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('authToken');
-
-    if (storedToken) {
-      setToken(storedToken);
-
-      api.auth
-        .getUserProfile()
-        .then((profileData) => {
-          setUser({
-            id: profileData.id,
-            name: profileData.name,
-            profilePicture: profileData.profilePicture,
-          });
-        })
-        .catch((error) => {
-          localStorage.removeItem('authToken');
-          setToken(null);
-          setUser(null);
-          throw error;
-        })
-        .finally(() => {
-          setLoading(false);
+    api.auth
+      .getUserProfile()
+      .then((profileData) => {
+        setUser({
+          id: profileData.id,
+          name: profileData.name,
+          profilePicture: profileData.profilePicture,
         });
-    } else {
-      setLoading(false);
-    }
+      })
+      .catch((error) => {
+        setUser(null);
+        throw error;
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
-  const login = useCallback(async (newToken: string) => {
-    setToken(newToken);
-    localStorage.setItem('authToken', newToken);
-
+  const login = useCallback(async () => {
     try {
-      const profileData = await api.auth.getUserProfile(newToken);
+      const profileData = await api.auth.getUserProfile();
 
       setUser({
         id: profileData.id,
@@ -69,36 +48,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profilePicture: profileData.profilePicture,
       });
     } catch (error) {
-      console.error('❌ Login failed:', error);
-
-      localStorage.removeItem('authToken');
-      setToken(null);
+      await api.auth.logout();
       throw error;
     }
   }, []);
 
   const logout = useCallback(() => {
-    setToken(null);
     setUser(null);
-
-    localStorage.removeItem('authToken');
-    window.location.href = '/?success=logout';
   }, []);
 
-  const isLoggedIn = !!user && !!token;
+  const isLoggedIn = !!user;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Loading...</p>
-      </div>
-    );
+    return <StatusScreen />;
   }
 
   return (
-    <AuthContext.Provider
-      value={{ user, token, isLoggedIn, login, logout, loading }}
-    >
+    <AuthContext.Provider value={{ user, isLoggedIn, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

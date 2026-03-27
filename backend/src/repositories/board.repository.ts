@@ -1,5 +1,5 @@
-import { Prisma } from '@prisma/client';
-import { CreateBoardDto, UpdateBoardDto } from '@shared/types/board.types';
+import { type Prisma } from '@prisma/client';
+import { type CreateBoardDto, type UpdateBoardDto } from '@shared/types/board.types';
 import prisma from '@lib/prisma';
 
 export type BoardWithCharacters = Prisma.BoardGetPayload<{
@@ -9,10 +9,7 @@ export type BoardWithCharacters = Prisma.BoardGetPayload<{
   };
 }> | null;
 
-export async function createBoard(
-  userId: string,
-  createBoardDto: CreateBoardDto
-): Promise<string> {
+export async function createBoard(userId: string, createBoardDto: CreateBoardDto): Promise<string> {
   const createdBoard = await prisma.board.create({
     data: {
       name: createBoardDto.name,
@@ -43,9 +40,7 @@ export async function getBoard(id: string): Promise<BoardWithCharacters> {
   });
 }
 
-export async function getBoardsForUser(
-  id: string
-): Promise<BoardWithCharacters[]> {
+export async function getBoardsForUser(id: string): Promise<BoardWithCharacters[]> {
   return await prisma.board.findMany({
     where: {
       user: {
@@ -59,10 +54,7 @@ export async function getBoardsForUser(
   });
 }
 
-export async function updateBoard(
-  id: string,
-  updateBoardDto: UpdateBoardDto
-): Promise<string> {
+export async function updateBoard(id: string, updateBoardDto: UpdateBoardDto): Promise<string> {
   if (!updateBoardDto.imageUrl) {
     await prisma.image.deleteMany({ where: { boardId: id } });
   }

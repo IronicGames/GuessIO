@@ -1,6 +1,9 @@
 # Guess.io
 
-playguess.io is a browser-based online multiplayer game inspired by Guess Who. The goal is to allow players to quickly make their own custom character sets to play privately with their friends or to use our premade character sets to play privately with their friends or in matchmade games against the public.
+playguess.io is a browser-based online multiplayer game inspired by Guess Who.
+The goal is to allow players to quickly make their own custom character sets to
+play privately with their friends or to use our premade character sets to play
+privately with their friends or in matchmade games against the public.
 
 ## Tech Stack
 

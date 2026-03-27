@@ -5,7 +5,7 @@ import * as userService from '@services/user.service';
 import { authService } from '@services/auth.service';
 import prisma from '@lib/prisma';
 import { generateUniqueUserData } from '@tests/helpers/test-data';
-import { BoardDto } from '@shared/types/board.types';
+import { type BoardDto } from '@shared/types/board.types';
 import { API_ENDPOINTS } from '@shared/endpoints';
 
 describe('Board Integration Tests', () => {
@@ -19,7 +19,7 @@ describe('Board Integration Tests', () => {
       userData.googleId,
       userData.name,
       userData.email,
-      userData.profilePictureUrl
+      userData.profilePictureUrl,
     );
     userId = user.id;
     userToken = authService.generateToken(user.id);
@@ -29,7 +29,7 @@ describe('Board Integration Tests', () => {
       otherUserData.googleId,
       otherUserData.name,
       otherUserData.email,
-      otherUserData.profilePictureUrl
+      otherUserData.profilePictureUrl,
     );
     otherUserId = otherUser.id;
   });
@@ -146,15 +146,11 @@ describe('Board Integration Tests', () => {
 
       const testBoards = response.body.filter(
         (board: BoardDto) =>
-          board.name === board1Name ||
-          board.name === board2Name ||
-          board.name === board3Name
+          board.name === board1Name || board.name === board2Name || board.name === board3Name,
       );
 
       expect(testBoards).toHaveLength(3);
-      expect(
-        testBoards.every((board: BoardDto) => board.userId === userId)
-      ).toBe(true);
+      expect(testBoards.every((board: BoardDto) => board.userId === userId)).toBe(true);
     });
 
     it('should not return other users boards', async () => {
@@ -169,11 +165,9 @@ describe('Board Integration Tests', () => {
         .expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
-      expect(
-        response.body.every(
-          (board: BoardDto) => board.name !== otherUserBoardName
-        )
-      ).toBe(true);
+      expect(response.body.every((board: BoardDto) => board.name !== otherUserBoardName)).toBe(
+        true,
+      );
     });
 
     it('should return 401 when no auth token is provided', async () => {

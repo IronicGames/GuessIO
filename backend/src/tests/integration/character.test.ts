@@ -18,7 +18,7 @@ describe('Character Integration Tests', () => {
       userData.googleId,
       userData.name,
       userData.email,
-      userData.profilePictureUrl
+      userData.profilePictureUrl,
     );
     userId = user.id;
     userToken = authService.generateToken(user.id);

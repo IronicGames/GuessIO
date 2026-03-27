@@ -4,7 +4,7 @@ import { Box, TextInput } from '@mantine/core';
 import { IconSearch } from '@tabler/icons-react';
 import { useState } from 'react';
 import ItemGrid from './ItemGrid';
-import { GridItemData } from './GridCard';
+import { type GridItemData } from './GridCard';
 
 interface GridContainerProps {
   items: GridItemData[];
@@ -29,7 +29,7 @@ export default function GridContainer({
 
   // Filter items based on search
   const filteredItems = items.filter((item) =>
-    item.name.toLowerCase().includes(searchValue.toLowerCase())
+    item.name.toLowerCase().includes(searchValue.toLowerCase()),
   );
 
   // Responsive columns based on colCount

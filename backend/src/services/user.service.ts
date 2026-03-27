@@ -1,13 +1,13 @@
 import { NotFoundError } from '@errors/app-error';
 import * as userRepository from '@repositories/user.repository';
-import { UserWithProfilePicture } from '@repositories/user.repository';
-import { UserProfile } from '@shared/types/user.types';
+import { type UserWithProfilePicture } from '@repositories/user.repository';
+import { type UserProfile } from '@shared/types/user.types';
 
 export async function createOrGetGoogleUser(
   googleId: string,
   name: string,
   email?: string,
-  profilePictureUrl?: string
+  profilePictureUrl?: string,
 ): Promise<UserWithProfilePicture> {
   let user = await userRepository.getUserByGoogleId(googleId);
 
@@ -15,19 +15,12 @@ export async function createOrGetGoogleUser(
     return user;
   }
 
-  user = await userRepository.createUser(
-    name,
-    email,
-    googleId,
-    profilePictureUrl
-  );
+  user = await userRepository.createUser(name, email, googleId, profilePictureUrl);
 
   return user;
 }
 
-export async function getUserById(
-  id: string
-): Promise<UserWithProfilePicture | null> {
+export async function getUserById(id: string): Promise<UserWithProfilePicture | null> {
   const user = await userRepository.getUserById(id);
   if (!user) {
     throw new NotFoundError('User not found');
@@ -44,15 +37,9 @@ export async function updateUserById(
   name?: string,
   email?: string,
   googleId?: string,
-  profilePictureUrl?: string
+  profilePictureUrl?: string,
 ): Promise<UserWithProfilePicture> {
-  return await userRepository.updateUserById(
-    id,
-    name,
-    email,
-    googleId,
-    profilePictureUrl
-  );
+  return await userRepository.updateUserById(id, name, email, googleId, profilePictureUrl);
 }
 
 export async function deleteUserById(id: string) {

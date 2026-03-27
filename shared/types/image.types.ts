@@ -17,9 +17,7 @@ export function ToImageDto(
     userId: string | null;
     characterId: string | null;
     boardId: string | null;
-  } | null
+  } | null,
 ): ImageDto | null {
-  return image
-    ? ({ id: image.id, imageUrl: image.imageUrl } as ImageDto)
-    : null;
+  return image ? ({ id: image.id, imageUrl: image.imageUrl } as ImageDto) : null;
 }

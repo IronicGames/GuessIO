@@ -4,7 +4,7 @@ import app from '@backend/app';
 import * as userService from '@services/user.service';
 import { authService } from '@services/auth.service';
 import { generateUniqueUserData } from '@tests/helpers/test-data';
-import { BoardDto } from '@shared/types/board.types';
+import { type BoardDto } from '@shared/types/board.types';
 import { API_ENDPOINTS } from '@shared/endpoints';
 
 describe('Board Functional Tests', () => {
@@ -17,7 +17,7 @@ describe('Board Functional Tests', () => {
       userData.googleId,
       userData.name,
       userData.email,
-      userData.profilePictureUrl
+      userData.profilePictureUrl,
     );
     userId = user.id;
     userToken = authService.generateToken(user.id);
@@ -47,9 +47,7 @@ describe('Board Functional Tests', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
-    const createdBoard = getResponse.body.find(
-      (b: { id: string }) => b.id === boardId
-    );
+    const createdBoard = getResponse.body.find((b: { id: string }) => b.id === boardId);
     expect(createdBoard).toBeDefined();
     expect(createdBoard.name).toBe(uniqueName);
 
@@ -69,9 +67,7 @@ describe('Board Functional Tests', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
-    const updatedBoard = getAfterUpdate.body.find(
-      (b: { id: string }) => b.id === boardId
-    );
+    const updatedBoard = getAfterUpdate.body.find((b: { id: string }) => b.id === boardId);
     expect(updatedBoard.name).toBe(updatedName);
     expect(updatedBoard.description).toBe('Updated Description');
     expect(updatedBoard.isPublic).toBe(true);
@@ -87,9 +83,7 @@ describe('Board Functional Tests', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
-    const deletedBoard = getAfterDelete.body.find(
-      (b: { id: string }) => b.id === boardId
-    );
+    const deletedBoard = getAfterDelete.body.find((b: { id: string }) => b.id === boardId);
     expect(deletedBoard).toBeUndefined();
   });
 
@@ -123,9 +117,7 @@ describe('Board Functional Tests', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
-    const createdBoards = response.body.filter((b: { id: string }) =>
-      boardIds.includes(b.id)
-    );
+    const createdBoards = response.body.filter((b: { id: string }) => boardIds.includes(b.id));
 
     expect(createdBoards).toHaveLength(3);
 
@@ -133,9 +125,7 @@ describe('Board Functional Tests', () => {
     expect(boardNames).toContain(board1Name);
     expect(boardNames).toContain(board2Name);
     expect(boardNames).toContain(board3Name);
-    expect(createdBoards.every((b: BoardDto) => b.userId === userId)).toBe(
-      true
-    );
+    expect(createdBoards.every((b: BoardDto) => b.userId === userId)).toBe(true);
   });
 
   it('should properly handle board with image through full lifecycle', async () => {
@@ -156,16 +146,14 @@ describe('Board Functional Tests', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
-    const createdBoard = getResponse.body.find(
-      (b: { id: string }) => b.id === boardId
-    );
+    const createdBoard = getResponse.body.find((b: { id: string }) => b.id === boardId);
     expect(createdBoard.image).not.toBeNull();
     expect(createdBoard.image.imageUrl).toBe(imageUrl);
 
     await request(app)
       .put(API_ENDPOINTS.boards.byId(boardId))
       .set('Authorization', `Bearer ${userToken}`)
-      .send({ name: boardName + ' updated', imageUrl: newImageUrl })
+      .send({ name: `${boardName} updated`, imageUrl: newImageUrl })
       .expect(200);
 
     const getAfterUpdate = await request(app)
@@ -173,9 +161,7 @@ describe('Board Functional Tests', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
-    const updatedBoard = getAfterUpdate.body.find(
-      (b: { id: string }) => b.id === boardId
-    );
+    const updatedBoard = getAfterUpdate.body.find((b: { id: string }) => b.id === boardId);
     expect(updatedBoard.image.imageUrl).toBe(newImageUrl);
 
     await request(app)
@@ -188,9 +174,7 @@ describe('Board Functional Tests', () => {
       .set('Authorization', `Bearer ${userToken}`)
       .expect(200);
 
-    const deletedBoard = finalGet.body.find(
-      (b: { id: string }) => b.id === boardId
-    );
+    const deletedBoard = finalGet.body.find((b: { id: string }) => b.id === boardId);
     expect(deletedBoard).toBeUndefined();
   });
 });

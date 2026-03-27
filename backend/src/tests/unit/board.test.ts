@@ -13,7 +13,7 @@ describe('Board Service Unit Tests', () => {
       userData.googleId,
       userData.name,
       userData.email,
-      userData.profilePictureUrl
+      userData.profilePictureUrl,
     );
     userId = user.id;
   });
@@ -45,7 +45,7 @@ describe('Board Service Unit Tests', () => {
       await expect(
         boardService.updateBoard(crypto.randomUUID(), {
           name: 'Non-existent Board',
-        })
+        }),
       ).rejects.toThrow(NotFoundError);
     });
 
@@ -65,9 +65,7 @@ describe('Board Service Unit Tests', () => {
 
   describe('deleteBoard', () => {
     it('should throw NotFoundError when board does not exist', async () => {
-      await expect(
-        boardService.deleteBoard(crypto.randomUUID())
-      ).rejects.toThrow(NotFoundError);
+      await expect(boardService.deleteBoard(crypto.randomUUID())).rejects.toThrow(NotFoundError);
     });
 
     it('should successfully delete existing board', async () => {
@@ -78,9 +76,7 @@ describe('Board Service Unit Tests', () => {
       const deletedId = await boardService.deleteBoard(boardId);
       expect(deletedId).toBe(boardId);
 
-      await expect(boardService.deleteBoard(boardId)).rejects.toThrow(
-        NotFoundError
-      );
+      await expect(boardService.deleteBoard(boardId)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -91,7 +87,7 @@ describe('Board Service Unit Tests', () => {
         newUserData.googleId,
         newUserData.name,
         newUserData.email,
-        newUserData.profilePictureUrl
+        newUserData.profilePictureUrl,
       );
 
       const boards = await boardService.getBoardsForUser(newUser.id);
@@ -112,16 +108,14 @@ describe('Board Service Unit Tests', () => {
         otherUserData.googleId,
         otherUserData.name,
         otherUserData.email,
-        otherUserData.profilePictureUrl
+        otherUserData.profilePictureUrl,
       );
       await boardService.createBoard(otherUser.id, {
         name: `Other User Board ${crypto.randomUUID()}`,
       });
 
       const boards = await boardService.getBoardsForUser(userId);
-      const testBoards = boards.filter(
-        (b) => b!.id === board1Id || b!.id === board2Id
-      );
+      const testBoards = boards.filter((b) => b!.id === board1Id || b!.id === board2Id);
 
       expect(testBoards).toHaveLength(2);
       expect(testBoards.every((b) => b!.userId === userId)).toBe(true);

@@ -9,7 +9,7 @@
   overflow: hidden;
 }
 .bg-radial::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;

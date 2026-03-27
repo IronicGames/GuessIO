@@ -1,13 +1,9 @@
-import {
-  BoardDto,
-  CreateBoardDto,
-  UpdateBoardDto,
-} from '@shared/types/board.types';
+import { type BoardDto, type CreateBoardDto, type UpdateBoardDto } from '@shared/types/board.types';
 import { NotFoundError, UnauthorizedError } from '@errors/app-error';
 import * as boardRepository from '@repositories/board.repository';
-import { CharacterDto } from '@shared/types/character.types';
+import { type CharacterDto } from '@shared/types/character.types';
 import { ToImageDto } from '@shared/types/image.types';
-import { Character, Board, Image } from '@prisma/client';
+import { type Character, type Board, type Image } from '@prisma/client';
 
 export async function getBoardsForUser(userId: string): Promise<BoardDto[]> {
   const boards = await boardRepository.getBoardsForUser(userId);
@@ -15,40 +11,26 @@ export async function getBoardsForUser(userId: string): Promise<BoardDto[]> {
   return boardDtos;
 }
 
-export async function getBoard(
-  userId: string,
-  boardId: string
-): Promise<BoardDto> {
+export async function getBoard(userId: string, boardId: string): Promise<BoardDto> {
   const board = await boardRepository.getBoard(boardId);
   if (!board) {
     throw new NotFoundError('Board not found');
   }
   if (userId !== board.userId) {
-    throw new UnauthorizedError(
-      `Board ${boardId} does not belong to user ${userId}`
-    );
+    throw new UnauthorizedError(`Board ${boardId} does not belong to user ${userId}`);
   }
   return ToBoardDto(board);
 }
 
-export async function createBoard(
-  userId: string,
-  createBoardDto: CreateBoardDto
-): Promise<string> {
-  const createdBoardId = await boardRepository.createBoard(
-    userId,
-    createBoardDto
-  );
+export async function createBoard(userId: string, createBoardDto: CreateBoardDto): Promise<string> {
+  const createdBoardId = await boardRepository.createBoard(userId, createBoardDto);
   if (!createdBoardId) {
     throw new NotFoundError('Board not created');
   }
   return createdBoardId;
 }
 
-export async function updateBoard(
-  id: string,
-  updateBoardDto: UpdateBoardDto
-): Promise<string> {
+export async function updateBoard(id: string, updateBoardDto: UpdateBoardDto): Promise<string> {
   let updatedBoardId: string;
   try {
     updatedBoardId = await boardRepository.updateBoard(id, updateBoardDto);
@@ -78,9 +60,7 @@ type CharacterWithBoardsAndImage = Character & {
   image: Image | null;
 };
 
-export function ToCharacterDto(
-  character: CharacterWithBoardsAndImage | null
-): CharacterDto | null {
+export function ToCharacterDto(character: CharacterWithBoardsAndImage | null): CharacterDto | null {
   return character
     ? {
         id: character.id,

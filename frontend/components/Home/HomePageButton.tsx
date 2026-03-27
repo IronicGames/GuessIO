@@ -1,6 +1,6 @@
 import { Button, Flex } from '@mantine/core';
 import Link from 'next/link';
-import { buttonThemes, ButtonThemeType } from '@styles/buttonThemes';
+import { buttonThemes, type ButtonThemeType } from '@styles/buttonThemes';
 
 interface HomePageButtonProps {
   href: string;
@@ -25,20 +25,14 @@ export default function HomePageButton({
   const buttonContent = (
     <Button
       w="100%"
-      h={
-        alternate
-          ? { base: 50, sm: 70, md: 90 }
-          : { base: 80, sm: 100, md: 120 }
-      }
+      h={alternate ? { base: 50, sm: 70, md: 90 } : { base: 80, sm: 100, md: 120 }}
       radius="lg"
       color={selectedTheme.color}
       c={selectedTheme.textColor}
       variant={selectedTheme.variant}
       styles={{
         root: {
-          fontSize: alternate
-            ? 'clamp(1rem, 3vw, 1.75rem)'
-            : 'clamp(1.5rem, 4vw, 2.5rem)',
+          fontSize: alternate ? 'clamp(1rem, 3vw, 1.75rem)' : 'clamp(1.5rem, 4vw, 2.5rem)',
           fontWeight: 600,
           borderColor: selectedTheme.borderColor,
           borderWidth: selectedTheme.variant === 'outline' ? 2 : undefined,

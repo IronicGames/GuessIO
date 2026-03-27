@@ -2,7 +2,7 @@
 
 import { Flex } from '@mantine/core';
 import { useRouter } from 'next/navigation';
-import { GridItemData } from '@components/Board/GridCard';
+import { type GridItemData } from '@components/Board/GridCard';
 import GridContainer from '@components/Board/GridContainer';
 import ContentPaper from '@components/ContentPaper';
 import { api } from '@lib/api';
@@ -24,9 +24,7 @@ export default function BoardsPage() {
   // TODO: order by updatedAt
   const gridItems: GridItemData[] =
     boards
-      ?.sort((a, b) =>
-        a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0
-      )
+      ?.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0))
       .map((board) => ({
         id: board.id,
         name: board.name,

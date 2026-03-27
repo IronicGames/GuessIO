@@ -2,7 +2,7 @@ import prisma from '../src/lib/prisma';
 import { createBoard } from '../src/services/board.service';
 import { createCharacter } from '../src/services/character.service';
 import { createUser } from '../src/repositories/user.repository';
-import { CreateCharacterDto } from '@shared/types/character.types';
+import { type CreateCharacterDto } from '@shared/types/character.types';
 
 async function main() {
   // Create Users
@@ -10,7 +10,7 @@ async function main() {
     'prince',
     `prince-${crypto.randomUUID()}@ironic.com`,
     'googleId1',
-    'images.com/prince.jpg'
+    'images.com/prince.jpg',
   );
   const user2 = await createUser('kevin');
 

@@ -25,11 +25,7 @@ export default function CreateBoardPage() {
     },
   });
 
-  const handleSubmit = (data: {
-    name: string;
-    description?: string;
-    imageUrl?: string;
-  }) => {
+  const handleSubmit = (data: { name: string; description?: string; imageUrl?: string }) => {
     createBoard({
       name: data.name,
       description: data.description,

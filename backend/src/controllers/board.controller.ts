@@ -1,18 +1,16 @@
-import { Request, Response } from 'express';
+import { type Request, type Response } from 'express';
 import * as boardService from '@services/board.service';
 import { BadRequestError } from '@errors/app-error';
 import { asyncHandler } from '@middleware/error-handler.middleware';
 
-export const getBoardsForUser = asyncHandler(
-  async (req: Request, res: Response) => {
-    const userId = req.userId;
-    if (!userId) {
-      throw new BadRequestError('User ID not found');
-    }
-    const boards = await boardService.getBoardsForUser(userId);
-    res.json(boards);
+export const getBoardsForUser = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.userId;
+  if (!userId) {
+    throw new BadRequestError('User ID not found');
   }
-);
+  const boards = await boardService.getBoardsForUser(userId);
+  res.json(boards);
+});
 
 export const getBoard = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.userId;

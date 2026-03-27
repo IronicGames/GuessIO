@@ -1,11 +1,7 @@
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import { config } from '@utils/constants/env';
-import {
-  adjectives,
-  animals,
-  uniqueNamesGenerator,
-} from 'unique-names-generator';
+import { adjectives, animals, uniqueNamesGenerator } from 'unique-names-generator';
 import * as userService from '@services/user.service';
 import { InternalServerError } from '@errors/app-error';
 
@@ -16,7 +12,7 @@ class AuthService {
     this.client = new OAuth2Client(
       config.googleClientId,
       config.googleClientSecret,
-      config.googleRedirectUri
+      config.googleRedirectUri,
     );
   }
 
@@ -56,7 +52,7 @@ class AuthService {
       payload.sub,
       username,
       payload.email,
-      payload.picture
+      payload.picture,
     );
 
     const jwtToken = this.generateToken(user.id);

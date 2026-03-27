@@ -11,7 +11,7 @@ describe('User Service Tests', () => {
         uniqueId,
         'Test User',
         `test-${uniqueId}@test.com`,
-        'http://example.com/profile.jpg'
+        'http://example.com/profile.jpg',
       );
 
       expect(user).toBeDefined();
@@ -26,9 +26,7 @@ describe('User Service Tests', () => {
 
       expect(userInDb).not.toBeNull();
       expect(userInDb!.googleId).toBe(uniqueId);
-      expect(userInDb!.profilePicture?.imageUrl).toBe(
-        'http://example.com/profile.jpg'
-      );
+      expect(userInDb!.profilePicture?.imageUrl).toBe('http://example.com/profile.jpg');
     });
 
     it('should return existing user when googleId already exists', async () => {
@@ -38,14 +36,14 @@ describe('User Service Tests', () => {
         uniqueId,
         'Test User',
         `test-${uniqueId}@test.com`,
-        'http://example.com/profile.jpg'
+        'http://example.com/profile.jpg',
       );
 
       const secondUser = await userService.createOrGetGoogleUser(
         uniqueId,
         'Different Name',
         'different@test.com',
-        'http://example.com/different.jpg'
+        'http://example.com/different.jpg',
       );
 
       expect(secondUser.id).toBe(firstUser.id);

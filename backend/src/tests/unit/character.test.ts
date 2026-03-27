@@ -4,10 +4,7 @@ import * as boardService from '@services/board.service';
 import * as userService from '@services/user.service';
 import { NotFoundError } from '@errors/app-error';
 import { generateUniqueUserData } from '@tests/helpers/test-data';
-import {
-  CreateCharacterDto,
-  UpdateCharacterDto,
-} from '@shared/types/character.types';
+import { type CreateCharacterDto, type UpdateCharacterDto } from '@shared/types/character.types';
 
 describe('Character Service Unit Tests', () => {
   let userId: string;
@@ -19,7 +16,7 @@ describe('Character Service Unit Tests', () => {
       userData.googleId,
       userData.name,
       userData.email,
-      userData.profilePictureUrl
+      userData.profilePictureUrl,
     );
     userId = user.id;
     boardId = await boardService.createBoard(userId, {
@@ -70,7 +67,7 @@ describe('Character Service Unit Tests', () => {
       await expect(
         characterService.updateCharacter(crypto.randomUUID(), {
           name: 'Non-existent Character',
-        } as UpdateCharacterDto)
+        } as UpdateCharacterDto),
       ).rejects.toThrow(NotFoundError);
     });
 
@@ -95,16 +92,13 @@ describe('Character Service Unit Tests', () => {
         name: `Character to Delete ${crypto.randomUUID()}`,
       } as CreateCharacterDto);
 
-      const result = await characterService.deleteCharacter(
-        characterId,
-        boardId
-      );
+      const result = await characterService.deleteCharacter(characterId, boardId);
       expect(result.characterId).toBe(characterId);
 
       await expect(
         characterService.updateCharacter(characterId, {
           name: 'Should fail',
-        } as UpdateCharacterDto)
+        } as UpdateCharacterDto),
       ).rejects.toThrow(NotFoundError);
     });
 
@@ -119,23 +113,20 @@ describe('Character Service Unit Tests', () => {
 
       await characterService.createCharacter(board2Id, { characterId });
 
-      const result = await characterService.deleteCharacter(
-        characterId,
-        boardId
-      );
+      const result = await characterService.deleteCharacter(characterId, boardId);
       expect(result.characterId).toBe(characterId);
 
       await expect(
         characterService.updateCharacter(characterId, {
           name: `Still alive ${crypto.randomUUID()}`,
-        } as UpdateCharacterDto)
+        } as UpdateCharacterDto),
       ).resolves.toBeDefined();
     });
 
     it('should throw NotFoundError when character does not exist', async () => {
-      await expect(
-        characterService.deleteCharacter(crypto.randomUUID(), boardId)
-      ).rejects.toThrow(NotFoundError);
+      await expect(characterService.deleteCharacter(crypto.randomUUID(), boardId)).rejects.toThrow(
+        NotFoundError,
+      );
     });
   });
 });

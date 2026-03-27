@@ -56,9 +56,7 @@ export default function ItemForm({
     imageUrl: initialData?.imageUrl || '',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    initialData?.imageUrl || null
-  );
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -100,11 +98,7 @@ export default function ItemForm({
   const handleDelete = async () => {
     if (!onDelete) return;
 
-    if (
-      !confirm(
-        'Are you sure you want to delete this? This action cannot be undone.'
-      )
-    ) {
+    if (!confirm('Are you sure you want to delete this? This action cannot be undone.')) {
       return;
     }
 
@@ -170,9 +164,7 @@ export default function ItemForm({
             size="lg"
             rows={4}
             value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             styles={{
               input: {
                 backgroundColor: '#1f2a3a',

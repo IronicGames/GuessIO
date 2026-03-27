@@ -5,12 +5,19 @@ import authRoutes from './routes/auth.route';
 import boardRoutes from './routes/board.route';
 import characterRoutes from './routes/character.route';
 import { errorHandler } from './middleware/error-handler.middleware';
+import cookieParser from 'cookie-parser';
+import { config } from './utils/constants/env';
 
 const app = express();
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(
+  cors({
+    origin: config.frontendUrl,
+    credentials: true,
+  }),
+);
+app.use(cookieParser());
 
 // Routes
 app.use('/api', statusRoutes); // /api/health

@@ -1,5 +1,5 @@
-import { CharacterDto } from './character.types';
-import { ImageDto } from './image.types';
+import { type CharacterDto } from './character.types';
+import { type ImageDto } from './image.types';
 
 export interface BoardSummaryDto {
   id: string;

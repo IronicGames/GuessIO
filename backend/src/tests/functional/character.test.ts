@@ -4,7 +4,7 @@ import app from '@backend/app';
 import * as userService from '@services/user.service';
 import { authService } from '@services/auth.service';
 import { generateUniqueUserData } from '@tests/helpers/test-data';
-import { CreateCharacterDto } from '@shared/types/character.types';
+import { type CreateCharacterDto } from '@shared/types/character.types';
 import { API_ENDPOINTS } from '@shared/endpoints';
 
 describe('Character Functional Tests', () => {
@@ -17,7 +17,7 @@ describe('Character Functional Tests', () => {
       userData.googleId,
       userData.name,
       userData.email,
-      userData.profilePictureUrl
+      userData.profilePictureUrl,
     );
     userToken = authService.generateToken(user.id);
 
@@ -138,8 +138,8 @@ describe('Character Functional Tests', () => {
             name: `${name} ${crypto.randomUUID()}`,
           } as CreateCharacterDto)
           .expect(200)
-          .then((res) => res.body.characterId)
-      )
+          .then((res) => res.body.characterId),
+      ),
     );
 
     expect(ids).toHaveLength(3);

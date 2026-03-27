@@ -1,6 +1,6 @@
 'use client';
 
-import { GridItemData } from '@components/Board/GridCard';
+import { type GridItemData } from '@components/Board/GridCard';
 import GridContainer from '@components/Board/GridContainer';
 import ItemForm from '@components/Board/ItemForm';
 import ContentPaper from '@components/ContentPaper';
@@ -8,16 +8,12 @@ import StatusScreen from '@components/StatusScreen';
 import { api } from '@lib/api';
 import { Group, Flex } from '@mantine/core';
 import { useAuth } from '@providers/auth-provider';
-import { UpdateBoardDto } from '@shared/types/board.types';
+import { type UpdateBoardDto } from '@shared/types/board.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
 
-export default function EditBoardPage({
-  params,
-}: {
-  params: Promise<{ boardId: string }>;
-}) {
+export default function EditBoardPage({ params }: { params: Promise<{ boardId: string }> }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { boardId } = use(params);
@@ -39,14 +35,10 @@ export default function EditBoardPage({
       queryClient.invalidateQueries({ queryKey: ['board', boardId] });
       router.push('/boards');
     },
-    onError: (error) => console.error('Failed to update board:', error),
+    onError: (e) => console.error('Failed to update board:', e),
   });
 
-  const handleSubmit = async (data: {
-    name: string;
-    description?: string;
-    imageUrl?: string;
-  }) => {
+  const handleSubmit = async (data: { name: string; description?: string; imageUrl?: string }) => {
     updateBoard({
       name: data.name,
       description: data.description,
@@ -61,7 +53,7 @@ export default function EditBoardPage({
       queryClient.invalidateQueries({ queryKey: ['board', boardId] });
       router.push('/boards');
     },
-    onError: (error) => console.error('Failed to delete board:', error),
+    onError: (e) => console.error('Failed to delete board:', e),
   });
 
   const handleDelete = async () => {
@@ -75,8 +67,7 @@ export default function EditBoardPage({
         imageUrl: char.image?.imageUrl,
       }))
     : [];
-  if (user?.id !== board?.userId)
-    <StatusScreen text="This board does not belong to you" />;
+  if (user?.id !== board?.userId) <StatusScreen text="This board does not belong to you" />;
   if (isLoading) return <StatusScreen />;
   if (error || !board) return <StatusScreen text="Error loading board" />;
 

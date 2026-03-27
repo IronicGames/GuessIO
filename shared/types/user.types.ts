@@ -1,4 +1,4 @@
-import { ImageDto } from './image.types';
+import { type ImageDto } from './image.types';
 
 export interface UserDto {
   id: string;

@@ -1,5 +1,5 @@
 import { SimpleGrid } from '@mantine/core';
-import GridCard, { GridItemData } from './GridCard';
+import GridCard, { type GridItemData } from './GridCard';
 
 interface ItemGridProps {
   items: GridItemData[];
@@ -22,11 +22,7 @@ export default function ItemGrid({
       {showAddButton && <GridCard key="add" onClick={onAddClick} />}
       {/* Items */}
       {items.map((item) => (
-        <GridCard
-          key={item.id}
-          item={item}
-          onClick={() => onItemClick?.(item)}
-        />
+        <GridCard key={item.id} item={item} onClick={() => onItemClick?.(item)} />
       ))}
     </SimpleGrid>
   );
