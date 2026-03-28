@@ -53,14 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    api.auth.logout();
     setUser(null);
   }, []);
 
   const isLoggedIn = !!user;
-
-  if (loading) {
-    return <StatusScreen />;
-  }
 
   return (
     <AuthContext.Provider value={{ user, isLoggedIn, login, logout, loading }}>

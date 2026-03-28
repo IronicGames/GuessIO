@@ -8,14 +8,16 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
     return next(err);
   }
 
-  // Log error
-  console.error('Error:', {
-    name: err.name,
-    message: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
-  });
+  // Only log unexpected errors — operational errors are expected
+  if (!(err instanceof AppError) || !err.isOperational) {
+    console.error('Error:', {
+      name: err.name,
+      message: err.message,
+      stack: err.stack,
+      url: req.url,
+      method: req.method,
+    });
+  }
 
   // Handle known operational errors
   if (err instanceof AppError) {
