@@ -5,6 +5,13 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+enum Role {
+  GUEST
+  PLAYER
+  ADMIN
+
+  @@map("role")
+}
 
 model User {
   id        String   @id @default(uuid())
@@ -14,6 +21,7 @@ model User {
   name     String
   email    String? @unique //TODO: Rethink if we want to keep this as optional.
   googleId String? @unique @map("google_id")
+  role     Role    @default(PLAYER)
 
   boards         Board[]
   profilePicture Image?

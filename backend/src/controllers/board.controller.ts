@@ -3,20 +3,20 @@ import * as boardService from '@services/board.service';
 import { asyncHandler } from '@middleware/error-handler.middleware';
 
 export const getBoardsForUser = asyncHandler(async (req: Request, res: Response) => {
-  const boards = await boardService.getBoardsForUser(req.userId);
+  const boards = await boardService.getBoardsForUser(req.user.id);
   res.json(boards);
 });
 
 export const getBoard = asyncHandler(async (req: Request, res: Response) => {
   const { boardId } = req.params as { boardId: string };
 
-  const board = await boardService.getBoard(req.userId, boardId);
+  const board = await boardService.getBoard(req.user.id, boardId);
   res.json(board);
 });
 
 export const createBoard = asyncHandler(async (req: Request, res: Response) => {
   const { name, description, isPublic, imageUrl } = req.body;
-  const createdBoard = await boardService.createBoard(req.userId, {
+  const createdBoard = await boardService.createBoard(req.user.id, {
     name,
     description,
     isPublic,

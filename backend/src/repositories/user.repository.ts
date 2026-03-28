@@ -114,6 +114,7 @@ export async function getUserProfile(id: string) {
           imageUrl: true,
         },
       },
+      role: true,
     },
   });
 }

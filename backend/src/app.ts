@@ -1,3 +1,4 @@
+import { requireAuth, requireRole } from '@middleware/auth.middleware';
 import express from 'express';
 import cors from 'cors';
 import statusRoutes from './routes/status.route';
@@ -7,6 +8,7 @@ import characterRoutes from './routes/character.route';
 import { errorHandler } from './middleware/error-handler.middleware';
 import cookieParser from 'cookie-parser';
 import { config } from './utils/constants/env';
+import { Role } from '@prisma/client';
 
 const app = express();
 
@@ -23,8 +25,8 @@ app.use(express.json());
 // Routes
 app.use('/api', statusRoutes); // /api/health
 app.use('/api/auth', authRoutes); // /api/auth/*
-app.use('/api/boards', boardRoutes); // /api/board/*
-app.use('/api/character', characterRoutes); // /api/character/*
+app.use('/api/boards', requireAuth, requireRole(Role.PLAYER, Role.ADMIN), boardRoutes); // /api/board/*
+app.use('/api/character', requireAuth, requireRole(Role.PLAYER, Role.ADMIN), characterRoutes); // /api/character/*
 
 app.use(errorHandler);
 export default app;

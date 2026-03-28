@@ -1,4 +1,5 @@
 import { NotFoundError } from '@errors/app-error';
+import { Role } from '@prisma/client';
 import * as userRepository from '@repositories/user.repository';
 import { type UserWithProfilePicture } from '@repositories/user.repository';
 import { type UserProfile } from '@shared/types/user.types';
@@ -57,5 +58,7 @@ export async function getUserProfile(id: string): Promise<UserProfile> {
     id: userProfile.id,
     name: userProfile.name,
     profilePicture: userProfile.profilePicture?.imageUrl,
-  };
+    role: userProfile.role,
+    isGuest: userProfile.role === Role.GUEST,
+  } as UserProfile;
 }

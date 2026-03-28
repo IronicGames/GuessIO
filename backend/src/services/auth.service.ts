@@ -4,6 +4,8 @@ import { config } from '@utils/constants/env';
 import { adjectives, animals, uniqueNamesGenerator } from 'unique-names-generator';
 import * as userService from '@services/user.service';
 import { InternalServerError } from '@errors/app-error';
+import { type UserProfile } from '@shared/types/user.types';
+import { Role } from '@prisma/client';
 
 class AuthService {
   private client: OAuth2Client;
@@ -41,31 +43,46 @@ class AuthService {
       throw new InternalServerError('Failed to get user info from Google');
     }
 
-    const username = uniqueNamesGenerator({
+    const user = await userService.createOrGetGoogleUser(
+      payload.sub,
+      this.generateUsername(),
+      payload.email,
+      payload.picture,
+    );
+
+    return this.generateToken({
+      id: user.id,
+      name: user.name,
+      role: user.role,
+      isGuest: false,
+      profilePicture: user.profilePicture?.imageUrl,
+    } as UserProfile);
+  }
+
+  generateToken(user: UserProfile): string {
+    return jwt.sign(user, config.jwtSecret, { expiresIn: '90d' });
+  }
+
+  verifyToken(token: string): UserProfile {
+    return jwt.verify(token, config.jwtSecret) as UserProfile;
+  }
+
+  createGuestToken(name?: string): string {
+    return this.generateToken({
+      id: `guest_${crypto.randomUUID()}`,
+      role: Role.GUEST,
+      isGuest: true,
+      name: name ?? this.generateUsername(),
+      profilePicture: `https://api.dicebear.com/9.x/bottts/svg?seed=${name}`,
+    });
+  }
+  generateUsername(): string {
+    return uniqueNamesGenerator({
       dictionaries: [adjectives, animals],
       separator: '',
       style: 'capital',
       length: 2,
     });
-
-    const user = await userService.createOrGetGoogleUser(
-      payload.sub,
-      username,
-      payload.email,
-      payload.picture,
-    );
-
-    const jwtToken = this.generateToken(user.id);
-
-    return jwtToken;
-  }
-
-  generateToken(userId: string): string {
-    return jwt.sign({ userId }, config.jwtSecret, { expiresIn: '90d' });
-  }
-
-  verifyToken(token: string): { userId: string } {
-    return jwt.verify(token, config.jwtSecret) as { userId: string };
   }
 }
 

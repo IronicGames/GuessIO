@@ -30,6 +30,13 @@ export const api = {
       const response = await fetchWithAuth(API_ENDPOINTS.auth.profile);
       return response.json();
     },
+    loginAsGuest: async (name?: string): Promise<UserProfile> => {
+      const response = await fetchWithAuth(API_ENDPOINTS.auth.loginAsGuest, {
+        method: 'POST',
+        body: JSON.stringify({ name: name }),
+      });
+      return response.json();
+    },
     logout: async (): Promise<UserProfile> => {
       const response = await fetchWithAuth(API_ENDPOINTS.auth.logout, {
         method: 'POST',

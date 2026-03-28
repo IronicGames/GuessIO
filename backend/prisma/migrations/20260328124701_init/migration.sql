@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "role" AS ENUM ('GUEST', 'PLAYER', 'ADMIN');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
@@ -6,6 +9,7 @@ CREATE TABLE "users" (
     "name" TEXT NOT NULL,
     "email" TEXT,
     "google_id" TEXT,
+    "role" "role" NOT NULL DEFAULT 'PLAYER',
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );

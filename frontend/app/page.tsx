@@ -1,5 +1,6 @@
 'use client';
 import { AuthErrorNotification } from '@components/Home/AuthErrorNotification';
+import { AuthModal } from '@components/Home/AuthModal';
 import HomePageButton from '@components/Home/HomePageButton';
 import { Stack, TextInput, Container, Flex } from '@mantine/core';
 import { useAuth } from '@providers/auth-provider';
@@ -7,9 +8,13 @@ import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
+
   return (
     <>
+      {/* Opens automatically when not logged in — cannot be dismissed without authenticating */}
+      <AuthModal opened={!isLoggedIn} />
+
       <AuthErrorNotification />
       <Container size="md" h="70vh">
         <Flex
@@ -19,11 +24,12 @@ export default function HomePage() {
           gap={{ base: 'lg', sm: 'xl' }}
           px={{ base: 'md', sm: 'lg' }}
         >
-          {/* Menu Buttons */}
           <Stack w="100%" maw={600} align="center">
             <HomePageButton href="/boards" text="Public Match" />
             <HomePageButton href="/boards" text="Create Lobby" />
-            {isLoggedIn ? <HomePageButton href="/boards" text="Manage Boards" /> : null}
+            {user?.role === 'PLAYER' || user?.role === 'ADMIN' ? (
+              <HomePageButton href="/boards" text="Manage Boards" />
+            ) : null}
 
             {/* Enter Code Input */}
             <TextInput
@@ -48,14 +54,11 @@ export default function HomePage() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   const code = (e.target as HTMLInputElement).value;
-                  if (code) {
-                    router.push(`/lobby/${code}`);
-                  }
+                  if (code) router.push(`/lobby/${code}`);
                 }
               }}
             />
 
-            {/* Donate */}
             <HomePageButton href="/boards" text="Donate" alternate />
           </Stack>
         </Flex>

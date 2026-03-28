@@ -83,3 +83,12 @@ export const googleCallbackQuerySchema = z.object({
   code: z.string().min(1, 'Authorization code is required').optional(),
   error: z.string().optional(),
 });
+
+export const guestLoginSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'Name must be at least 2 characters')
+    .max(20, 'Name must not exceed 20 characters')
+    .optional(),
+});

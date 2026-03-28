@@ -6,7 +6,7 @@ export interface UserDto {
   email: string | null;
   googleId: string | null;
   profilePicture: ImageDto | null;
-  createdAt: string; // ISO string for JSON transfer
+  createdAt: string;
   updatedAt: string;
 }
 
@@ -20,5 +20,7 @@ export interface CreateUserDto {
 export interface UserProfile {
   id: string;
   name: string;
+  role: string;
+  isGuest: boolean;
   profilePicture?: string;
 }

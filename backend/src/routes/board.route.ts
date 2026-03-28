@@ -7,7 +7,6 @@ import {
 } from './../controllers/board.controller';
 import characterRouter from './character.route';
 import { Router } from 'express';
-import { requireAuth } from '@middleware/auth.middleware';
 import { validate } from '@middleware/validation/validation.middleware';
 import {
   createBoardSchema,
@@ -17,17 +16,16 @@ import {
 
 const router = Router();
 
-router.get('/', requireAuth, getBoardsForUser);
-router.get('/:boardId', requireAuth, validate(boardIdParamSchema, 'params'), getBoard);
-router.post('/', requireAuth, validate(createBoardSchema), createBoard);
+router.get('/', getBoardsForUser);
+router.get('/:boardId', validate(boardIdParamSchema, 'params'), getBoard);
+router.post('/', validate(createBoardSchema), createBoard);
 router.put(
   '/:boardId',
-  requireAuth,
   validate(boardIdParamSchema, 'params'),
   validate(updateBoardSchema),
   updateBoard,
 );
-router.delete('/:boardId', requireAuth, validate(boardIdParamSchema, 'params'), deleteBoard);
+router.delete('/:boardId', validate(boardIdParamSchema, 'params'), deleteBoard);
 
 router.use('/:boardId/characters', characterRouter);
 
