@@ -8,7 +8,7 @@ import characterRoutes from './routes/character.route';
 import { errorHandler } from './middleware/error-handler.middleware';
 import cookieParser from 'cookie-parser';
 import { config } from './utils/constants/env';
-import { Role } from '@prisma/client';
+import { Role } from '@shared/types/misc.types';
 
 const app = express();
 

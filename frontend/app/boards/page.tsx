@@ -21,7 +21,6 @@ export default function BoardsPage() {
   });
   if (isLoading) return <StatusScreen />;
   if (error || !boards) return <StatusScreen text="Error loading board" />;
-  // TODO: order by updatedAt
   const gridItems: GridItemData[] =
     boards
       ?.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0))
@@ -29,6 +28,7 @@ export default function BoardsPage() {
         id: board.id,
         name: board.name,
         imageUrl: board.image?.imageUrl,
+        isPublic: board.isPublic,
       })) ?? [];
 
   const handleAddBoard = () => {

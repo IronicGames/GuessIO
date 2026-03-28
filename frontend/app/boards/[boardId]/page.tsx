@@ -25,14 +25,34 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
 
   const [characterFormType, setCharacterFormType] = useState<FormType>(FormType.Hidden);
   const [currentCharacter, setCurrentCharacter] = useState<GridItemData | null>(null);
+  const [showImportCharacterForm, setShowImportCharacterForm] = useState(false);
 
   const {
     data: board,
-    isLoading,
-    error,
+    isLoading: isLoadingBoard,
+    error: boardError,
   } = useQuery({
     queryKey: ['board', boardId],
     queryFn: () => api.boards.getBoard(boardId),
+  });
+
+  const {
+    data: boards,
+    isLoading: isLoadingBoards,
+    error: boardsError,
+  } = useQuery({
+    queryKey: ['boards'],
+    queryFn: () => api.boards.getBoardsForUser(),
+  });
+
+  const { mutate: importCharacter } = useMutation({
+    mutationFn: (dto: CreateCharacterDto) => api.characters.createCharacter(boardId, dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      queryClient.invalidateQueries({ queryKey: ['board', boardId] });
+      setShowImportCharacterForm(false);
+    },
+    onError: (e) => notify.error(getErrorMessage(e)),
   });
 
   const { mutate: createCharacter } = useMutation({
@@ -56,8 +76,9 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
     onError: (e) => notify.error(getErrorMessage(e)),
   });
 
-    const { mutate: updateCharacter } = useMutation({
-    mutationFn: (dto: UpdateCharacterDto) => api.characters.updateCharacter(boardId, currentCharacter!.id, dto),
+  const { mutate: updateCharacter } = useMutation({
+    mutationFn: (dto: UpdateCharacterDto) =>
+      api.characters.updateCharacter(boardId, currentCharacter!.id, dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['boards'] });
       queryClient.invalidateQueries({ queryKey: ['board', boardId] });
@@ -67,24 +88,34 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
     onError: (e) => notify.error(getErrorMessage(e)),
   });
 
-  const handleSubmit = async (formType: FormType, data: { name: string; description?: string; imageUrl?: string }) => {
+  const handleSubmit = async (
+    formType: FormType,
+    data: {
+      name: string;
+      description?: string;
+      imageUrl?: string;
+      tags?: string[];
+      isPublic?: boolean;
+    },
+  ) => {
     if (formType === FormType.Board) {
       updateBoard({
         name: data.name,
         description: data.description,
         imageUrl: data.imageUrl,
+        isPublic: data?.isPublic,
       });
     } else if (formType === FormType.AddCharacter) {
       createCharacter({
         name: data.name,
         imageUrl: data.imageUrl,
+        tags: data.tags,
       });
     } else if (formType === FormType.EditCharacter) {
       updateCharacter({
         name: data.name,
         imageUrl: data.imageUrl,
-        //TODO: adding tags
-        tags: [],
+        tags: data.tags,
       });
     } else {
       notify.error('Unknown form type');
@@ -112,7 +143,7 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
     onError: (e) => notify.error(getErrorMessage(e)),
   });
 
-  const handleDelete = async (formType: FormType, characterId?: string ) => {
+  const handleDelete = async (formType: FormType, characterId?: string) => {
     if (formType === FormType.Board) {
       deleteBoard();
     } else {
@@ -121,15 +152,18 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
   };
 
   const characterItems: GridItemData[] = board?.characters
-    ? board.characters.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0)).map((char) => ({
-      id: char.id,
-      name: char.name,
-      imageUrl: char.image?.imageUrl,
-    }))
+    ? board.characters
+        .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0))
+        .map((char) => ({
+          id: char.id,
+          name: char.name,
+          imageUrl: char.image?.imageUrl,
+          tags: char.tags,
+        }))
     : [];
   if (user?.id !== board?.userId) <StatusScreen text="This board does not belong to you" />;
-  if (isLoading) return <StatusScreen />;
-  if (error || !board) return <StatusScreen text="Error loading board" />;
+  if (isLoadingBoard || isLoadingBoards) return <StatusScreen />;
+  if (boardError || !board || boardsError) return <StatusScreen text="Error loading board" />;
 
   const handleCancel = (formType: FormType) => {
     if (formType === FormType.Board) {
@@ -142,6 +176,14 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
 
   const handleAddCharacter = () => {
     setCharacterFormType(FormType.AddCharacter);
+  };
+
+  const handleImportCharacter = () => {
+    setShowImportCharacterForm(true);
+  };
+
+  const handleChooseCharacter = (character: GridItemData) => {
+    importCharacter({ characterId: character.id });
   };
 
   const handleCharacterClick = (character: GridItemData) => {
@@ -169,6 +211,7 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
               name: board.name,
               description: board.description,
               imageUrl: board.image?.imageUrl,
+              isPublic: board.isPublic,
             }}
             onSubmit={(data) => handleSubmit(FormType.Board, data)}
             onCancel={() => handleCancel(FormType.Board)}
@@ -180,29 +223,60 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
         <ContentPaper w={{ base: '100%', sm: '65%', md: '70%' }}>
           {characterFormType !== FormType.Hidden ? (
             <ItemForm
-              title={`${
-                characterFormType === FormType.AddCharacter ? 'Add' : 'Edit'
-              } Character`}
+              title={`${characterFormType === FormType.AddCharacter ? 'Add' : 'Edit'} Character`}
               namePlaceholder="Enter character name..."
               formType={characterFormType}
-              initialData={characterFormType === FormType.EditCharacter && currentCharacter ? {
-                name: currentCharacter.name,
-                imageUrl: currentCharacter.imageUrl,
-              }: undefined}
+              initialData={
+                characterFormType === FormType.EditCharacter && currentCharacter
+                  ? {
+                      name: currentCharacter.name,
+                      imageUrl: currentCharacter.imageUrl,
+                      tags: currentCharacter.tags,
+                    }
+                  : undefined
+              }
               onSubmit={(data) => handleSubmit(characterFormType, data)}
               onCancel={() => handleCancel(characterFormType)}
               onDelete={() => handleDelete(characterFormType, currentCharacter?.id)}
-            />) :
+            />
+          ) : !showImportCharacterForm ? (
             <GridContainer
               items={characterItems}
               showSearch={true}
               searchPlaceholder="Search characters..."
+              showImportButton={true}
+              disableImportButton={
+                !boards ||
+                boards.length <= 1 ||
+                boards
+                  .filter((b) => b.id !== boardId)
+                  .flatMap((b) => b.characters)
+                  .filter((c) => !c.boardIds.includes(boardId)).length === 0
+              }
               showAddButton={true}
               onAddClick={handleAddCharacter}
+              onImportClick={handleImportCharacter}
               onItemClick={handleCharacterClick}
               colCount={5}
             />
-          }
+          ) : (
+            <GridContainer
+              items={
+                boards
+                  ?.filter((b) => b.id !== boardId)
+                  .flatMap((b) => b.characters)
+                  .filter((c) => !c.boardIds.includes(boardId))
+                  .map((c) => ({
+                    id: c.id,
+                    name: c.name,
+                    imageUrl: c.image?.imageUrl,
+                    tags: c.tags,
+                  })) ?? []
+              }
+              onItemClick={handleChooseCharacter}
+              colCount={5}
+            />
+          )}
         </ContentPaper>
       </Group>
     </Flex>

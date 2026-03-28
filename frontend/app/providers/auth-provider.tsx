@@ -4,6 +4,7 @@ import { type UserProfile } from '@shared/types/user.types';
 import { createContext, useState, type ReactNode, useEffect, useContext, useCallback } from 'react';
 import { api } from '@lib/api';
 import StatusScreen from '@components/StatusScreen';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   const refreshUser = useCallback(async () => {
     const profileData = await api.auth.getUserProfile();
@@ -51,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     api.auth.logout();
+    router.push('/');
     setUser(null);
   }, []);
 

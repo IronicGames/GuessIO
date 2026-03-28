@@ -9,7 +9,7 @@ import {
 import { requireAuth, requireRole } from '@middleware/auth.middleware';
 import { validate } from '@middleware/validation/validation.middleware';
 import { guestLoginSchema } from '@middleware/validation/validation.schemas';
-import { Role } from '@prisma/client';
+import { Role } from '@shared/types/misc.types';
 
 const router = Router();
 

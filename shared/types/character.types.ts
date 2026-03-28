@@ -26,5 +26,5 @@ export interface UpdateCharacterDto {
   name?: string;
   description?: string;
   imageUrl?: string;
-  tags: string[];
+  tags?: string[];
 }

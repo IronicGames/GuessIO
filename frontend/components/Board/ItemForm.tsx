@@ -12,10 +12,13 @@ import {
   Image,
   Box,
   Center,
+  TagsInput,
+  Switch,
 } from '@mantine/core';
 import { IconUpload, IconX, IconTrash } from '@tabler/icons-react';
 import { buttonThemes } from '@styles/buttonThemes';
-
+import { useAuth } from '@providers/auth-provider';
+import { Role } from '@shared/types/misc.types';
 export enum FormType {
   Board,
   AddCharacter,
@@ -27,6 +30,8 @@ interface ItemFormData {
   name: string;
   description?: string;
   imageUrl?: string;
+  tags?: string[];
+  isPublic?: boolean;
 }
 
 interface ItemFormProps {
@@ -34,6 +39,7 @@ interface ItemFormProps {
   namePlaceholder?: string;
   formType: FormType;
   descriptionPlaceholder?: string;
+  tagsPlaceholder?: string;
   initialData?: ItemFormData;
   onSubmit: (data: ItemFormData) => void | Promise<void>;
   onCancel: () => void;
@@ -48,6 +54,7 @@ export default function ItemForm({
   namePlaceholder = 'Enter name...',
   formType,
   descriptionPlaceholder = 'Enter description...',
+  tagsPlaceholder = 'Enter tags...',
   initialData,
   onSubmit,
   onCancel,
@@ -58,11 +65,13 @@ export default function ItemForm({
 }: ItemFormProps) {
   const isEditMode = !!initialData;
   const defaultSubmitText = isEditMode ? 'Save' : 'Create';
-
+  const { user } = useAuth();
   const [formData, setFormData] = useState<ItemFormData>({
     name: initialData?.name || '',
     description: initialData?.description || '',
-    imageUrl: initialData?.imageUrl || '',
+    imageUrl: initialData?.imageUrl,
+    tags: initialData?.tags,
+    isPublic: initialData?.isPublic,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
@@ -267,6 +276,38 @@ export default function ItemForm({
             />
           )}
 
+          {/* Tags Input */}
+          {formType !== FormType.Board && user?.role === Role.ADMIN && (
+            <TagsInput
+              placeholder={tagsPlaceholder}
+              size="lg"
+              value={formData.tags}
+              onChange={(e) => setFormData({ ...formData, tags: e })}
+              styles={{
+                input: {
+                  backgroundColor: '#1f2a3a',
+                  borderColor: '#33465f',
+                  color: 'white',
+                },
+              }}
+            />
+          )}
+
+          {/* isPublic Input */}
+          {formType === FormType.Board && user?.role === Role.ADMIN && (
+            <Switch
+              onLabel="Is a public board"
+              offLabel="Is a private board"
+              size="lg"
+              checked={formData.isPublic}
+              onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
+              style={{
+                borderColor: '#33465f',
+                color: 'white',
+                marginBottom: '1rem',
+              }}
+            />
+          )}
         </Stack>
       </Box>
 

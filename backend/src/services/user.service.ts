@@ -1,7 +1,7 @@
 import { NotFoundError } from '@errors/app-error';
-import { Role } from '@prisma/client';
 import * as userRepository from '@repositories/user.repository';
 import { type UserWithProfilePicture } from '@repositories/user.repository';
+import { Role } from '@shared/types/misc.types';
 import { type UserProfile } from '@shared/types/user.types';
 
 export async function createOrGetGoogleUser(

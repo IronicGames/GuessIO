@@ -68,12 +68,13 @@ class AuthService {
   }
 
   createGuestToken(name?: string): string {
+    const userName = name ?? this.generateUsername();
     return this.generateToken({
       id: `guest_${crypto.randomUUID()}`,
       role: Role.GUEST,
       isGuest: true,
-      name: name ?? this.generateUsername(),
-      profilePicture: `https://api.dicebear.com/9.x/bottts/svg?seed=${name}`,
+      name: userName,
+      profilePicture: `https://api.dicebear.com/9.x/bottts/svg?seed=${userName}`,
     });
   }
   generateUsername(): string {

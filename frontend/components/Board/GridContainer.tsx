@@ -11,7 +11,10 @@ interface GridContainerProps {
   showSearch?: boolean;
   searchPlaceholder?: string;
   showAddButton?: boolean;
+  showImportButton?: boolean;
+  disableImportButton?: boolean;
   onAddClick?: () => void;
+  onImportClick?: () => void;
   onItemClick?: (item: GridItemData) => void;
   colCount?: number;
 }
@@ -21,7 +24,10 @@ export default function GridContainer({
   showSearch = true,
   searchPlaceholder = 'Search...',
   showAddButton = false,
+  showImportButton = false,
+  disableImportButton = false,
   onAddClick,
+  onImportClick,
   onItemClick,
   colCount = 5,
 }: GridContainerProps) {
@@ -86,7 +92,10 @@ export default function GridContainer({
         <ItemGrid
           items={filteredItems}
           showAddButton={showAddButton}
+          showImportButton={showImportButton}
+          disableImportButton={disableImportButton}
           onAddClick={onAddClick}
+          onImportClick={onImportClick}
           onItemClick={onItemClick}
           columns={columns}
         />

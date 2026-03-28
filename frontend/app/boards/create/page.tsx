@@ -25,11 +25,16 @@ export default function CreateBoardPage() {
     },
   });
 
-  const handleSubmit = (data: { name: string; description?: string; imageUrl?: string }) => {
+  const handleSubmit = (data: {
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    isPublic?: boolean;
+  }) => {
     createBoard({
       name: data.name,
       description: data.description,
-      isPublic: false,
+      isPublic: data.isPublic,
       imageUrl: data.imageUrl,
     });
   };
