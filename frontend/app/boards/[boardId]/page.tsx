@@ -1,11 +1,13 @@
 'use client';
 
+import { useNotify } from '@/hooks/useNotify';
 import { type GridItemData } from '@components/Board/GridCard';
 import GridContainer from '@components/Board/GridContainer';
 import ItemForm from '@components/Board/ItemForm';
 import ContentPaper from '@components/ContentPaper';
 import StatusScreen from '@components/StatusScreen';
 import { api } from '@lib/api';
+import { getErrorMessage } from '@lib/errors';
 import { Group, Flex } from '@mantine/core';
 import { useAuth } from '@providers/auth-provider';
 import { type UpdateBoardDto } from '@shared/types/board.types';
@@ -18,6 +20,7 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
   const queryClient = useQueryClient();
   const { boardId } = use(params);
   const { user } = useAuth();
+  const notify = useNotify();
 
   const {
     data: board,
@@ -35,7 +38,7 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
       queryClient.invalidateQueries({ queryKey: ['board', boardId] });
       router.push('/boards');
     },
-    onError: (e) => console.error('Failed to update board:', e),
+    onError: (e) => notify.error(getErrorMessage(e)),
   });
 
   const handleSubmit = async (data: { name: string; description?: string; imageUrl?: string }) => {
@@ -53,7 +56,7 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
       queryClient.invalidateQueries({ queryKey: ['board', boardId] });
       router.push('/boards');
     },
-    onError: (e) => console.error('Failed to delete board:', e),
+    onError: (e) => notify.error(getErrorMessage(e)),
   });
 
   const handleDelete = async () => {

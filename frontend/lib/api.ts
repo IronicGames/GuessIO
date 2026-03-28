@@ -3,17 +3,7 @@ import { type UserProfile } from '@shared/types/user.types';
 import { type BoardDto, type CreateBoardDto, type UpdateBoardDto } from '@shared/types/board.types';
 import { type CreateCharacterDto, type UpdateCharacterDto } from '@shared/types/character.types';
 import { API_ENDPOINTS, API_URL } from '@shared/endpoints';
-
-export class ApiError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-    public data?: unknown,
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
+import { ApiError } from '@lib/errors';
 
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const response = await fetch(`${API_URL}${endpoint}`, {
