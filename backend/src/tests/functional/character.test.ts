@@ -23,7 +23,7 @@ describe('Character Functional Tests', () => {
 
     const boardResponse = await request(app)
       .post(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({ name: `Test Board ${crypto.randomUUID()}` });
 
     boardId = boardResponse.body.id;
@@ -36,7 +36,7 @@ describe('Character Functional Tests', () => {
     // 1. Create character
     const createResponse = await request(app)
       .post(API_ENDPOINTS.characters.root(boardId))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({
         name: characterName,
         description: 'Test Description',
@@ -50,7 +50,7 @@ describe('Character Functional Tests', () => {
     // 2. Update character
     await request(app)
       .put(API_ENDPOINTS.characters.byId(boardId, characterId))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({
         name: updatedName,
         description: 'Updated Description',
@@ -61,21 +61,21 @@ describe('Character Functional Tests', () => {
     // 3. Delete character (only board — should delete character entirely)
     await request(app)
       .delete(API_ENDPOINTS.characters.byId(boardId, characterId))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .expect(200);
   });
 
   it('should add an existing character to a second board then remove it from first board without deleting it', async () => {
     const board2Response = await request(app)
       .post(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({ name: `Second Board ${crypto.randomUUID()}` });
     const board2Id = board2Response.body.id;
 
     // Create character on board1
     const createResponse = await request(app)
       .post(API_ENDPOINTS.characters.root(boardId))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({ name: `Shared Character ${crypto.randomUUID()}` })
       .expect(200);
 
@@ -84,20 +84,20 @@ describe('Character Functional Tests', () => {
     // Add existing character to board2
     await request(app)
       .post(API_ENDPOINTS.characters.root(board2Id))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({ characterId })
       .expect(200);
 
     // Remove from board1 — character should still exist (still on board2)
     await request(app)
       .delete(API_ENDPOINTS.characters.byId(boardId, characterId))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
     // Verify character still exists by updating it successfully
     await request(app)
       .put(API_ENDPOINTS.characters.byId(board2Id, characterId))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({ name: `Still Exists ${crypto.randomUUID()}` })
       .expect(200);
   });
@@ -105,7 +105,7 @@ describe('Character Functional Tests', () => {
   it('should delete character entirely when removed from its last board', async () => {
     const createResponse = await request(app)
       .post(API_ENDPOINTS.characters.root(boardId))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({ name: `Doomed Character ${crypto.randomUUID()}` })
       .expect(200);
 
@@ -113,7 +113,7 @@ describe('Character Functional Tests', () => {
 
     const deleteResponse = await request(app)
       .delete(API_ENDPOINTS.characters.byId(boardId, characterId))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
     expect(deleteResponse.body.characterId).toBe(characterId);
@@ -121,7 +121,7 @@ describe('Character Functional Tests', () => {
     // Verify gone — update should 404
     await request(app)
       .put(API_ENDPOINTS.characters.byId(boardId, characterId))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({ name: 'Should not work' })
       .expect(404);
   });
@@ -133,7 +133,7 @@ describe('Character Functional Tests', () => {
       names.map((name) =>
         request(app)
           .post(API_ENDPOINTS.characters.root(boardId))
-          .set('Authorization', `Bearer ${userToken}`)
+          .set('Cookie', [`token=${userToken}`])
           .send({
             name: `${name} ${crypto.randomUUID()}`,
           } as CreateCharacterDto)

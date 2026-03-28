@@ -30,7 +30,7 @@ describe('Board Functional Tests', () => {
     // 1. Create board
     const createResponse = await request(app)
       .post(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({
         name: uniqueName,
         description: 'Test Description',
@@ -44,7 +44,7 @@ describe('Board Functional Tests', () => {
     // 2. Get boards - verify it exists
     const getResponse = await request(app)
       .get(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
     const createdBoard = getResponse.body.find((b: { id: string }) => b.id === boardId);
@@ -54,7 +54,7 @@ describe('Board Functional Tests', () => {
     // 3. Update board - verify changes
     await request(app)
       .put(API_ENDPOINTS.boards.byId(boardId))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({
         name: updatedName,
         description: 'Updated Description',
@@ -64,7 +64,7 @@ describe('Board Functional Tests', () => {
 
     const getAfterUpdate = await request(app)
       .get(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
     const updatedBoard = getAfterUpdate.body.find((b: { id: string }) => b.id === boardId);
@@ -75,12 +75,12 @@ describe('Board Functional Tests', () => {
     // 4. Delete board - verify gone
     await request(app)
       .delete(API_ENDPOINTS.boards.byId(boardId))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
     const getAfterDelete = await request(app)
       .get(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
     const deletedBoard = getAfterDelete.body.find((b: { id: string }) => b.id === boardId);
@@ -94,19 +94,19 @@ describe('Board Functional Tests', () => {
 
     const board1 = await request(app)
       .post(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({ name: board1Name })
       .expect(200);
 
     const board2 = await request(app)
       .post(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({ name: board2Name, isPublic: true })
       .expect(200);
 
     const board3 = await request(app)
       .post(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({ name: board3Name, description: 'Superheroes' })
       .expect(200);
 
@@ -114,7 +114,7 @@ describe('Board Functional Tests', () => {
 
     const response = await request(app)
       .get(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
     const createdBoards = response.body.filter((b: { id: string }) => boardIds.includes(b.id));
@@ -135,7 +135,7 @@ describe('Board Functional Tests', () => {
 
     const createResponse = await request(app)
       .post(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({ name: boardName, imageUrl })
       .expect(200);
 
@@ -143,7 +143,7 @@ describe('Board Functional Tests', () => {
 
     const getResponse = await request(app)
       .get(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
     const createdBoard = getResponse.body.find((b: { id: string }) => b.id === boardId);
@@ -152,13 +152,13 @@ describe('Board Functional Tests', () => {
 
     await request(app)
       .put(API_ENDPOINTS.boards.byId(boardId))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .send({ name: `${boardName} updated`, imageUrl: newImageUrl })
       .expect(200);
 
     const getAfterUpdate = await request(app)
       .get(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
     const updatedBoard = getAfterUpdate.body.find((b: { id: string }) => b.id === boardId);
@@ -166,12 +166,12 @@ describe('Board Functional Tests', () => {
 
     await request(app)
       .delete(API_ENDPOINTS.boards.byId(boardId))
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
     const finalGet = await request(app)
       .get(API_ENDPOINTS.boards.root)
-      .set('Authorization', `Bearer ${userToken}`)
+      .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
     const deletedBoard = finalGet.body.find((b: { id: string }) => b.id === boardId);

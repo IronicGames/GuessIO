@@ -40,7 +40,7 @@ describe('Board Integration Tests', () => {
 
       const response = await request(app)
         .post(API_ENDPOINTS.boards.root)
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({
           name: uniqueName,
           description: 'All 151 original pokemon',
@@ -71,7 +71,7 @@ describe('Board Integration Tests', () => {
 
       const response = await request(app)
         .post(API_ENDPOINTS.boards.root)
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send(boardData)
         .expect(200);
 
@@ -87,7 +87,7 @@ describe('Board Integration Tests', () => {
     it('should return 400 when name is missing', async () => {
       const response = await request(app)
         .post(API_ENDPOINTS.boards.root)
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ description: 'Missing name', isPublic: false })
         .expect(400);
 
@@ -139,7 +139,7 @@ describe('Board Integration Tests', () => {
 
       const response = await request(app)
         .get(API_ENDPOINTS.boards.root)
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
@@ -161,7 +161,7 @@ describe('Board Integration Tests', () => {
 
       const response = await request(app)
         .get(API_ENDPOINTS.boards.root)
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
@@ -195,7 +195,7 @@ describe('Board Integration Tests', () => {
 
       const response = await request(app)
         .put(API_ENDPOINTS.boards.byId(boardId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({
           name: updatedName,
           description: 'Updated description',
@@ -219,7 +219,7 @@ describe('Board Integration Tests', () => {
 
       await request(app)
         .put(API_ENDPOINTS.boards.byId(boardId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ name: `Board with New Image ${crypto.randomUUID()}`, imageUrl })
         .expect(200);
 
@@ -235,7 +235,7 @@ describe('Board Integration Tests', () => {
     it('should return 400 when name is missing', async () => {
       const response = await request(app)
         .put(API_ENDPOINTS.boards.byId(boardId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ description: 'Missing name' })
         .expect(400);
 
@@ -245,7 +245,7 @@ describe('Board Integration Tests', () => {
     it('should return 404 when board does not exist', async () => {
       const response = await request(app)
         .put(API_ENDPOINTS.boards.byId(crypto.randomUUID()))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ name: 'Non-existent Board' })
         .expect(404);
 
@@ -266,7 +266,7 @@ describe('Board Integration Tests', () => {
     it('should delete a board', async () => {
       const response = await request(app)
         .delete(API_ENDPOINTS.boards.byId(boardId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .expect(200);
 
       expect(response.body).toHaveProperty('id');
@@ -281,7 +281,7 @@ describe('Board Integration Tests', () => {
     it('should return 404 when board does not exist', async () => {
       const response = await request(app)
         .delete(API_ENDPOINTS.boards.byId(crypto.randomUUID()))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .expect(404);
 
       expect(response.body.error).toBe('Board not found');

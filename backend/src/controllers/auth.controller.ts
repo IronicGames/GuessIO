@@ -3,7 +3,6 @@ import { config } from '@utils/constants/env';
 import { authService } from '@services/auth.service';
 import * as userService from '@services/user.service';
 import { asyncHandler } from '@middleware/error-handler.middleware';
-import { redirectToFrontendWithError } from '@utils/error/redirect-with-error';
 
 export const initiateGoogleLogin = (req: Request, res: Response) => {
   const authUrl = authService.getGoogleAuthUrl();
@@ -11,32 +10,22 @@ export const initiateGoogleLogin = (req: Request, res: Response) => {
 };
 
 export const handleGoogleCallback = asyncHandler(async (req: Request, res: Response) => {
-  try {
-    const { code, error } = req.query;
+  const { code, error } = req.query;
 
-    if (error) {
-      return redirectToFrontendWithError(
-        res,
-        error === 'access_denied' ? 'login_cancelled' : 'auth_failed',
-      );
-    }
-
-    if (!code || typeof code !== 'string') {
-      return redirectToFrontendWithError(res, 'missing_code');
-    }
-
-    const token = await authService.handleGoogleCallback(code);
-    res.cookie('token', token, {
-      httpOnly: true,
-      //TODO: make this true when on production and we are able to use HTTPS
-      secure: false,
-      sameSite: 'lax',
-    });
-    res.redirect(`${config.frontendUrl}`);
-  } catch (error) {
-    console.error('OAuth callback error:', error);
-    return redirectToFrontendWithError(res, 'auth_failed');
+  if (error || !code || typeof code !== 'string') {
+    res.redirect(
+      `${config.frontendUrl}?error=${error === 'access_denied' ? 'login_cancelled' : 'auth_failed'}`,
+    );
+    return;
   }
+
+  const token = await authService.handleGoogleCallback(code);
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: config.deployment === 'production',
+    sameSite: 'lax',
+  });
+  res.redirect(`${config.frontendUrl}`);
 });
 
 export const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {

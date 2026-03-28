@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '../.env', quiet: true });
 
 export const config = {
+  deployment: 'dev',
   port: 8080,
   frontendUrl: 'http://localhost:3000',
   backendUrl: 'http://localhost:8080',

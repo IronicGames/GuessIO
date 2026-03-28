@@ -5,6 +5,7 @@ import { AppHeader } from '@components/Header/AppHeader';
 import { AuthProvider } from '@providers/auth-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
+import { Notifications } from '@mantine/notifications';
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
   return (
@@ -12,6 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{ margin: 0 }}>
         <QueryClientProvider client={queryClient}>
           <MantineProvider defaultColorScheme="dark">
+            <Notifications />
             <AuthProvider>
               <div
                 style={{

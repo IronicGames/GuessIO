@@ -27,7 +27,6 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promi
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: 'Request failed' }));
     if (response.status === 401) {
-      window.location.href = '/?error=session_expired';
       throw new ApiError(401, 'Session expired', errorData);
     }
     throw new ApiError(response.status, errorData.error || 'Request failed', errorData);

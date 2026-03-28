@@ -35,7 +35,7 @@ describe('Character Integration Tests', () => {
 
       const response = await request(app)
         .post(API_ENDPOINTS.characters.root(boardId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({
           name: characterName,
           description: 'A test character',
@@ -61,7 +61,7 @@ describe('Character Integration Tests', () => {
 
       const response = await request(app)
         .post(API_ENDPOINTS.characters.root(boardId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ name: `Character with Image ${crypto.randomUUID()}`, imageUrl })
         .expect(200);
 
@@ -81,7 +81,7 @@ describe('Character Integration Tests', () => {
 
       const createResponse = await request(app)
         .post(API_ENDPOINTS.characters.root(boardId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ name: `Shared Character ${crypto.randomUUID()}` })
         .expect(200);
 
@@ -89,7 +89,7 @@ describe('Character Integration Tests', () => {
 
       await request(app)
         .post(API_ENDPOINTS.characters.root(board2.id))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ characterId })
         .expect(200);
 
@@ -106,7 +106,7 @@ describe('Character Integration Tests', () => {
     it('should return 400 when neither name nor characterId is provided', async () => {
       const response = await request(app)
         .post(API_ENDPOINTS.characters.root(boardId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ description: 'No name or id' })
         .expect(400);
 
@@ -127,7 +127,7 @@ describe('Character Integration Tests', () => {
     beforeEach(async () => {
       const response = await request(app)
         .post(API_ENDPOINTS.characters.root(boardId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ name: `Character to Update ${crypto.randomUUID()}` });
 
       characterId = response.body.characterId;
@@ -138,7 +138,7 @@ describe('Character Integration Tests', () => {
 
       const response = await request(app)
         .put(API_ENDPOINTS.characters.byId(boardId, characterId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({
           name: updatedName,
           description: 'Updated description',
@@ -161,7 +161,7 @@ describe('Character Integration Tests', () => {
 
       await request(app)
         .put(API_ENDPOINTS.characters.byId(boardId, characterId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ name: `Character with Image ${crypto.randomUUID()}`, imageUrl })
         .expect(200);
 
@@ -177,7 +177,7 @@ describe('Character Integration Tests', () => {
     it('should return 400 when name is missing', async () => {
       const response = await request(app)
         .put(API_ENDPOINTS.characters.byId(boardId, characterId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ description: 'No name' })
         .expect(400);
 
@@ -187,7 +187,7 @@ describe('Character Integration Tests', () => {
     it('should return 404 when character does not exist', async () => {
       const response = await request(app)
         .put(API_ENDPOINTS.characters.byId(boardId, crypto.randomUUID()))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ name: 'Non-existent Character' })
         .expect(404);
 
@@ -201,7 +201,7 @@ describe('Character Integration Tests', () => {
     beforeEach(async () => {
       const response = await request(app)
         .post(API_ENDPOINTS.characters.root(boardId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ name: `Character to Delete ${crypto.randomUUID()}` });
 
       characterId = response.body.characterId;
@@ -210,7 +210,7 @@ describe('Character Integration Tests', () => {
     it('should delete character entirely when it only belongs to one board', async () => {
       const response = await request(app)
         .delete(API_ENDPOINTS.characters.byId(boardId, characterId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .expect(200);
 
       expect(response.body.characterId).toBe(characterId);
@@ -228,12 +228,12 @@ describe('Character Integration Tests', () => {
 
       await request(app)
         .post(API_ENDPOINTS.characters.root(board2.id))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .send({ characterId });
 
       await request(app)
         .delete(API_ENDPOINTS.characters.byId(boardId, characterId))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .expect(200);
 
       const characterInDb = await prisma.character.findUnique({
@@ -249,7 +249,7 @@ describe('Character Integration Tests', () => {
     it('should return 404 when character does not exist', async () => {
       const response = await request(app)
         .delete(API_ENDPOINTS.characters.byId(boardId, crypto.randomUUID()))
-        .set('Authorization', `Bearer ${userToken}`)
+        .set('Cookie', [`token=${userToken}`])
         .expect(404);
 
       expect(response.body.error).toBe('Character not found');
