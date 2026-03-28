@@ -1,4 +1,4 @@
-import { Card, Center, Text, AspectRatio, Box } from '@mantine/core';
+import { Card, Center, Text, AspectRatio } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
 
 export interface GridItemData {

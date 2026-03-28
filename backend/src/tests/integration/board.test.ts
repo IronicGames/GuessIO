@@ -91,8 +91,9 @@ describe('Board Integration Tests', () => {
         .send({ description: 'Missing name', isPublic: false })
         .expect(400);
 
-      expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Board name is required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.issues).toHaveLength(1);
+      expect(response.body.issues[0].message).toBe('Board name is required');
     });
 
     it('should return 401 when no auth token is provided', async () => {
@@ -239,7 +240,9 @@ describe('Board Integration Tests', () => {
         .send({ description: 'Missing name' })
         .expect(400);
 
-      expect(response.body.error).toBe('Board name is required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.issues).toHaveLength(1);
+      expect(response.body.issues[0].message).toBe('Board name is required');
     });
 
     it('should return 404 when board does not exist', async () => {

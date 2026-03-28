@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           profilePicture: profileData.profilePicture,
         });
       })
-      .catch((error) => {
+      .catch(() => {
         setUser(null);
       })
       .finally(() => {

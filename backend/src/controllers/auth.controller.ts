@@ -10,12 +10,17 @@ export const initiateGoogleLogin = (req: Request, res: Response) => {
 };
 
 export const handleGoogleCallback = asyncHandler(async (req: Request, res: Response) => {
-  const { code, error } = req.query;
+  const { code, error } = req.query as { code?: string; error?: string };
 
-  if (error || !code || typeof code !== 'string') {
+  if (error) {
     res.redirect(
       `${config.frontendUrl}?error=${error === 'access_denied' ? 'login_cancelled' : 'auth_failed'}`,
     );
+    return;
+  }
+
+  if (!code) {
+    res.redirect(`${config.frontendUrl}?error=auth_failed`);
     return;
   }
 
@@ -29,9 +34,6 @@ export const handleGoogleCallback = asyncHandler(async (req: Request, res: Respo
 });
 
 export const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.userId) {
-    res.json(null);
-  }
   const user = await userService.getUserById(req.userId!);
   res.json(user);
 });

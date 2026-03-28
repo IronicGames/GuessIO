@@ -5,11 +5,28 @@ import {
 } from './../controllers/character.controller';
 import { Router } from 'express';
 import { requireAuth } from '@middleware/auth.middleware';
+import { validate } from '@middleware/validation/validation.middleware';
+import {
+  createCharacterSchema,
+  updateCharacterSchema,
+  characterIdParamSchema,
+} from '@middleware/validation/validation.schemas';
 
-const router = Router({ mergeParams: true }); // mergeParams gives access to :boardId from parent
+const router = Router({ mergeParams: true });
 
-router.post('/', requireAuth, createCharacter); // POST   /api/boards/:boardId/characters
-router.put('/:characterId', requireAuth, updateCharacter); // PUT    /api/boards/:boardId/characters/:characterId
-router.delete('/:characterId', requireAuth, deleteCharacter); // DELETE /api/boards/:boardId/characters/:characterId
+router.post('/', requireAuth, validate(createCharacterSchema), createCharacter);
+router.put(
+  '/:characterId',
+  requireAuth,
+  validate(characterIdParamSchema, 'params'),
+  validate(updateCharacterSchema),
+  updateCharacter,
+);
+router.delete(
+  '/:characterId',
+  requireAuth,
+  validate(characterIdParamSchema, 'params'),
+  deleteCharacter,
+);
 
 export default router;
