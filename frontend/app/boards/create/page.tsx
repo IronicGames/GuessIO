@@ -1,6 +1,6 @@
 'use client';
 
-import ItemForm from '@components/Board/ItemForm';
+import ItemForm, { FormType } from '@components/Board/ItemForm';
 import ContentPaper from '@components/ContentPaper';
 import { api } from '@lib/api';
 import { Flex } from '@mantine/core';
@@ -43,6 +43,7 @@ export default function CreateBoardPage() {
       <ContentPaper w={{ base: '60%', md: '50%', lg: '40%' }} h="70vh">
         <ItemForm
           title="Create New Board"
+          formType={FormType.Board}
           namePlaceholder="Enter board name..."
           descriptionPlaceholder="Describe your board..."
           onSubmit={handleSubmit}

@@ -15,7 +15,7 @@ export interface CharacterDto extends CharacterSummaryDto {
 }
 
 export interface CreateCharacterDto {
-  characterId: string;
+  characterId?: string;
   name?: string;
   description?: string;
   imageUrl?: string;

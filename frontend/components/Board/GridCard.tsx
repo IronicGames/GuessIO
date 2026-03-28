@@ -57,6 +57,7 @@ export default function GridCard({ item, onClick }: GridCardProps) {
             />
           ) : (
             <Center h="100%" bg="#1f2a3a">
+              {/* TODO: Replace with default image */}
               <Text c="dimmed">No Image</Text>
             </Center>
           )}

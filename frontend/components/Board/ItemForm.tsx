@@ -16,6 +16,13 @@ import {
 import { IconUpload, IconX, IconTrash } from '@tabler/icons-react';
 import { buttonThemes } from '@styles/buttonThemes';
 
+export enum FormType {
+  Board,
+  AddCharacter,
+  EditCharacter,
+  Hidden,
+}
+
 interface ItemFormData {
   name: string;
   description?: string;
@@ -25,11 +32,12 @@ interface ItemFormData {
 interface ItemFormProps {
   title: string;
   namePlaceholder?: string;
+  formType: FormType;
   descriptionPlaceholder?: string;
   initialData?: ItemFormData;
   onSubmit: (data: ItemFormData) => void | Promise<void>;
   onCancel: () => void;
-  onDelete?: () => void | Promise<void>;
+  onDelete?: (characterId?: string) => void | Promise<void>;
   submitText?: string;
   cancelText?: string;
   deleteText?: string;
@@ -38,6 +46,7 @@ interface ItemFormProps {
 export default function ItemForm({
   title,
   namePlaceholder = 'Enter name...',
+  formType,
   descriptionPlaceholder = 'Enter description...',
   initialData,
   onSubmit,
@@ -142,38 +151,6 @@ export default function ItemForm({
             {title}
           </Text>
 
-          {/* Name Input */}
-          <TextInput
-            placeholder={namePlaceholder}
-            required
-            size="lg"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            styles={{
-              input: {
-                backgroundColor: '#1f2a3a',
-                borderColor: '#33465f',
-                color: 'white',
-              },
-            }}
-          />
-
-          {/* Description Input */}
-          <Textarea
-            placeholder={descriptionPlaceholder}
-            size="lg"
-            rows={4}
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            styles={{
-              input: {
-                backgroundColor: '#1f2a3a',
-                borderColor: '#33465f',
-                color: 'white',
-              },
-            }}
-          />
-
           {/* Image Upload Section */}
           <Stack gap="sm" w="100%" pb="lg">
             {/* Image Preview Container - Always Same Size */}
@@ -255,6 +232,41 @@ export default function ItemForm({
               }}
             />
           </Stack>
+
+          {/* Name Input */}
+          <TextInput
+            placeholder={namePlaceholder}
+            required
+            size="lg"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            styles={{
+              input: {
+                backgroundColor: '#1f2a3a',
+                borderColor: '#33465f',
+                color: 'white',
+              },
+            }}
+          />
+
+          {/* Description Input */}
+          {formType === FormType.Board && (
+            <Textarea
+              placeholder={descriptionPlaceholder}
+              size="lg"
+              rows={4}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              styles={{
+                input: {
+                  backgroundColor: '#1f2a3a',
+                  borderColor: '#33465f',
+                  color: 'white',
+                },
+              }}
+            />
+          )}
+
         </Stack>
       </Box>
 
