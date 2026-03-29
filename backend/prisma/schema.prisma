@@ -50,7 +50,6 @@ model Character {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   name        String
-  description String?
   tags        String[] @default([]) @map("tags")
 
   image Image?

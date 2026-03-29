@@ -59,7 +59,6 @@ export const createCharacterSchema = z
   .object({
     characterId: idSchema.optional(),
     name: stringFieldSchema('Character name is required', { min: 1, max: 100 }).optional(),
-    description: z.string().max(500, 'Description must not exceed 500 characters').optional(),
     imageUrl: urlSchema,
     tags: tagsSchema,
   })
@@ -70,7 +69,6 @@ export const createCharacterSchema = z
 
 export const updateCharacterSchema = z.object({
   name: stringFieldSchema('Character name is required', { min: 1, max: 100 }),
-  description: z.string().max(500, 'Description must not exceed 500 characters').optional(),
   imageUrl: urlSchema,
   tags: tagsSchema,
 });

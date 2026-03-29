@@ -28,7 +28,6 @@ describe('Character Service Unit Tests', () => {
     it('should create a new character and return characterId and boardId', async () => {
       const result = await characterService.createCharacter(boardId, {
         name: `New Character ${crypto.randomUUID()}`,
-        description: 'Test',
         tags: ['tag1'],
       } as CreateCharacterDto);
 
@@ -78,7 +77,6 @@ describe('Character Service Unit Tests', () => {
 
       const result = await characterService.updateCharacter(characterId, {
         name: `Updated Name ${crypto.randomUUID()}`,
-        description: 'Updated description',
         tags: ['newTag'],
       });
 

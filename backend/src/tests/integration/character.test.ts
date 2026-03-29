@@ -38,7 +38,6 @@ describe('Character Integration Tests', () => {
         .set('Cookie', [`token=${userToken}`])
         .send({
           name: characterName,
-          description: 'A test character',
           tags: ['tag1', 'tag2'],
         })
         .expect(200);
@@ -107,7 +106,7 @@ describe('Character Integration Tests', () => {
       const response = await request(app)
         .post(API_ENDPOINTS.characters.root(boardId))
         .set('Cookie', [`token=${userToken}`])
-        .send({ description: 'No name or id' })
+        .send({ tags: ['no-name'] })
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');
@@ -143,7 +142,6 @@ describe('Character Integration Tests', () => {
         .set('Cookie', [`token=${userToken}`])
         .send({
           name: updatedName,
-          description: 'Updated description',
           tags: ['newTag'],
         })
         .expect(200);
@@ -154,7 +152,6 @@ describe('Character Integration Tests', () => {
         where: { id: characterId },
       });
       expect(characterInDb!.name).toBe(updatedName);
-      expect(characterInDb!.description).toBe('Updated description');
       expect(characterInDb!.tags).toContain('newTag');
     });
 
@@ -180,7 +177,7 @@ describe('Character Integration Tests', () => {
       const response = await request(app)
         .put(API_ENDPOINTS.characters.byId(boardId, characterId))
         .set('Cookie', [`token=${userToken}`])
-        .send({ description: 'No name' })
+        .send({ tags: [] })
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');

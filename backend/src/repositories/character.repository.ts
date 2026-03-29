@@ -10,7 +10,6 @@ export async function createCharacter(boardId: string, dto: CreateCharacterDto):
   const character = await prisma.character.create({
     data: {
       name: dto.name!,
-      description: dto.description,
       tags: dto.tags,
       image: dto.imageUrl ? { create: { imageUrl: dto.imageUrl } } : undefined,
       boards: { connect: { id: boardId } },
@@ -55,7 +54,6 @@ export async function updateCharacter(
     where: { id: characterId },
     data: {
       name: dto.name,
-      description: dto.description,
       tags: dto.tags,
       image: dto.imageUrl
         ? {

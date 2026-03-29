@@ -4,12 +4,11 @@ import * as characterService from '@services/character.service';
 
 export const createCharacter = asyncHandler(async (req: Request, res: Response) => {
   const { boardId } = req.params as { boardId: string };
-  const { characterId, name, description, imageUrl, tags } = req.body;
+  const { characterId, name, imageUrl, tags } = req.body;
 
   const result = await characterService.createCharacter(boardId, {
     characterId,
     name,
-    description,
     imageUrl,
     tags,
   });
@@ -19,11 +18,10 @@ export const createCharacter = asyncHandler(async (req: Request, res: Response) 
 
 export const updateCharacter = asyncHandler(async (req: Request, res: Response) => {
   const { characterId } = req.params as { characterId: string };
-  const { name, description, imageUrl, tags } = req.body;
+  const { name, imageUrl, tags } = req.body;
 
   const result = await characterService.updateCharacter(characterId, {
     name,
-    description,
     imageUrl,
     tags,
   });

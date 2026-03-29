@@ -39,7 +39,6 @@ describe('Character Functional Tests', () => {
       .set('Cookie', [`token=${userToken}`])
       .send({
         name: characterName,
-        description: 'Test Description',
         tags: ['tag1', 'tag2'],
       })
       .expect(200);
@@ -53,7 +52,6 @@ describe('Character Functional Tests', () => {
       .set('Cookie', [`token=${userToken}`])
       .send({
         name: updatedName,
-        description: 'Updated Description',
         tags: ['tag3'],
       })
       .expect(200);

@@ -2,11 +2,11 @@
 import { type UserProfile } from '@shared/types/user.types';
 import { type BoardDto, type CreateBoardDto, type UpdateBoardDto } from '@shared/types/board.types';
 import { type CreateCharacterDto, type UpdateCharacterDto } from '@shared/types/character.types';
-import { API_ENDPOINTS, API_URL } from '@shared/endpoints';
+import { API_ENDPOINTS } from '@shared/endpoints';
 import { ApiError } from '@lib/errors';
 
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
     ...options,
     credentials: 'include',
     headers: {

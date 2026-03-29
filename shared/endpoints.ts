@@ -1,17 +1,15 @@
 export const API_ENDPOINTS = {
   auth: {
-    profile: '/api/auth/profile',
-    logout: '/api/auth/logout',
-    loginAsGuest: '/api/auth/loginAsGuest',
+    profile: '/auth/profile',
+    logout: '/auth/logout',
+    loginAsGuest: '/auth/loginAsGuest',
   },
   boards: {
-    root: '/api/boards',
-    byId: (boardId: string) => `/api/boards/${boardId}`,
+    root: '/boards',
+    byId: (boardId: string) => `/boards/${boardId}`,
   },
   characters: {
-    root: (boardId: string) => `/api/boards/${boardId}/characters`,
-    byId: (boardId: string, characterId: string) =>
-      `/api/boards/${boardId}/characters/${characterId}`,
+    root: (boardId: string) => `/boards/${boardId}/characters`,
+    byId: (boardId: string, characterId: string) => `/boards/${boardId}/characters/${characterId}`,
   },
 } as const;
-export const API_URL = 'http://localhost:8080';

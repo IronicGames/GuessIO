@@ -67,7 +67,6 @@ export function ToCharacterDto(character: CharacterWithBoardsAndImage | null): C
         name: character.name,
         createdAt: character.createdAt.toISOString(),
         updatedAt: character.updatedAt.toISOString(),
-        description: character.description,
         tags: character.tags ?? [],
         image: ToImageDto(character.image),
         boardIds: character.boards.map((board) => board.id),
