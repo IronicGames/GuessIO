@@ -20,8 +20,7 @@ app.use(
   }),
 );
 app.use(cookieParser());
-app.use(express.json());
-
+app.use(express.json({ limit: '10mb' })); // base64 inflates ~33% so 5MB file ≈ 7MB body
 // Routes
 app.use('/api', statusRoutes); // /api/health
 app.use('/api/auth', authRoutes); // /api/auth/*

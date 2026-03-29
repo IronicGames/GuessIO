@@ -3,12 +3,10 @@ import { AppError } from '@errors/app-error';
 import { Prisma } from '@prisma/client';
 
 export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
-  // Prevent header modification after response sent
   if (res.headersSent) {
     return next(err);
   }
 
-  // Only log unexpected errors — operational errors are expected
   if (!(err instanceof AppError) || !err.isOperational) {
     console.error('Error:', {
       name: err.name,
@@ -19,7 +17,6 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
     });
   }
 
-  // Handle known operational errors
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       error: err.message,
@@ -27,46 +24,33 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
     });
   }
 
-  // Handle Prisma errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === 'P2025') {
-      return res.status(404).json({
-        error: 'Board not found',
-        status: 404,
-      });
+      return res.status(404).json({ error: 'Board not found', status: 404 });
     }
-
     if (err.code === 'P2002') {
-      return res.status(409).json({
-        error: 'Resource already exists',
-        status: 409,
-      });
+      return res.status(409).json({ error: 'Resource already exists', status: 409 });
     }
   }
 
-  // Handle JWT errors
   if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({
-      error: 'Invalid token',
-      status: 401,
-    });
+    return res.status(401).json({ error: 'Invalid token', status: 401 });
   }
 
   if (err.name === 'TokenExpiredError') {
-    return res.status(401).json({
-      error: 'Token expired',
-      status: 401,
-    });
+    return res.status(401).json({ error: 'Token expired', status: 401 });
   }
 
-  // Unknown errors (500)
-  return res.status(500).json({
-    error: 'Internal server error',
-    status: 500,
-  });
+  // Body parser sets err.type — cast needed since base Error doesn't have this field
+  if ((err as Error & { type?: string }).type === 'entity.too.large') {
+    return res
+      .status(413)
+      .json({ error: 'Image too large. Maximum file size is 5MB.', status: 413 });
+  }
+
+  return res.status(500).json({ error: 'Internal server error', status: 500 });
 }
 
-// Async error wrapper
 export function asyncHandler(
   fn: (req: Request, res: Response, next: NextFunction) => Promise<void>,
 ) {

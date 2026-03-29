@@ -1,6 +1,7 @@
 'use client';
 
 import { AspectRatio, Box, Button, Center, Image, Text, TextInput } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { IconCamera, IconX } from '@tabler/icons-react';
 import { useRef, useState } from 'react';
 
@@ -11,6 +12,9 @@ interface ImageUploadSectionProps {
 
 const isDataUrl = (s: string) => s.startsWith('data:');
 
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
 export default function ImageUploadSection({ value, onChange }: ImageUploadSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hovered, setHovered] = useState(false);
@@ -19,6 +23,18 @@ export default function ImageUploadSection({ value, onChange }: ImageUploadSecti
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      notifications.show({
+        title: 'Image too large',
+        message: `Please choose an image under ${MAX_FILE_SIZE_MB}MB.`,
+        color: 'red',
+      });
+      // Reset so the same file triggers onChange again if re-selected
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onloadend = () => {
       onChange(reader.result as string);
@@ -40,9 +56,6 @@ export default function ImageUploadSection({ value, onChange }: ImageUploadSecti
   };
 
   const handlePreviewClick = () => {
-    // Always open the file picker when clicking the preview area —
-    // whether there's no image yet, a data URL, or a regular URL.
-    // For URL images this clears the URL field first so they're not fighting.
     if (urlInput) {
       setUrlInput('');
       onChange(undefined);
@@ -60,7 +73,6 @@ export default function ImageUploadSection({ value, onChange }: ImageUploadSecti
         onChange={handleFileChange}
       />
 
-      {/* Square preview — matches the GridCard aspect ratio */}
       <AspectRatio ratio={1} w="40%" maw={180} mx="auto">
         <Box
           onClick={handlePreviewClick}
@@ -89,7 +101,6 @@ export default function ImageUploadSection({ value, onChange }: ImageUploadSecti
                 style={{ backgroundColor: '#1f2a3a' }}
               />
 
-              {/* Clear button */}
               <Button
                 size="xs"
                 color="red"
@@ -100,7 +111,6 @@ export default function ImageUploadSection({ value, onChange }: ImageUploadSecti
                 <IconX size={12} />
               </Button>
 
-              {/* Replace overlay — shown on hover regardless of URL or file */}
               {hovered && (
                 <Box
                   style={{
@@ -142,13 +152,11 @@ export default function ImageUploadSection({ value, onChange }: ImageUploadSecti
         </Box>
       </AspectRatio>
 
-      {/* URL input — secondary option */}
       <TextInput
         placeholder="Or paste image URL..."
         mt="sm"
         value={urlInput}
         onChange={(e) => handleUrlChange(e.target.value)}
-        // Disable when a file is loaded — mutually exclusive with file upload
         disabled={!!value && isDataUrl(value)}
         styles={{
           input: {

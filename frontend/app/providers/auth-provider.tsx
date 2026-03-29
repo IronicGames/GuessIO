@@ -3,7 +3,6 @@
 import { type UserProfile } from '@shared/types/user.types';
 import { createContext, useState, type ReactNode, useEffect, useContext, useCallback } from 'react';
 import { api } from '@lib/api';
-import LoadingOverlay from '@components/LoadingOverlay';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -38,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshUser]);
 
   const loginWithGoogle = useCallback(() => {
-    window.location.href = `http://localhost:8080/api/auth/google`;
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
   }, []);
 
   const loginAsGuest = useCallback(
@@ -54,10 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  if (loading) {
-    return <LoadingOverlay mode="screen" status="loading" />;
-  }
-
+  // Render children immediately — pages handle their own loading/auth states.
+  // The loading flag is exposed for consumers that need to wait (e.g. route guards).
   return (
     <AuthContext.Provider
       value={{ user, isLoggedIn: !!user, loginWithGoogle, loginAsGuest, logout, loading }}

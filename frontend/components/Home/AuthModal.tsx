@@ -1,51 +1,42 @@
 'use client';
 
-import { Modal, Stack, TextInput, Button, Divider, Text, Box } from '@mantine/core';
-import { IconBrandGoogle, IconUser } from '@tabler/icons-react';
-import { useState } from 'react';
+import { Modal, Stack, Button, Divider, Text, Box } from '@mantine/core';
+import { IconBrandGoogle } from '@tabler/icons-react';
 import { useAuth } from '@providers/auth-provider';
-import { buttonThemes } from '@styles/buttonThemes';
-import { notifications } from '@mantine/notifications';
+
+// 'session'       — user has no session at all (first visit / expired)
+// 'needs-account' — user is a guest trying to access a player-only feature
+type AuthModalReason = 'session' | 'needs-account';
 
 interface AuthModalProps {
   opened: boolean;
+  onClose?: () => void; // only provided when the modal is dismissible (needs-account case)
+  reason?: AuthModalReason;
 }
 
-export function AuthModal({ opened }: AuthModalProps) {
-  const { loginWithGoogle, loginAsGuest } = useAuth();
-  const [name, setName] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const copy = {
+  session: {
+    subtitle: 'Sign in with Google for a permanent account.',
+    // no dismiss — user must authenticate to use the app
+    dismissible: false,
+  },
+  'needs-account': {
+    subtitle: 'You need a permanent account to manage boards. Sign in with Google to continue.',
+    dismissible: true,
+  },
+};
 
-  const trimmed = name.trim();
-  // If the user typed something it must meet the length requirement.
-  // Empty is fine — the backend will generate a name.
-  const nameError = trimmed.length > 0 && (trimmed.length < 2 || trimmed.length > 20);
-  const canSubmit = !nameError && !isSubmitting;
-
-  const handleGuestLogin = async () => {
-    if (!canSubmit) return;
-    setIsSubmitting(true);
-    try {
-      // Pass trimmed name, or undefined to let the backend generate one
-      await loginAsGuest(trimmed || undefined);
-    } catch {
-      notifications.show({
-        title: 'Something went wrong',
-        message: 'Could not start a guest session. Please try again.',
-        color: 'red',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+export function AuthModal({ opened, onClose, reason = 'session' }: AuthModalProps) {
+  const { loginWithGoogle } = useAuth();
+  const { subtitle, dismissible } = copy[reason];
 
   return (
     <Modal
       opened={opened}
-      onClose={() => {}}
-      withCloseButton={false}
-      closeOnClickOutside={false}
-      closeOnEscape={false}
+      onClose={dismissible && onClose ? onClose : () => {}}
+      withCloseButton={dismissible}
+      closeOnClickOutside={dismissible}
+      closeOnEscape={dismissible}
       centered
       size="sm"
       radius="md"
@@ -61,7 +52,6 @@ export function AuthModal({ opened }: AuthModalProps) {
       }}
     >
       <Stack gap="xl" p="md">
-        {/* Header */}
         <Box ta="center">
           <Text
             fw={800}
@@ -75,55 +65,10 @@ export function AuthModal({ opened }: AuthModalProps) {
             guess.io
           </Text>
           <Text c="dimmed" size="sm" mt={6}>
-            Pick a name to jump in, or sign in for a permanent account
+            {subtitle}
           </Text>
         </Box>
 
-        {/* Guest Login */}
-        <Stack gap="sm">
-          <TextInput
-            placeholder="Leave blank for a random name"
-            size="md"
-            leftSection={<IconUser size={18} />}
-            value={name}
-            onChange={(e) => setName(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleGuestLogin();
-            }}
-            maxLength={20}
-            error={nameError ? 'Name must be between 2 and 20 characters' : undefined}
-            styles={{
-              input: {
-                backgroundColor: '#1f2a3a',
-                borderColor: '#33465f',
-                color: 'white',
-              },
-            }}
-          />
-
-          <Button
-            size="md"
-            onClick={handleGuestLogin}
-            disabled={!canSubmit}
-            loading={isSubmitting}
-            color={buttonThemes.primary.color}
-            c={buttonThemes.primary.textColor}
-            fullWidth
-            styles={{
-              root: { borderColor: buttonThemes.primary.borderColor },
-            }}
-          >
-            Play as Guest
-          </Button>
-        </Stack>
-
-        <Divider
-          label="or"
-          labelPosition="center"
-          styles={{ label: { color: '#6b7f96', fontSize: '0.75rem' } }}
-        />
-
-        {/* Google Login */}
         <Button
           size="md"
           variant="outline"
@@ -141,7 +86,7 @@ export function AuthModal({ opened }: AuthModalProps) {
         </Button>
 
         <Text size="xs" c="dimmed" ta="center">
-          Guest sessions last 90 days. Sign in with Google for a permanent account.
+          Signing in gives you a permanent account and access to all features.
         </Text>
       </Stack>
     </Modal>

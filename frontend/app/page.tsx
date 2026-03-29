@@ -1,42 +1,60 @@
 'use client';
+
 import { AuthErrorNotification } from '@components/Home/AuthErrorNotification';
 import { AuthModal } from '@components/Home/AuthModal';
 import HomePageButton from '@components/Home/HomePageButton';
 import { Stack, TextInput, Container, Flex } from '@mantine/core';
 import { useAuth } from '@providers/auth-provider';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function HomePage() {
   const router = useRouter();
-  const { isLoggedIn, user } = useAuth();
+  const { user } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  // Only players and admins can manage boards — guests cannot
+  const canManageBoards = user?.role === 'PLAYER' || user?.role === 'ADMIN';
+
+  const handleManageBoardsLocked = () => {
+    setAuthModalOpen(true);
+  };
 
   return (
     <>
-      {/* Opens automatically when not logged in — cannot be dismissed without authenticating */}
-      <AuthModal opened={!isLoggedIn} />
+      {/* Shown when guest clicks Manage Boards — dismissible, explains why */}
+      <AuthModal
+        opened={authModalOpen}
+        reason="needs-account"
+        onClose={() => setAuthModalOpen(false)}
+      />
 
       <AuthErrorNotification />
-      <Container size="md" h="70vh">
+
+      <Container size="sm" h="100%" py="xl">
         <Flex
           direction="column"
           justify="center"
           align="center"
-          gap={{ base: 'lg', sm: 'xl' }}
+          h="70vh"
+          gap={{ base: 'sm', sm: 'md' }}
           px={{ base: 'md', sm: 'lg' }}
         >
-          <Stack w="100%" maw={600} align="center">
-            <HomePageButton href="/boards" text="Public Match" />
-            <HomePageButton href="/boards" text="Create Lobby" />
-            {user?.role === 'PLAYER' || user?.role === 'ADMIN' ? (
-              <HomePageButton href="/boards" text="Manage Boards" />
-            ) : null}
-
-            {/* Enter Code Input */}
+          <Stack w="100%" maw={500} gap="md">
+            <HomePageButton href="/game/public" text="Public Match" />
+            <HomePageButton href="/game/lobby/create" text="Create Lobby" />
+            {/* Locked for guests — visible but explains access requirement on click */}
+            <HomePageButton
+              href="/boards"
+              text="Manage Boards"
+              locked={!canManageBoards}
+              onLockedClick={handleManageBoardsLocked}
+            />
+            {/* Enter lobby code */}
             <TextInput
               w="100%"
               placeholder="Enter Code"
               radius="lg"
-              maw={600}
               styles={{
                 input: {
                   height: 'auto',
@@ -45,10 +63,6 @@ export default function HomePage() {
                   textAlign: 'center',
                   backgroundColor: 'var(--mantine-color-dark-6)',
                   border: '2px solid var(--mantine-color-dark-4)',
-                  '&::placeholder': {
-                    color: 'var(--mantine-color-cyan-3)',
-                    opacity: 0.6,
-                  },
                 },
               }}
               onKeyDown={(e) => {
@@ -58,8 +72,7 @@ export default function HomePage() {
                 }
               }}
             />
-
-            <HomePageButton href="/boards" text="Donate" alternate />
+            <HomePageButton href="/donate" text="Donate" alternate />
           </Stack>
         </Flex>
       </Container>
