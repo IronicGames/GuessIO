@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshUser]);
 
   const loginWithGoogle = useCallback(() => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
+    window.location.href = `http://localhost:8080/api/auth/google`;
   }, []);
 
   const loginAsGuest = useCallback(

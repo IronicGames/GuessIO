@@ -1,6 +1,6 @@
 'use client';
 
-import { Stack, TagsInput, TextInput } from '@mantine/core';
+import { TagsInput, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { Role } from '@shared/types/misc.types';
 import { useAuth } from '@providers/auth-provider';
