@@ -1,8 +1,10 @@
 'use client';
 
+import { useNotify } from '@/hooks/useNotify';
 import ItemForm, { FormType } from '@components/Board/ItemForm';
 import ContentPaper from '@components/ContentPaper';
 import { api } from '@lib/api';
+import { getErrorMessage } from '@lib/errors';
 import { Flex } from '@mantine/core';
 import { useAuth } from '@providers/auth-provider';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,6 +14,7 @@ export default function CreateBoardPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const notify = useNotify();
   if (!user?.id) router.push('/');
 
   const { mutate: createBoard } = useMutation({
@@ -20,9 +23,7 @@ export default function CreateBoardPage() {
       queryClient.invalidateQueries({ queryKey: ['boards'] });
       router.push(`/boards/${createdBoard.id}`);
     },
-    onError: (error) => {
-      console.error('Failed to create board:', error);
-    },
+    onError: (e) => notify.error(getErrorMessage(e)),
   });
 
   const handleSubmit = (data: {

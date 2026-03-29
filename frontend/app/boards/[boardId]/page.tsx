@@ -28,15 +28,6 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
   const [showImportCharacterForm, setShowImportCharacterForm] = useState(false);
 
   const {
-    data: board,
-    isLoading: isLoadingBoard,
-    error: boardError,
-  } = useQuery({
-    queryKey: ['board', boardId],
-    queryFn: () => api.boards.getBoard(boardId),
-  });
-
-  const {
     data: boards,
     isLoading: isLoadingBoards,
     error: boardsError,
@@ -45,11 +36,24 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
     queryFn: () => api.boards.getBoardsForUser(),
   });
 
+  const board = boards?.filter((b) => b.id === boardId)[0];
+  const importableCharacters = boards
+    ? [
+        ...new Map(
+          boards
+            .filter((b) => b.id !== boardId)
+            .flatMap((b) => b.characters)
+            .filter((c) => !c.boardIds.includes(boardId))
+            .map((c) => [c.id, c]),
+        ).values(),
+      ]
+    : [];
+  const disableImportCharacters = importableCharacters.length === 0;
+
   const { mutate: importCharacter } = useMutation({
     mutationFn: (dto: CreateCharacterDto) => api.characters.createCharacter(boardId, dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['boards'] });
-      queryClient.invalidateQueries({ queryKey: ['board', boardId] });
       setShowImportCharacterForm(false);
     },
     onError: (e) => notify.error(getErrorMessage(e)),
@@ -59,7 +63,6 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
     mutationFn: (dto: CreateCharacterDto) => api.characters.createCharacter(boardId, dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['boards'] });
-      queryClient.invalidateQueries({ queryKey: ['board', boardId] });
       setCharacterFormType(FormType.Hidden);
       setCurrentCharacter(null);
     },
@@ -70,7 +73,6 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
     mutationFn: (dto: UpdateBoardDto) => api.boards.updateBoard(boardId, dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['boards'] });
-      queryClient.invalidateQueries({ queryKey: ['board', boardId] });
       router.push('/boards');
     },
     onError: (e) => notify.error(getErrorMessage(e)),
@@ -81,7 +83,6 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
       api.characters.updateCharacter(boardId, currentCharacter!.id, dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['boards'] });
-      queryClient.invalidateQueries({ queryKey: ['board', boardId] });
       setCharacterFormType(FormType.Hidden);
       setCurrentCharacter(null);
     },
@@ -126,7 +127,6 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
     mutationFn: (characterId: string) => api.characters.deleteCharacter(boardId, characterId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['boards'] });
-      queryClient.invalidateQueries({ queryKey: ['board', boardId] });
       setCharacterFormType(FormType.Hidden);
       setCurrentCharacter(null);
     },
@@ -137,7 +137,6 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
     mutationFn: () => api.boards.deleteBoard(boardId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['boards'] });
-      queryClient.invalidateQueries({ queryKey: ['board', boardId] });
       router.push('/boards');
     },
     onError: (e) => notify.error(getErrorMessage(e)),
@@ -162,8 +161,8 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
         }))
     : [];
   if (user?.id !== board?.userId) <StatusScreen text="This board does not belong to you" />;
-  if (isLoadingBoard || isLoadingBoards) return <StatusScreen />;
-  if (boardError || !board || boardsError) return <StatusScreen text="Error loading board" />;
+  if (isLoadingBoards) return <StatusScreen />;
+  if (!board || boardsError) return <StatusScreen text="Error loading board" />;
 
   const handleCancel = (formType: FormType) => {
     if (formType === FormType.Board) {
@@ -245,14 +244,7 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
               showSearch={true}
               searchPlaceholder="Search characters..."
               showImportButton={true}
-              disableImportButton={
-                !boards ||
-                boards.length <= 1 ||
-                boards
-                  .filter((b) => b.id !== boardId)
-                  .flatMap((b) => b.characters)
-                  .filter((c) => !c.boardIds.includes(boardId)).length === 0
-              }
+              disableImportButton={disableImportCharacters}
               showAddButton={true}
               onAddClick={handleAddCharacter}
               onImportClick={handleImportCharacter}
@@ -262,16 +254,12 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
           ) : (
             <GridContainer
               items={
-                boards
-                  ?.filter((b) => b.id !== boardId)
-                  .flatMap((b) => b.characters)
-                  .filter((c) => !c.boardIds.includes(boardId))
-                  .map((c) => ({
-                    id: c.id,
-                    name: c.name,
-                    imageUrl: c.image?.imageUrl,
-                    tags: c.tags,
-                  })) ?? []
+                importableCharacters.map((c) => ({
+                  id: c.id,
+                  name: c.name,
+                  imageUrl: c.image?.imageUrl,
+                  tags: c.tags,
+                })) ?? []
               }
               onItemClick={handleChooseCharacter}
               colCount={5}

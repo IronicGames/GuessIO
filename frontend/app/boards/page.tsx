@@ -8,9 +8,12 @@ import ContentPaper from '@components/ContentPaper';
 import { api } from '@lib/api';
 import { useQuery } from '@tanstack/react-query';
 import StatusScreen from '@components/StatusScreen';
+import { useNotify } from '@/hooks/useNotify';
+import { getErrorMessage } from '@lib/errors';
 
 export default function BoardsPage() {
   const router = useRouter();
+  const notify = useNotify();
   const {
     data: boards,
     isLoading,
@@ -20,7 +23,7 @@ export default function BoardsPage() {
     queryFn: api.boards.getBoardsForUser,
   });
   if (isLoading) return <StatusScreen />;
-  if (error || !boards) return <StatusScreen text="Error loading board" />;
+  if (error) return notify.error(getErrorMessage(error));
   const gridItems: GridItemData[] =
     boards
       ?.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0))
