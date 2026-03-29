@@ -1,43 +1,56 @@
 'use client';
 
-import { useNotify } from '@/hooks/useNotify';
-import { type GridItemData } from '@components/Board/GridCard';
+import { Flex, Group, Box } from '@mantine/core';
+import { IconPlus, IconUpload } from '@tabler/icons-react';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
+
+import BoardForm from '@components/Board/BoardForm';
+import CharacterForm from '@components/Board/CharacterForm';
 import GridContainer from '@components/Board/GridContainer';
-import ItemForm, { FormType } from '@components/Board/ItemForm';
 import ContentPaper from '@components/ContentPaper';
-import StatusScreen from '@components/StatusScreen';
+import LoadingOverlay from '@components/LoadingOverlay';
+import { useCharacterPanel } from '@/hooks/useCharacterPanel';
+import { useBoardMutations } from '@/hooks/useBoardMutations';
 import { api } from '@lib/api';
 import { getErrorMessage } from '@lib/errors';
-import { Group, Flex } from '@mantine/core';
 import { useAuth } from '@providers/auth-provider';
-import { type UpdateBoardDto } from '@shared/types/board.types';
-import { CreateCharacterDto, UpdateCharacterDto } from '@shared/types/character.types';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { use, useState } from 'react';
+import { type GridItemData } from '@components/Board/GridCard';
 
 export default function EditBoardPage({ params }: { params: Promise<{ boardId: string }> }) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { boardId } = use(params);
   const { user } = useAuth();
-  const notify = useNotify();
-
-  const [characterFormType, setCharacterFormType] = useState<FormType>(FormType.Hidden);
-  const [currentCharacter, setCurrentCharacter] = useState<GridItemData | null>(null);
-  const [showImportCharacterForm, setShowImportCharacterForm] = useState(false);
+  const panel = useCharacterPanel();
 
   const {
     data: boards,
-    isLoading: isLoadingBoards,
-    error: boardsError,
+    isLoading,
+    error,
   } = useQuery({
     queryKey: ['boards'],
     queryFn: () => api.boards.getBoardsForUser(),
   });
 
-  const board = boards?.filter((b) => b.id === boardId)[0];
-  const importableCharacters = boards
+  const mutations = useBoardMutations(boardId, {
+    onBoardSaved: () => router.push('/boards'),
+    onBoardDeleted: () => router.push('/boards'),
+    onCharacterSaved: panel.close,
+    onCharacterDeleted: panel.close,
+    onCharacterImported: panel.close,
+  });
+
+  if (isLoading) return <LoadingOverlay mode="screen" status="loading" />;
+  if (error) return <LoadingOverlay mode="screen" status="error" text={getErrorMessage(error)} />;
+
+  const board = boards?.find((b) => b.id === boardId);
+  if (!board) return <LoadingOverlay mode="screen" status="error" text="Board not found" />;
+  if (user?.id !== board.userId) {
+    return <LoadingOverlay mode="screen" status="error" text="This board does not belong to you" />;
+  }
+
+  const importableCharacters: GridItemData[] = boards
     ? [
         ...new Map(
           boards
@@ -46,149 +59,14 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
             .filter((c) => !c.boardIds.includes(boardId))
             .map((c) => [c.id, c]),
         ).values(),
-      ]
+      ].map((c) => ({ id: c.id, name: c.name, imageUrl: c.image?.imageUrl, tags: c.tags }))
     : [];
-  const disableImportCharacters = importableCharacters.length === 0;
 
-  const { mutate: importCharacter } = useMutation({
-    mutationFn: (dto: CreateCharacterDto) => api.characters.createCharacter(boardId, dto),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boards'] });
-      setShowImportCharacterForm(false);
-    },
-    onError: (e) => notify.error(getErrorMessage(e)),
-  });
-
-  const { mutate: createCharacter } = useMutation({
-    mutationFn: (dto: CreateCharacterDto) => api.characters.createCharacter(boardId, dto),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boards'] });
-      setCharacterFormType(FormType.Hidden);
-      setCurrentCharacter(null);
-    },
-    onError: (e) => notify.error(getErrorMessage(e)),
-  });
-
-  const { mutate: updateBoard } = useMutation({
-    mutationFn: (dto: UpdateBoardDto) => api.boards.updateBoard(boardId, dto),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boards'] });
-      router.push('/boards');
-    },
-    onError: (e) => notify.error(getErrorMessage(e)),
-  });
-
-  const { mutate: updateCharacter } = useMutation({
-    mutationFn: (dto: UpdateCharacterDto) =>
-      api.characters.updateCharacter(boardId, currentCharacter!.id, dto),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boards'] });
-      setCharacterFormType(FormType.Hidden);
-      setCurrentCharacter(null);
-    },
-    onError: (e) => notify.error(getErrorMessage(e)),
-  });
-
-  const handleSubmit = async (
-    formType: FormType,
-    data: {
-      name: string;
-      description?: string;
-      imageUrl?: string;
-      tags?: string[];
-      isPublic?: boolean;
-    },
-  ) => {
-    if (formType === FormType.Board) {
-      updateBoard({
-        name: data.name,
-        description: data.description,
-        imageUrl: data.imageUrl,
-        isPublic: data?.isPublic,
-      });
-    } else if (formType === FormType.AddCharacter) {
-      createCharacter({
-        name: data.name,
-        imageUrl: data.imageUrl,
-        tags: data.tags,
-      });
-    } else if (formType === FormType.EditCharacter) {
-      updateCharacter({
-        name: data.name,
-        imageUrl: data.imageUrl,
-        tags: data.tags,
-      });
-    } else {
-      notify.error('Unknown form type');
-    }
-  };
-
-  const { mutate: deleteCharacter } = useMutation({
-    mutationFn: (characterId: string) => api.characters.deleteCharacter(boardId, characterId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boards'] });
-      setCharacterFormType(FormType.Hidden);
-      setCurrentCharacter(null);
-    },
-    onError: (e) => notify.error(getErrorMessage(e)),
-  });
-
-  const { mutate: deleteBoard } = useMutation({
-    mutationFn: () => api.boards.deleteBoard(boardId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boards'] });
-      router.push('/boards');
-    },
-    onError: (e) => notify.error(getErrorMessage(e)),
-  });
-
-  const handleDelete = async (formType: FormType, characterId?: string) => {
-    if (formType === FormType.Board) {
-      deleteBoard();
-    } else {
-      deleteCharacter(characterId!);
-    }
-  };
-
-  const characterItems: GridItemData[] = board?.characters
-    ? board.characters
-        .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0))
-        .map((char) => ({
-          id: char.id,
-          name: char.name,
-          imageUrl: char.image?.imageUrl,
-          tags: char.tags,
-        }))
+  const characterItems: GridItemData[] = board.characters
+    ? [...board.characters]
+        .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
+        .map((c) => ({ id: c.id, name: c.name, imageUrl: c.image?.imageUrl, tags: c.tags }))
     : [];
-  if (user?.id !== board?.userId) <StatusScreen text="This board does not belong to you" />;
-  if (isLoadingBoards) return <StatusScreen />;
-  if (!board || boardsError) return <StatusScreen text="Error loading board" />;
-
-  const handleCancel = (formType: FormType) => {
-    if (formType === FormType.Board) {
-      router.push('/boards');
-    } else {
-      setCharacterFormType(FormType.Hidden);
-      setCurrentCharacter(null);
-    }
-  };
-
-  const handleAddCharacter = () => {
-    setCharacterFormType(FormType.AddCharacter);
-  };
-
-  const handleImportCharacter = () => {
-    setShowImportCharacterForm(true);
-  };
-
-  const handleChooseCharacter = (character: GridItemData) => {
-    importCharacter({ characterId: character.id });
-  };
-
-  const handleCharacterClick = (character: GridItemData) => {
-    setCharacterFormType(FormType.EditCharacter);
-    setCurrentCharacter(character);
-  };
 
   return (
     <Flex justify="center" p="md">
@@ -196,75 +74,106 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
         align="stretch"
         gap="md"
         w={{ base: '95%', md: '90%', lg: '85%' }}
-        h="70vh"
-        style={{ flexWrap: 'nowrap' }}
+        h={{ base: 'auto', md: '70vh' }}
+        style={{ flexWrap: 'wrap' }}
       >
-        {/* Left: Board Form (30%) */}
-        <ContentPaper w={{ base: '100%', sm: '35%', md: '30%' }}>
-          <ItemForm
+        {/* Board form — full width when stacked, 30% when side by side */}
+        <ContentPaper
+          w={{ base: '100%', md: '30%' }}
+          h={{ base: 'auto', md: '100%' }}
+          style={{ minHeight: 400 }}
+        >
+          <BoardForm
             title="Edit Board"
-            namePlaceholder="Enter board name..."
-            descriptionPlaceholder="Describe your board..."
-            formType={FormType.Board}
             initialData={{
               name: board.name,
               description: board.description,
               imageUrl: board.image?.imageUrl,
               isPublic: board.isPublic,
             }}
-            onSubmit={(data) => handleSubmit(FormType.Board, data)}
-            onCancel={() => handleCancel(FormType.Board)}
-            onDelete={() => handleDelete(FormType.Board)}
+            onSubmit={(data) => mutations.updateBoard(data)}
+            onCancel={() => router.push('/boards')}
+            onDelete={() => mutations.deleteBoard()}
           />
         </ContentPaper>
 
-        {/* Right: Characters Grid (70%) */}
-        <ContentPaper w={{ base: '100%', sm: '65%', md: '70%' }}>
-          {characterFormType !== FormType.Hidden ? (
-            <ItemForm
-              title={`${characterFormType === FormType.AddCharacter ? 'Add' : 'Edit'} Character`}
-              namePlaceholder="Enter character name..."
-              formType={characterFormType}
-              initialData={
-                characterFormType === FormType.EditCharacter && currentCharacter
-                  ? {
-                      name: currentCharacter.name,
-                      imageUrl: currentCharacter.imageUrl,
-                      tags: currentCharacter.tags,
-                    }
-                  : undefined
-              }
-              onSubmit={(data) => handleSubmit(characterFormType, data)}
-              onCancel={() => handleCancel(characterFormType)}
-              onDelete={() => handleDelete(characterFormType, currentCharacter?.id)}
+        {/* Character panel — full width when stacked, remaining width when side by side */}
+        <ContentPaper
+          w={{ base: '100%', md: '65%' }}
+          h={{ base: 'auto', md: '100%' }}
+          style={{ minHeight: 500, flex: 1 }}
+        >
+          {/* position: relative scopes the loading overlay to this panel */}
+          <Box style={{ position: 'relative', height: '100%', minHeight: 'inherit' }}>
+            <LoadingOverlay
+              mode="overlay"
+              visible={mutations.isPending}
+              message={mutations.pendingLabel}
             />
-          ) : !showImportCharacterForm ? (
-            <GridContainer
-              items={characterItems}
-              showSearch={true}
-              searchPlaceholder="Search characters..."
-              showImportButton={true}
-              disableImportButton={disableImportCharacters}
-              showAddButton={true}
-              onAddClick={handleAddCharacter}
-              onImportClick={handleImportCharacter}
-              onItemClick={handleCharacterClick}
-              colCount={5}
-            />
-          ) : (
-            <GridContainer
-              items={
-                importableCharacters.map((c) => ({
-                  id: c.id,
-                  name: c.name,
-                  imageUrl: c.image?.imageUrl,
-                  tags: c.tags,
-                })) ?? []
-              }
-              onItemClick={handleChooseCharacter}
-              colCount={5}
-            />
-          )}
+
+            {panel.view === 'add' && (
+              <CharacterForm
+                title="Add Character"
+                onBack={panel.close}
+                onSubmit={(data) => mutations.createCharacter(data)}
+                onCancel={panel.close}
+              />
+            )}
+
+            {panel.view === 'edit' && panel.currentCharacter && (
+              <CharacterForm
+                title="Edit Character"
+                onBack={panel.close}
+                initialData={{
+                  name: panel.currentCharacter.name,
+                  imageUrl: panel.currentCharacter.imageUrl,
+                  tags: panel.currentCharacter.tags,
+                }}
+                onSubmit={(data) => mutations.updateCharacter(panel.currentCharacter!.id, data)}
+                onCancel={panel.close}
+                onDelete={() => mutations.deleteCharacter(panel.currentCharacter!.id)}
+              />
+            )}
+
+            {panel.view === 'import' && (
+              <GridContainer
+                items={importableCharacters}
+                onBack={panel.close}
+                showSearch={true}
+                searchPlaceholder="Search characters..."
+                onItemClick={(character) =>
+                  mutations.importCharacter({ characterId: character.id })
+                }
+                colCount={5}
+              />
+            )}
+
+            {panel.view === 'grid' && (
+              <GridContainer
+                items={characterItems}
+                showSearch={true}
+                searchPlaceholder="Search characters..."
+                actionCards={[
+                  {
+                    id: 'add',
+                    icon: <IconPlus size="70%" color="white" strokeWidth={2} />,
+                    label: 'Add',
+                    onClick: panel.openAdd,
+                  },
+                  {
+                    id: 'import',
+                    icon: <IconUpload size="70%" color="white" strokeWidth={2} />,
+                    label: 'Import',
+                    disabled: importableCharacters.length === 0,
+                    onClick: panel.openImport,
+                  },
+                ]}
+                onItemClick={panel.openEdit}
+                colCount={5}
+                onBack={() => router.push('/boards')}
+              />
+            )}
+          </Box>
         </ContentPaper>
       </Group>
     </Flex>

@@ -1,4 +1,4 @@
-import { Paper, Stack } from '@mantine/core';
+import { Paper } from '@mantine/core';
 import { type ReactNode, type CSSProperties } from 'react';
 
 interface ContentPaperProps {
@@ -27,13 +27,11 @@ export default function ContentPaper({
         borderWidth: 1,
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'auto',
+        overflow: 'hidden',
         ...style,
       }}
     >
-      <Stack gap="md" style={{ flex: 1 }}>
-        {children}
-      </Stack>
+      {children}
     </Paper>
   );
 }

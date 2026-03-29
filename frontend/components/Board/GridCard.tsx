@@ -1,6 +1,5 @@
 import { Card, Center, Text, AspectRatio } from '@mantine/core';
-import { IconPlus, IconUpload } from '@tabler/icons-react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 export interface GridItemData {
   id: string;
@@ -9,21 +8,33 @@ export interface GridItemData {
   tags?: string[];
 }
 
-interface GridCardProps {
-  item?: GridItemData;
-  cardType?: 'add' | 'import' | 'item';
+export interface ActionCardConfig {
+  id: string;
+  icon: ReactNode;
+  label: string;
   disabled?: boolean;
-  onClick?: () => void;
+  onClick: () => void;
 }
 
-export default function GridCard({
-  item,
-  cardType = 'item',
-  disabled = false,
-  onClick,
-}: GridCardProps) {
-  const [hovered, setHovered] = useState(false);
+// Discriminated union — no ambiguous optional props
+type GridCardProps =
+  | {
+      variant: 'item';
+      item: GridItemData;
+      disabled?: boolean;
+      onClick?: () => void;
+    }
+  | {
+      variant: 'action';
+      icon: ReactNode;
+      label: string;
+      disabled?: boolean;
+      onClick?: () => void;
+    };
 
+export default function GridCard(props: GridCardProps) {
+  const [hovered, setHovered] = useState(false);
+  const { disabled = false, onClick } = props;
   const isClickable = !!onClick && !disabled;
 
   return (
@@ -39,51 +50,37 @@ export default function GridCard({
         bg="#2f3e55"
         style={{
           borderColor: '#33465f',
-          cursor: isClickable ? 'pointer' : 'not-allowed',
-          // Hover scale — only when clickable
+          cursor: isClickable ? 'pointer' : disabled ? 'not-allowed' : 'default',
           transform: hovered ? 'scale(1.02)' : 'scale(1)',
           transition: 'transform 0.2s ease, opacity 0.2s ease',
           width: '100%',
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          // Visually communicate disabled state
           opacity: disabled ? 0.4 : 1,
           filter: disabled ? 'grayscale(40%)' : 'none',
         }}
       >
-        {/* Image Section */}
         <Card.Section style={{ flex: 1, overflow: 'hidden' }}>
-          {!item ? (
-            <Center h="100%">
-              {cardType === 'add' ? (
-                <IconPlus size="70%" color="white" strokeWidth={2} />
-              ) : (
-                <IconUpload size="70%" color="white" strokeWidth={2} />
-              )}
-            </Center>
-          ) : item.imageUrl ? (
+          {props.variant === 'action' ? (
+            <Center h="100%">{props.icon}</Center>
+          ) : props.item.imageUrl ? (
             <img
-              src={item.imageUrl}
-              alt={item.name}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-              }}
+              src={props.item.imageUrl}
+              alt={props.item.name}
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
           ) : (
             <Center h="100%" bg="#1f2a3a">
-              {/* TODO: Replace with default image */}
+              {/* TODO: Replace with default character image */}
               <Text c="dimmed">No Image</Text>
             </Center>
           )}
         </Card.Section>
 
-        {/* Name */}
         <Card.Section p="xs" style={{ flexShrink: 0 }}>
           <Text c="white" fw={500} ta="center" lineClamp={2} size="lg">
-            {item?.name ? item.name : cardType === 'add' ? 'Add' : 'Import'}
+            {props.variant === 'action' ? props.label : props.item.name}
           </Text>
         </Card.Section>
       </Card>

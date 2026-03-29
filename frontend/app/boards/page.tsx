@@ -2,18 +2,19 @@
 
 import { Flex } from '@mantine/core';
 import { useRouter } from 'next/navigation';
-import { type GridItemData } from '@components/Board/GridCard';
+import { useQuery } from '@tanstack/react-query';
+import { IconPlus } from '@tabler/icons-react';
+
 import GridContainer from '@components/Board/GridContainer';
 import ContentPaper from '@components/ContentPaper';
+import LoadingOverlay from '@components/LoadingOverlay';
 import { api } from '@lib/api';
-import { useQuery } from '@tanstack/react-query';
-import StatusScreen from '@components/StatusScreen';
-import { useNotify } from '@/hooks/useNotify';
 import { getErrorMessage } from '@lib/errors';
+import { type GridItemData } from '@components/Board/GridCard';
 
 export default function BoardsPage() {
   const router = useRouter();
-  const notify = useNotify();
+
   const {
     data: boards,
     isLoading,
@@ -22,27 +23,18 @@ export default function BoardsPage() {
     queryKey: ['boards'],
     queryFn: api.boards.getBoardsForUser,
   });
-  if (isLoading) return <StatusScreen />;
-  if (error) return notify.error(getErrorMessage(error));
+
+  if (isLoading) return <LoadingOverlay mode="screen" status="loading" />;
+  if (error) return <LoadingOverlay mode="screen" status="error" text={getErrorMessage(error)} />;
+
   const gridItems: GridItemData[] =
     boards
-      ?.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0))
+      ?.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
       .map((board) => ({
         id: board.id,
         name: board.name,
         imageUrl: board.image?.imageUrl,
-        isPublic: board.isPublic,
       })) ?? [];
-
-  const handleAddBoard = () => {
-    router.push('/boards/create');
-  };
-
-  const handleBoardClick = (boardItem: GridItemData) => {
-    if (boardItem.id) {
-      router.push(`/boards/${boardItem.id}`);
-    }
-  };
 
   return (
     <Flex justify="center" p="md">
@@ -51,10 +43,17 @@ export default function BoardsPage() {
           items={gridItems}
           showSearch={true}
           searchPlaceholder="Search boards..."
-          showAddButton={true}
-          onAddClick={handleAddBoard}
-          onItemClick={handleBoardClick}
+          actionCards={[
+            {
+              id: 'create',
+              icon: <IconPlus size="70%" color="white" strokeWidth={2} />,
+              label: 'Create',
+              onClick: () => router.push('/boards/create'),
+            },
+          ]}
+          onItemClick={(board) => router.push(`/boards/${board.id}`)}
           colCount={5}
+          onBack={() => router.push('/')}
         />
       </ContentPaper>
     </Flex>

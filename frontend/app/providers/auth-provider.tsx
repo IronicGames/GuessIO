@@ -3,8 +3,7 @@
 import { type UserProfile } from '@shared/types/user.types';
 import { createContext, useState, type ReactNode, useEffect, useContext, useCallback } from 'react';
 import { api } from '@lib/api';
-import StatusScreen from '@components/StatusScreen';
-import { useRouter } from 'next/navigation';
+import LoadingOverlay from '@components/LoadingOverlay';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -20,7 +19,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   const refreshUser = useCallback(async () => {
     const profileData = await api.auth.getUserProfile();
@@ -40,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshUser]);
 
   const loginWithGoogle = useCallback(() => {
-    window.location.href = 'http://localhost:8080/api/auth/google';
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
   }, []);
 
   const loginAsGuest = useCallback(
@@ -53,19 +51,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     api.auth.logout();
-    router.push('/');
     setUser(null);
   }, []);
 
-  const isLoggedIn = !!user;
-
   if (loading) {
-    return <StatusScreen />;
+    return <LoadingOverlay mode="screen" status="loading" />;
   }
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoggedIn, loginWithGoogle, loginAsGuest, logout, loading }}
+      value={{ user, isLoggedIn: !!user, loginWithGoogle, loginAsGuest, logout, loading }}
     >
       {children}
     </AuthContext.Provider>
