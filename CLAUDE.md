@@ -10,8 +10,8 @@ to suggest updates based on what was built, review them, and commit the changes.
 
 Browser-based multiplayer game inspired by Guess Who. Players create custom character
 boards and play privately with friends or in public matchmade games. Standard board is
-6×4, customisable up to 10×10. Two game modes: Chat Mode (free-form questions) and
-Tag Mode (pick from predefined tags).
+6×4 (24 characters). Two game modes: Casual Mode (free-form, honour-based) and
+Tag Mode (pick from predefined tags — system auto-answers yes/no).
 
 **Domain:** playguess.io
 **Target:** v1.0 launch
@@ -46,8 +46,9 @@ Tag Mode (pick from predefined tags).
 
 ## Design Document
 
-Full design document lives on Notion (section 11 has live development status).
-All key decisions from it are captured in this file.
+Full design document: **Guess.io v1 Design Document 2.0** on Notion (child of the main design doc page).
+This is the single source of truth for product decisions, architecture, and build order.
+CLAUDE.md captures the code-level conventions and patterns needed for development sessions.
 
 ---
 
@@ -97,11 +98,13 @@ do not add per-route guards inside board/character route files.
 - `auth.middleware.ts` — `requireAuth` (reads cookie, attaches `req.user: UserProfile`), `requireRole(...roles)`
 - `auth.controller.ts` — `loginAsGuest`, `getUserProfile` (guest-compatible — returns JWT payload directly for guests), `getCurrentUser` (PLAYER/ADMIN only — fetches full user from DB), `initiateGoogleLogin`, `handleGoogleCallback`
 - `auth.route.ts` — `POST /auth/loginAsGuest` (no auth), `GET /auth/profile` (requireAuth, guest-compatible), `GET /auth/me` (requireAuth + requireRole PLAYER/ADMIN — DB users only), `POST /auth/logout`
+- `board.route.ts` — `GET /`, `GET /:boardId`, `POST /`, `PUT /:boardId`, `DELETE /:boardId`; characters nested at `/:boardId/characters`
 - `validation.schemas.ts` — Zod schemas for boards, characters, auth; `guestLoginSchema` (name optional, 2–20 chars if provided)
-- `board.service.ts` / `character.service.ts` — business logic + DTO mapping (`ToBoardDto`, `ToCharacterDto`)
+- `board.service.ts` / `character.service.ts` — business logic + DTO mapping (`ToBoardDto`, `ToCharacterDto`); `updateBoard` and `deleteBoard` check ownership (`userId === board.userId`) in the service layer before mutating
 - `board.repository.ts` / `character.repository.ts` — Prisma queries
 - `app.ts` — `express.json({ limit: '10mb' })`, board routes protected at router level; characters nested under boards (`/api/boards/:boardId/characters`)
 - `error-handler.middleware.ts` — handles `entity.too.large` → 413, Prisma errors, JWT errors, `AppError`
+- `tests/` — 72 tests across unit (service logic), integration (HTTP + real DB), functional (full workflows); auth integration tests cover loginAsGuest, profile, me, logout, middleware edge cases; board tests cover all CRUD, ownership enforcement, GET by ID, and 413
 
 ### Frontend — Auth & Layout
 - `auth-provider.tsx` — `loginWithGoogle` (redirect to `NEXT_PUBLIC_API_URL/auth/google`), `loginAsGuest` (POST + refresh), `logout`, `loading` flag; renders children immediately
@@ -215,24 +218,36 @@ never change URLs in code between environments.
 
 ## Still To Do / Known Issues
 
+Build order for v1 (top = do first):
+
 | Item | Priority | Notes |
 |---|---|---|
-| Socket.io integration | High | Zero lines wired. Auth pattern designed (reads token from `socket.handshake.auth.token`). Blocks lobby, gameplay, and chat. |
-| Lobby system | High | Private lobby creation, join codes, host controls, turn timer, board selection, lobby chat |
-| Gameplay — Chat Mode | High | Turn system (Ask/Guess), question highlighting, Yes/No/Ask Again, cross-offs (frontend only), guess mechanic, win condition |
-| Gameplay — Tag Mode | High | Tag search box UI, pick-a-tag flow (premade boards only in v1) |
-| Public matchmaking | High | Finding match screen, board voting, random board pick |
-| S3 signed URL image upload | High (pre-launch) | Current base64-through-Express is temporary. Backend generates signed URL, frontend uploads directly to S3. `express.json({ limit: '10mb' })` is a stopgap. |
-| One premade board + pipeline | High | Needed for v1. Tag Mode only works on premade boards. |
-| Donation button | Must-have v1 | Not yet built |
-| ToS / Privacy Policy pages | Must-have v1 | Not yet built |
-| Profile page | Must-have v1 | `/profile` linked from header but page doesn't exist |
-| Settings page | Must-have v1 | `/settings` linked from header but page doesn't exist |
-| Admin panel UI | Medium | `requireRole('ADMIN')` guards exist on backend, no admin UI built |
-| Match history | Medium | `GameParticipant` model not yet added to schema. Needs `userId?`, `displayName`, `isGuest`, `outcome` |
-| Guest banning | Deferred post-v1 | Inherently weak without device fingerprinting |
-| Tag Mode for custom boards | Deferred post-v1 | Explicitly out of v1 scope |
-| Mobile compatibility | Could-have | Responsive layouts started but not fully tested |
+| Socket.io integration | High | Zero lines wired. Auth pattern: reads token from `socket.handshake.auth.token`. Blocks everything below. |
+| Private lobby | High | Lobby creation/join via code, real-time host↔joiner sync. Board selection (min 24 chars to play; host sees "Host is selecting…" privacy). Host can disable characters. 24 chosen randomly at game start from non-disabled set. Settings: mode/timer/lives. Host privileges transfer. Chat persists into game. |
+| DB schema: Game Instance + Game Log | High | Game Instance (players, winner, result, result reason, lobby settings snapshot). Game Log entries (action type, result, order). Add to schema before gameplay. |
+| Gameplay — Casual Mode | High | Phase-based turns (Phase 1: Ask/Guess decision → Phase 2: act → Phase 3: cross-offs + End Turn). Cross-offs are frontend-only. Turn timer (configurable), game timer (30min → draw). Disconnect: 5 skips = loss. 3 mutual skips = abandoned. |
+| Gameplay — Tag Mode | High | Collapsible tags list, character "i" button filters to that character's tags. Tag selection → system auto-answers. Same phase structure as Casual. |
+| Public matchmaking | High | Fixed settings: always Tag Mode, 3 lives, 3-min turns, 30-min game. Both players pick a board; system picks one randomly. |
+| S3 signed URL image upload | High (pre-launch) | Current base64-through-Express is a stopgap. Backend generates presigned URL; frontend uploads directly to S3. |
+| One premade board + pipeline | High | Needed for public matchmaking (always Tag Mode). Admin creates board with tagged characters. |
+| Guest name editing in header | Must-have v1 | After logging in as guest, header input should allow editing the display name without logging out. |
+| Donation button | Must-have v1 | Not yet built. |
+| ToS / Privacy Policy pages | Must-have v1 | Not yet built. |
+| Profile page | Must-have v1 | `/profile` linked from header but page doesn't exist. |
+| Settings page | Must-have v1 | `/settings` linked from header but page doesn't exist. |
+| Admin panel UI | Medium | `requireRole('ADMIN')` guards exist on backend; no admin UI built. |
+| Mobile compatibility | Could-have | Responsive layouts started but not fully tested. |
+
+## Post-v1 Ideas (from 29/03/2026 meeting)
+
+| Idea | Notes |
+|---|---|
+| Board export / import | Export as JSON or compressed string; share in video descriptions etc. Useful since user boards are private. |
+| Bulk character import | Drag images into manage boards page to create characters in bulk; set names/tags after. |
+| Managed Casual Mode | Asker types question in chat; answerer clicks Yes/No. Middle ground between Casual and Tag. |
+| Rock-paper-scissors turn order | Fun mini-game to decide who asks first. Host goes first in v1. |
+| Guest banning | Needs device fingerprinting to be meaningful. |
+| Tag Mode for custom boards | Tags are admin-only in UI. Needs opening up to all users first. |
 
 ## Known Technical Debt
 
