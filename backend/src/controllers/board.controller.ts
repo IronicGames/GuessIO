@@ -29,7 +29,7 @@ export const updateBoard = asyncHandler(async (req: Request, res: Response) => {
   const { boardId } = req.params as { boardId: string };
   const { name, description, isPublic, imageUrl } = req.body;
 
-  const updatedBoard = await boardService.updateBoard(boardId, {
+  const updatedBoard = await boardService.updateBoard(req.user.id, boardId, {
     name,
     description,
     isPublic,
@@ -40,6 +40,6 @@ export const updateBoard = asyncHandler(async (req: Request, res: Response) => {
 
 export const deleteBoard = asyncHandler(async (req: Request, res: Response) => {
   const { boardId } = req.params as { boardId: string };
-  const deletedBoard = await boardService.deleteBoard(boardId);
+  const deletedBoard = await boardService.deleteBoard(req.user.id, boardId);
   res.json({ id: deletedBoard });
 });

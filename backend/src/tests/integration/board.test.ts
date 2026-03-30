@@ -12,6 +12,7 @@ describe('Board Integration Tests', () => {
   let userToken: string;
   let userId: string;
   let otherUserId: string;
+  let otherUserToken: string;
 
   beforeEach(async () => {
     const userData = generateUniqueUserData();
@@ -22,7 +23,13 @@ describe('Board Integration Tests', () => {
       userData.profilePictureUrl,
     );
     userId = user.id;
-    userToken = authService.generateToken(user.id);
+    userToken = authService.generateToken({
+      id: user.id,
+      name: user.name,
+      role: user.role,
+      isGuest: false,
+      profilePicture: user.profilePicture?.imageUrl,
+    });
 
     const otherUserData = generateUniqueUserData();
     const otherUser = await userService.createOrGetGoogleUser(
@@ -32,14 +39,21 @@ describe('Board Integration Tests', () => {
       otherUserData.profilePictureUrl,
     );
     otherUserId = otherUser.id;
+    otherUserToken = authService.generateToken({
+      id: otherUser.id,
+      name: otherUser.name,
+      role: otherUser.role,
+      isGuest: false,
+      profilePicture: otherUser.profilePicture?.imageUrl,
+    });
   });
 
-  describe(`POST ${API_ENDPOINTS.boards.root}`, () => {
+  describe(`POST ${`/api${API_ENDPOINTS.boards.root}`}`, () => {
     it('should create a board with valid data', async () => {
       const uniqueName = `Pokemon Board ${crypto.randomUUID()}`;
 
       const response = await request(app)
-        .post(API_ENDPOINTS.boards.root)
+        .post(`/api${API_ENDPOINTS.boards.root}`)
         .set('Cookie', [`token=${userToken}`])
         .send({
           name: uniqueName,
@@ -70,7 +84,7 @@ describe('Board Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post(API_ENDPOINTS.boards.root)
+        .post(`/api${API_ENDPOINTS.boards.root}`)
         .set('Cookie', [`token=${userToken}`])
         .send(boardData)
         .expect(200);
@@ -86,7 +100,7 @@ describe('Board Integration Tests', () => {
 
     it('should return 400 when name is missing', async () => {
       const response = await request(app)
-        .post(API_ENDPOINTS.boards.root)
+        .post(`/api${API_ENDPOINTS.boards.root}`)
         .set('Cookie', [`token=${userToken}`])
         .send({ description: 'Missing name', isPublic: false })
         .expect(400);
@@ -98,7 +112,7 @@ describe('Board Integration Tests', () => {
 
     it('should return 401 when no auth token is provided', async () => {
       const response = await request(app)
-        .post(API_ENDPOINTS.boards.root)
+        .post(`/api${API_ENDPOINTS.boards.root}`)
         .send({ name: 'Unauthorized Board' })
         .expect(401);
 
@@ -108,7 +122,7 @@ describe('Board Integration Tests', () => {
 
     it('should return 401 when invalid token is provided', async () => {
       const response = await request(app)
-        .post(API_ENDPOINTS.boards.root)
+        .post(`/api${API_ENDPOINTS.boards.root}`)
         .set('Authorization', 'Bearer invalid-token')
         .send({ name: 'Invalid Token Board' })
         .expect(401);
@@ -117,7 +131,7 @@ describe('Board Integration Tests', () => {
     });
   });
 
-  describe(`GET ${API_ENDPOINTS.boards.root}`, () => {
+  describe(`GET ${`/api${API_ENDPOINTS.boards.root}`}`, () => {
     it('should return all boards for authenticated user', async () => {
       const board1Name = `Board 1 ${crypto.randomUUID()}`;
       const board2Name = `Board 2 ${crypto.randomUUID()}`;
@@ -139,7 +153,7 @@ describe('Board Integration Tests', () => {
       });
 
       const response = await request(app)
-        .get(API_ENDPOINTS.boards.root)
+        .get(`/api${API_ENDPOINTS.boards.root}`)
         .set('Cookie', [`token=${userToken}`])
         .expect(200);
 
@@ -161,7 +175,7 @@ describe('Board Integration Tests', () => {
       });
 
       const response = await request(app)
-        .get(API_ENDPOINTS.boards.root)
+        .get(`/api${API_ENDPOINTS.boards.root}`)
         .set('Cookie', [`token=${userToken}`])
         .expect(200);
 
@@ -172,7 +186,7 @@ describe('Board Integration Tests', () => {
     });
 
     it('should return 401 when no auth token is provided', async () => {
-      await request(app).get(API_ENDPOINTS.boards.root).expect(401);
+      await request(app).get(`/api${API_ENDPOINTS.boards.root}`).expect(401);
     });
   });
 
@@ -195,7 +209,7 @@ describe('Board Integration Tests', () => {
       const updatedName = `Updated Board ${crypto.randomUUID()}`;
 
       const response = await request(app)
-        .put(API_ENDPOINTS.boards.byId(boardId))
+        .put(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
         .set('Cookie', [`token=${userToken}`])
         .send({
           name: updatedName,
@@ -219,7 +233,7 @@ describe('Board Integration Tests', () => {
       const imageUrl = `https://example.com/new-image-${crypto.randomUUID()}.jpg`;
 
       await request(app)
-        .put(API_ENDPOINTS.boards.byId(boardId))
+        .put(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
         .set('Cookie', [`token=${userToken}`])
         .send({ name: `Board with New Image ${crypto.randomUUID()}`, imageUrl })
         .expect(200);
@@ -235,7 +249,7 @@ describe('Board Integration Tests', () => {
 
     it('should return 400 when name is missing', async () => {
       const response = await request(app)
-        .put(API_ENDPOINTS.boards.byId(boardId))
+        .put(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
         .set('Cookie', [`token=${userToken}`])
         .send({ description: 'Missing name' })
         .expect(400);
@@ -247,7 +261,7 @@ describe('Board Integration Tests', () => {
 
     it('should return 404 when board does not exist', async () => {
       const response = await request(app)
-        .put(API_ENDPOINTS.boards.byId(crypto.randomUUID()))
+        .put(`/api${API_ENDPOINTS.boards.byId(crypto.randomUUID())}`)
         .set('Cookie', [`token=${userToken}`])
         .send({ name: 'Non-existent Board' })
         .expect(404);
@@ -268,7 +282,7 @@ describe('Board Integration Tests', () => {
 
     it('should delete a board', async () => {
       const response = await request(app)
-        .delete(API_ENDPOINTS.boards.byId(boardId))
+        .delete(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
         .set('Cookie', [`token=${userToken}`])
         .expect(200);
 
@@ -283,11 +297,101 @@ describe('Board Integration Tests', () => {
 
     it('should return 404 when board does not exist', async () => {
       const response = await request(app)
-        .delete(API_ENDPOINTS.boards.byId(crypto.randomUUID()))
+        .delete(`/api${API_ENDPOINTS.boards.byId(crypto.randomUUID())}`)
         .set('Cookie', [`token=${userToken}`])
         .expect(404);
 
       expect(response.body.error).toBe('Board not found');
+    });
+  });
+
+  describe('GET /api/boards/:boardId', () => {
+    let boardId: string;
+
+    beforeEach(async () => {
+      const board = await prisma.board.create({
+        data: { name: `Fetchable Board ${crypto.randomUUID()}`, userId },
+      });
+      boardId = board.id;
+    });
+
+    it('should return board data for the owner', async () => {
+      const response = await request(app)
+        .get(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
+        .set('Cookie', [`token=${userToken}`])
+        .expect(200);
+
+      expect(response.body.id).toBe(boardId);
+      expect(response.body.userId).toBe(userId);
+      expect(response.body).toHaveProperty('characters');
+    });
+
+    it('should return 404 when board does not exist', async () => {
+      const response = await request(app)
+        .get(`/api${API_ENDPOINTS.boards.byId(crypto.randomUUID())}`)
+        .set('Cookie', [`token=${userToken}`])
+        .expect(404);
+
+      expect(response.body.error).toBe('Board not found');
+    });
+
+    it('should return 401 when requesting another user\'s board', async () => {
+      await request(app)
+        .get(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
+        .set('Cookie', [`token=${otherUserToken}`])
+        .expect(401);
+    });
+  });
+
+  describe('Board ownership enforcement on mutations', () => {
+    let boardId: string;
+
+    beforeEach(async () => {
+      const board = await prisma.board.create({
+        data: { name: `Owned Board ${crypto.randomUUID()}`, userId },
+      });
+      boardId = board.id;
+    });
+
+    it('should return 401 when user B tries to update user A\'s board', async () => {
+      const response = await request(app)
+        .put(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
+        .set('Cookie', [`token=${otherUserToken}`])
+        .send({ name: 'Hijacked Name' })
+        .expect(401);
+
+      expect(response.body.error).toBeDefined();
+    });
+
+    it('should return 401 when user B tries to delete user A\'s board', async () => {
+      const response = await request(app)
+        .delete(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
+        .set('Cookie', [`token=${otherUserToken}`])
+        .expect(401);
+
+      expect(response.body.error).toBeDefined();
+
+      // Board should still exist
+      const boardInDb = await prisma.board.findUnique({ where: { id: boardId } });
+      expect(boardInDb).not.toBeNull();
+    });
+  });
+
+  describe('Request body size limit', () => {
+    it('should return 413 when payload exceeds 10MB', async () => {
+      // Build a JSON body just over the 10MB express.json limit
+      const largePayload = {
+        name: 'Big Board',
+        imageUrl: 'x'.repeat(11 * 1024 * 1024),
+      };
+
+      const response = await request(app)
+        .post(`/api${API_ENDPOINTS.boards.root}`)
+        .set('Cookie', [`token=${userToken}`])
+        .send(largePayload)
+        .expect(413);
+
+      expect(response.body.error).toBe('Image too large. Maximum file size is 5MB.');
     });
   });
 });

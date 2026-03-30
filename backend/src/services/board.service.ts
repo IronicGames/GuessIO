@@ -30,7 +30,18 @@ export async function createBoard(userId: string, createBoardDto: CreateBoardDto
   return createdBoardId;
 }
 
-export async function updateBoard(id: string, updateBoardDto: UpdateBoardDto): Promise<string> {
+export async function updateBoard(
+  userId: string,
+  id: string,
+  updateBoardDto: UpdateBoardDto,
+): Promise<string> {
+  const board = await boardRepository.getBoard(id);
+  if (!board) {
+    throw new NotFoundError('Board not found');
+  }
+  if (userId !== board.userId) {
+    throw new UnauthorizedError(`Board ${id} does not belong to user ${userId}`);
+  }
   let updatedBoardId: string;
   try {
     updatedBoardId = await boardRepository.updateBoard(id, updateBoardDto);
@@ -40,7 +51,14 @@ export async function updateBoard(id: string, updateBoardDto: UpdateBoardDto): P
   return updatedBoardId;
 }
 
-export async function deleteBoard(id: string): Promise<string> {
+export async function deleteBoard(userId: string, id: string): Promise<string> {
+  const board = await boardRepository.getBoard(id);
+  if (!board) {
+    throw new NotFoundError('Board not found');
+  }
+  if (userId !== board.userId) {
+    throw new UnauthorizedError(`Board ${id} does not belong to user ${userId}`);
+  }
   let deletedBoardId: string;
   try {
     deletedBoardId = await boardRepository.deleteBoard(id);

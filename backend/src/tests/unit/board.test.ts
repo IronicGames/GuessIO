@@ -43,7 +43,7 @@ describe('Board Service Unit Tests', () => {
   describe('updateBoard', () => {
     it('should throw NotFoundError when board does not exist', async () => {
       await expect(
-        boardService.updateBoard(crypto.randomUUID(), {
+        boardService.updateBoard(userId, crypto.randomUUID(), {
           name: 'Non-existent Board',
         }),
       ).rejects.toThrow(NotFoundError);
@@ -54,7 +54,7 @@ describe('Board Service Unit Tests', () => {
         name: `Board to Update ${crypto.randomUUID()}`,
       });
 
-      const updatedId = await boardService.updateBoard(boardId, {
+      const updatedId = await boardService.updateBoard(userId, boardId, {
         name: `Updated Board ${crypto.randomUUID()}`,
         description: 'Updated description',
       });
@@ -65,7 +65,9 @@ describe('Board Service Unit Tests', () => {
 
   describe('deleteBoard', () => {
     it('should throw NotFoundError when board does not exist', async () => {
-      await expect(boardService.deleteBoard(crypto.randomUUID())).rejects.toThrow(NotFoundError);
+      await expect(boardService.deleteBoard(userId, crypto.randomUUID())).rejects.toThrow(
+        NotFoundError,
+      );
     });
 
     it('should successfully delete existing board', async () => {
@@ -73,10 +75,10 @@ describe('Board Service Unit Tests', () => {
         name: `Board to Delete ${crypto.randomUUID()}`,
       });
 
-      const deletedId = await boardService.deleteBoard(boardId);
+      const deletedId = await boardService.deleteBoard(userId, boardId);
       expect(deletedId).toBe(boardId);
 
-      await expect(boardService.deleteBoard(boardId)).rejects.toThrow(NotFoundError);
+      await expect(boardService.deleteBoard(userId, boardId)).rejects.toThrow(NotFoundError);
     });
   });
 

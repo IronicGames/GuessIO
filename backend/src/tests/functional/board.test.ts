@@ -20,7 +20,13 @@ describe('Board Functional Tests', () => {
       userData.profilePictureUrl,
     );
     userId = user.id;
-    userToken = authService.generateToken(user.id);
+    userToken = authService.generateToken({
+      id: user.id,
+      name: user.name,
+      role: user.role,
+      isGuest: false,
+      profilePicture: user.profilePicture?.imageUrl,
+    });
   });
 
   it('should complete full CRUD workflow: Create → Get → Update → Delete', async () => {
@@ -29,7 +35,7 @@ describe('Board Functional Tests', () => {
 
     // 1. Create board
     const createResponse = await request(app)
-      .post(API_ENDPOINTS.boards.root)
+      .post(`/api${API_ENDPOINTS.boards.root}`)
       .set('Cookie', [`token=${userToken}`])
       .send({
         name: uniqueName,
@@ -43,7 +49,7 @@ describe('Board Functional Tests', () => {
 
     // 2. Get boards - verify it exists
     const getResponse = await request(app)
-      .get(API_ENDPOINTS.boards.root)
+      .get(`/api${API_ENDPOINTS.boards.root}`)
       .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
@@ -53,7 +59,7 @@ describe('Board Functional Tests', () => {
 
     // 3. Update board - verify changes
     await request(app)
-      .put(API_ENDPOINTS.boards.byId(boardId))
+      .put(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
       .set('Cookie', [`token=${userToken}`])
       .send({
         name: updatedName,
@@ -63,7 +69,7 @@ describe('Board Functional Tests', () => {
       .expect(200);
 
     const getAfterUpdate = await request(app)
-      .get(API_ENDPOINTS.boards.root)
+      .get(`/api${API_ENDPOINTS.boards.root}`)
       .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
@@ -74,12 +80,12 @@ describe('Board Functional Tests', () => {
 
     // 4. Delete board - verify gone
     await request(app)
-      .delete(API_ENDPOINTS.boards.byId(boardId))
+      .delete(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
       .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
     const getAfterDelete = await request(app)
-      .get(API_ENDPOINTS.boards.root)
+      .get(`/api${API_ENDPOINTS.boards.root}`)
       .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
@@ -93,19 +99,19 @@ describe('Board Functional Tests', () => {
     const board3Name = `Marvel Board ${crypto.randomUUID()}`;
 
     const board1 = await request(app)
-      .post(API_ENDPOINTS.boards.root)
+      .post(`/api${API_ENDPOINTS.boards.root}`)
       .set('Cookie', [`token=${userToken}`])
       .send({ name: board1Name })
       .expect(200);
 
     const board2 = await request(app)
-      .post(API_ENDPOINTS.boards.root)
+      .post(`/api${API_ENDPOINTS.boards.root}`)
       .set('Cookie', [`token=${userToken}`])
       .send({ name: board2Name, isPublic: true })
       .expect(200);
 
     const board3 = await request(app)
-      .post(API_ENDPOINTS.boards.root)
+      .post(`/api${API_ENDPOINTS.boards.root}`)
       .set('Cookie', [`token=${userToken}`])
       .send({ name: board3Name, description: 'Superheroes' })
       .expect(200);
@@ -113,7 +119,7 @@ describe('Board Functional Tests', () => {
     const boardIds = [board1.body.id, board2.body.id, board3.body.id];
 
     const response = await request(app)
-      .get(API_ENDPOINTS.boards.root)
+      .get(`/api${API_ENDPOINTS.boards.root}`)
       .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
@@ -134,7 +140,7 @@ describe('Board Functional Tests', () => {
     const boardName = `Board with Image ${crypto.randomUUID()}`;
 
     const createResponse = await request(app)
-      .post(API_ENDPOINTS.boards.root)
+      .post(`/api${API_ENDPOINTS.boards.root}`)
       .set('Cookie', [`token=${userToken}`])
       .send({ name: boardName, imageUrl })
       .expect(200);
@@ -142,7 +148,7 @@ describe('Board Functional Tests', () => {
     const boardId = createResponse.body.id;
 
     const getResponse = await request(app)
-      .get(API_ENDPOINTS.boards.root)
+      .get(`/api${API_ENDPOINTS.boards.root}`)
       .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
@@ -151,13 +157,13 @@ describe('Board Functional Tests', () => {
     expect(createdBoard.image.imageUrl).toBe(imageUrl);
 
     await request(app)
-      .put(API_ENDPOINTS.boards.byId(boardId))
+      .put(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
       .set('Cookie', [`token=${userToken}`])
       .send({ name: `${boardName} updated`, imageUrl: newImageUrl })
       .expect(200);
 
     const getAfterUpdate = await request(app)
-      .get(API_ENDPOINTS.boards.root)
+      .get(`/api${API_ENDPOINTS.boards.root}`)
       .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
@@ -165,12 +171,12 @@ describe('Board Functional Tests', () => {
     expect(updatedBoard.image.imageUrl).toBe(newImageUrl);
 
     await request(app)
-      .delete(API_ENDPOINTS.boards.byId(boardId))
+      .delete(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
       .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
     const finalGet = await request(app)
-      .get(API_ENDPOINTS.boards.root)
+      .get(`/api${API_ENDPOINTS.boards.root}`)
       .set('Cookie', [`token=${userToken}`])
       .expect(200);
 
