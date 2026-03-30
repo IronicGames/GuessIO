@@ -25,6 +25,8 @@ model User {
 
   boards         Board[]
   profilePicture Image?
+  gamesAsPlayer1 GameInstance[] @relation("GameInstancePlayer1")
+  gamesAsPlayer2 GameInstance[] @relation("GameInstancePlayer2")
 
   @@map("users")
 }
@@ -69,9 +71,111 @@ model Board {
 
   userId String? @map("user_id")
 
-  user       User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  image      Image?
-  characters Character[]
+  user          User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  image         Image?
+  characters    Character[]
+  gameInstances GameInstance[]
 
   @@map("boards")
+}
+
+// ─── Game enums ───────────────────────────────────────────────────────────────
+
+enum GameMode {
+  CASUAL
+  TAG
+
+  @@map("game_mode")
+}
+
+enum GameResult {
+  WIN
+  DRAW
+  ABANDONED
+
+  @@map("game_result")
+}
+
+enum GameResultReason {
+  CORRECT_GUESS
+  LIVES_EXHAUSTED
+  TIMEOUT
+  DISCONNECT
+  MUTUAL_SKIP
+
+  @@map("game_result_reason")
+}
+
+enum LogActionType {
+  ASK
+  GUESS
+  SKIP
+
+  @@map("log_action_type")
+}
+
+// ─── Game models ──────────────────────────────────────────────────────────────
+
+model GameInstance {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Board snapshot — nullable FK so board can be deleted post-game without losing history
+  boardId   String?  @map("board_id")
+  boardName String   @map("board_name")
+  board     Board?   @relation(fields: [boardId], references: [id], onDelete: SetNull)
+
+  // Settings snapshot
+  mode      GameMode
+  turnTimer Int?     @map("turn_timer") // null = off; 30 | 60 | 180 = seconds
+  lives     Int // 0 = infinite; 1 | 3 = finite
+  isPublic  Boolean  @map("is_public")
+
+  // Player identity — nullable FK (null for guests); name snapshot always present
+  player1UserId String? @map("player1_user_id")
+  player1Name   String  @map("player1_name")
+  player2UserId String? @map("player2_user_id")
+  player2Name   String  @map("player2_name")
+  player1       User?   @relation("GameInstancePlayer1", fields: [player1UserId], references: [id], onDelete: SetNull)
+  player2       User?   @relation("GameInstancePlayer2", fields: [player2UserId], references: [id], onDelete: SetNull)
+
+  // Outcome
+  result          GameResult
+  resultReason    GameResultReason @map("result_reason")
+  winnerIsPlayer1 Boolean?         @map("winner_is_player1") // null = draw/abandoned
+
+  log GameLogEntry[]
+
+  @@index([player1UserId])
+  @@index([player2UserId])
+  @@index([createdAt])
+  @@map("game_instances")
+}
+
+model GameLogEntry {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  gameInstanceId String       @map("game_instance_id")
+  gameInstance   GameInstance @relation(fields: [gameInstanceId], references: [id], onDelete: Cascade)
+
+  turnNumber      Int           @map("turn_number")
+  playerIsPlayer1 Boolean       @map("player_is_player1")
+  actionType      LogActionType @map("action_type")
+
+  // What the action was about:
+  //   ASK (Tag Mode)  → the tag name e.g. "Is Saiyan?"
+  //   ASK (Casual)    → null (question happened in chat)
+  //   GUESS           → the character name e.g. "Goku"
+  //   SKIP            → null
+  subject String?
+
+  // Outcome of the action:
+  //   ASK (Tag Mode)  → "Yes" or "No"
+  //   GUESS           → "Correct" or "Wrong"
+  //   ASK (Casual) / SKIP → null
+  result String?
+
+  @@index([gameInstanceId])
+  @@map("game_log_entries")
 }
