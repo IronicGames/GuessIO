@@ -6,6 +6,8 @@ export interface GridItemData {
   name: string;
   imageUrl?: string;
   tags?: string[];
+  badge?: { label: string; color: string };
+  selected?: boolean;
 }
 
 export interface ActionCardConfig {
@@ -21,6 +23,7 @@ type GridCardProps =
   | {
       variant: 'item';
       item: GridItemData;
+      selected?: boolean;
       disabled?: boolean;
       onClick?: () => void;
     }
@@ -35,6 +38,9 @@ type GridCardProps =
 export default function GridCard(props: GridCardProps) {
   const [hovered, setHovered] = useState(false);
   const { disabled = false, onClick } = props;
+  // selected can come from the item data (when going through ItemGrid) or as a direct prop
+  const selected = props.variant === 'item' ? (props.selected ?? props.item.selected ?? false) : false;
+  const badge = props.variant === 'item' ? props.item.badge : undefined;
   const isClickable = !!onClick && !disabled;
 
   return (
@@ -49,7 +55,7 @@ export default function GridCard(props: GridCardProps) {
         onMouseLeave={() => setHovered(false)}
         bg="#2f3e55"
         style={{
-          borderColor: '#33465f',
+          borderColor: selected ? '#8ecae6' : '#33465f',
           cursor: isClickable ? 'pointer' : disabled ? 'not-allowed' : 'default',
           transform: hovered ? 'scale(1.02)' : 'scale(1)',
           transition: 'transform 0.2s ease, opacity 0.2s ease',
@@ -59,8 +65,29 @@ export default function GridCard(props: GridCardProps) {
           flexDirection: 'column',
           opacity: disabled ? 0.4 : 1,
           filter: disabled ? 'grayscale(40%)' : 'none',
+          position: 'relative',
         }}
       >
+        {/* Optional status badge — used e.g. to show character count on board cards */}
+        {badge && (
+          <Center
+            style={{
+              position: 'absolute',
+              top: 6,
+              right: 6,
+              zIndex: 2,
+              backgroundColor: badge.color + '22',
+              border: `1px solid ${badge.color}`,
+              borderRadius: 4,
+              padding: '1px 6px',
+            }}
+          >
+            <Text size="xs" c={badge.color} fw={600} style={{ lineHeight: 1.4 }}>
+              {badge.label}
+            </Text>
+          </Center>
+        )}
+
         <Card.Section style={{ flex: 1, overflow: 'hidden' }}>
           {props.variant === 'action' ? (
             <Center h="100%">{props.icon}</Center>

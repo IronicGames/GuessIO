@@ -11,7 +11,7 @@ interface ContentPaperProps {
 export default function ContentPaper({
   children,
   w = '100%',
-  h = '100%',
+  h = 'auto',
   style,
 }: ContentPaperProps) {
   return (

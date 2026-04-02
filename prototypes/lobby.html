@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guess.io — Lobby Prototype</title>
+  <style>
+    /* ============================================================
+       DESIGN TOKENS — exact values from darkBlue.css / buttonThemes.ts
+       ============================================================ */
+    :root {
+      --bg-page:      radial-gradient(ellipse at top, rgba(61,83,111,1) 0%, rgba(44,60,80,1) 50%, rgba(27,36,48,1) 100%);
+      --bg-card:      #243040;   /* ContentPaper bg */
+      --bg-card2:     #2f3e55;   /* GridCard bg */
+      --bg-input:     #1f2a3a;   /* .bg-search */
+      --border:       #33465f;
+      --cyan:         #8ecae6;
+      --text:         #e6edf3;
+      --text-dim:     rgba(230,237,243,0.55);
+      --text-dark:    #121620;
+      --error:        #fa5252;
+      --green:        #4caf7d;
+      --yellow:       #f5c542;
+      --header-h:     64px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg-page);
+      background-attachment: fixed;
+      overflow: hidden;
+    }
+
+    /* noise overlay matching darkBlue.css */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.06;
+      z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    }
+
+    /* ============================================================ APP SHELL ============================================================ */
+    #app {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ============================================================ HEADER ============================================================ */
+    #app-header {
+      height: var(--header-h);
+      flex-shrink: 0;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+      position: relative;
+      z-index: 50;
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--cyan);
+      letter-spacing: -0.5px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .logo span { color: var(--text-dim); font-weight: 400; }
+
+    .header-center {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Join code pill */
+    .join-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 7px 14px;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.15s;
+    }
+    .join-pill:hover { border-color: var(--cyan); }
+
+    .join-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-dim);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+    .join-code {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--text);
+      transition: color 0.15s;
+    }
+    .join-pill:hover .join-code { color: var(--cyan); }
+    .join-action {
+      font-size: 15px;
+      color: var(--text-dim);
+      transition: color 0.15s;
+    }
+    .join-pill:hover .join-action { color: var(--cyan); }
+
+    /* User area */
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .user-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px;
+      color: var(--text-dark);
+      flex-shrink: 0;
+      border: 2px solid transparent;
+      transition: border-color 0.15s;
+    }
+    .header-user:hover .user-avatar { border-color: var(--cyan); }
+    .user-name { font-size: 14px; font-weight: 500; }
+    .host-crown { font-size: 13px; }
+
+    /* ============================================================ LOBBY LAYOUT ============================================================ */
+    #lobby {
+      flex: 1;
+      display: flex;
+      gap: 12px;
+      padding: 14px;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ============================================================ LEFT PANEL ============================================================ */
+    #left-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.35);
+      min-width: 0;
+    }
+
+    /* Panel sub-components */
+    .panel-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .panel-title { font-size: 15px; font-weight: 700; }
+    .panel-sub   { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+    .back-btn {
+      background: none; border: none;
+      color: var(--cyan);
+      font-size: 20px; line-height: 1;
+      padding: 2px 6px; border-radius: 6px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      display: flex; align-items: center; flex-shrink: 0;
+    }
+    .back-btn:hover { opacity: 0.65; }
+
+    .search-bar {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .search-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: var(--cyan); }
+    .search-input::placeholder { color: var(--text-dim); }
+
+    .tag-strip {
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .tag-chip {
+      font-size: 10px; font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: var(--bg-card2);
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.12s;
+      text-transform: uppercase; letter-spacing: 0.4px;
+      user-select: none;
+    }
+    .tag-chip:hover { border-color: rgba(142,202,230,0.5); color: var(--text); }
+    .tag-chip.active { background: var(--cyan); color: var(--text-dark); border-color: var(--cyan); }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      min-height: 0;
+    }
+    .panel-body::-webkit-scrollbar { width: 4px; }
+    .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .panel-body::-webkit-scrollbar-track { background: transparent; }
+
+    .panel-footer {
+      padding: 11px 16px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    /* ---- Board grid ---- */
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+      gap: 10px;
+    }
+    .board-card {
+      background: var(--bg-card2);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s;
+    }
+    .board-card:hover { transform: scale(1.02); border-color: #4a637e; }
+    .board-card.selected { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan); }
+    .board-card.invalid-board { opacity: 0.5; }
+    .board-card.invalid-board:hover { transform: scale(1); cursor: not-allowed; }
+
+    .board-img {
+      aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+    }
+    .board-meta {
+      padding: 8px 10px;
+      border-top: 1px solid var(--border);
+    }
+    .board-name {
+      font-size: 12px; font-weight: 600;
+      display: -webkit-box;
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+    .board-row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .badge {
+      font-size: 10px; font-weight: 700;
+      padding: 2px 7px; border-radius: 4px;
+    }
+    .badge-valid   { background: rgba(76,175,125,0.15); color: #4caf7d; border: 1px solid rgba(76,175,125,0.3); }
+    .badge-invalid { background: rgba(250,82,82,0.12);  color: var(--error);  border: 1px solid rgba(250,82,82,0.3); }
+    .board-count   { font-size: 10px; color: var(--text-dim); }
+
+    /* ---- Character grid ---- */
+    .char-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(98px, 1fr));
+      gap: 8px;
+    }
+    /* GridCard exact match from GridCard.tsx */
+    .char-card {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;       /* radius="md" */
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      transform: scale(1);
+      position: relative;
+    }
+    .char-card:hover     { transform: scale(1.02); }
+    .char-card.disabled  { opacity: 0.4; filter: grayscale(40%); }
+    .char-card.viewer    { cursor: default; }
+    .char-card.viewer:hover { transform: scale(1); }
+
+    .char-img {
+      aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 800;
+      color: rgba(255,255,255,0.35);
+      position: relative;
+    }
+    .disabled-x {
+      position: absolute; inset: 0;
+      background: rgba(27,36,48,0.72);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: var(--error);
+      font-weight: 700;
+    }
+    .char-name {
+      padding: 5px 6px;
+      font-size: 11px; font-weight: 500;
+      text-align: center;
+      border-top: 1px solid var(--border);
+      display: -webkit-box;
+      -webkit-line-clamp: 1; -webkit-box-orient: vertical;
+      overflow: hidden;
+      color: var(--text);
+    }
+
+    /* ---- Waiting state ---- */
+    .waiting {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 18px;
+      padding: 40px;
+      text-align: center;
+    }
+    .spinner {
+      width: 42px; height: 42px;
+      border: 3px solid var(--border);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .waiting-title { font-size: 16px; font-weight: 700; }
+    .waiting-sub   { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
+
+    /* ---- Empty state ---- */
+    .empty-state {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      height: 160px;
+      gap: 10px;
+      color: var(--text-dim);
+      text-align: center;
+    }
+    .empty-icon { font-size: 32px; opacity: 0.4; }
+    .empty-text { font-size: 13px; }
+
+    /* ============================================================ RIGHT PANEL ============================================================ */
+    #right-panel {
+      width: 274px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .r-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      flex-shrink: 0;
+    }
+    .r-card.grow {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .r-head {
+      padding: 9px 13px;
+      border-bottom: 1px solid var(--border);
+      font-size: 10px; font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 1px;
+      flex-shrink: 0;
+    }
+
+    /* ---- Settings ---- */
+    .settings-body {
+      padding: 11px 13px;
+      display: flex; flex-direction: column;
+      gap: 10px;
+    }
+    .s-label {
+      font-size: 10px; font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+    .s-note {
+      font-size: 10px; color: var(--text-dim);
+      font-weight: 400; text-transform: none; letter-spacing: 0;
+    }
+
+    /* Segmented control — matches Mantine SegmentedControl visually */
+    .seg {
+      display: flex;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px; gap: 2px;
+    }
+    .seg-opt {
+      flex: 1;
+      text-align: center;
+      padding: 5px 4px;
+      border-radius: 6px;
+      font-size: 11px; font-weight: 600;
+      cursor: pointer;
+      color: var(--text-dim);
+      user-select: none;
+      transition: all 0.15s;
+    }
+    .seg-opt:hover:not(.seg-active):not(.seg-off) { color: var(--text); }
+    .seg-opt.seg-active { background: var(--cyan); color: var(--text-dark); }
+    .seg-opt.seg-off { opacity: 0.32; cursor: not-allowed; }
+    /* Read-only for joiner */
+    .seg.readonly .seg-opt { cursor: default; pointer-events: none; }
+    .seg.readonly .seg-opt:not(.seg-active) { opacity: 0.5; }
+
+    .transfer-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-dim);
+      font-size: 11px;
+      padding: 7px 10px;
+      width: 100%;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .transfer-btn:hover { border-color: var(--cyan); color: var(--text); }
+
+    /* ---- Players ---- */
+    .players-body {
+      padding: 10px 12px;
+      display: flex; flex-direction: column;
+      gap: 7px;
+    }
+    .player-row {
+      display: flex; align-items: center;
+      gap: 9px;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .p-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      color: var(--text-dark);
+      flex-shrink: 0;
+    }
+    .p-info { flex: 1; min-width: 0; }
+    .p-name-row {
+      display: flex; align-items: center; gap: 5px;
+      margin-bottom: 1px;
+    }
+    .p-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .host-badge {
+      font-size: 9px; font-weight: 700;
+      background: rgba(245,197,66,0.14);
+      color: var(--yellow);
+      border: 1px solid rgba(245,197,66,0.28);
+      padding: 1px 5px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: 0.4px;
+      flex-shrink: 0;
+    }
+    .p-status { font-size: 10px; color: var(--text-dim); }
+    .ready-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .ready-dot.on  { background: var(--green); box-shadow: 0 0 7px rgba(76,175,125,0.55); }
+    .ready-dot.off { background: var(--border); }
+
+    /* Ready button */
+    .ready-btn {
+      width: 100%;
+      padding: 10px;
+      border: none; border-radius: 8px;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s;
+      letter-spacing: 0.2px;
+    }
+    .ready-btn.state-go {
+      background: var(--cyan); color: var(--text-dark);
+    }
+    .ready-btn.state-go:hover { filter: brightness(1.1); }
+    .ready-btn.state-on {
+      background: rgba(76,175,125,0.14);
+      color: var(--green);
+      border: 1px solid rgba(76,175,125,0.35);
+    }
+    .ready-btn.state-on:hover { filter: brightness(1.15); }
+    .ready-btn.state-blocked {
+      background: var(--bg-card2);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      cursor: not-allowed;
+    }
+
+    /* ---- Chat ---- */
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 12px;
+      display: flex; flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+    }
+    .chat-body::-webkit-scrollbar { width: 3px; }
+    .chat-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .chat-body::-webkit-scrollbar-track { background: transparent; }
+
+    .chat-msg-name { font-size: 11px; font-weight: 700; }
+    .chat-msg-time { font-size: 10px; color: var(--text-dim); }
+    .chat-msg-text { font-size: 12px; line-height: 1.45; margin-top: 2px; }
+    .chat-system   { font-size: 11px; color: var(--text-dim); font-style: italic; text-align: center; padding: 2px 0; }
+
+    .chat-footer {
+      padding: 8px 10px;
+      border-top: 1px solid var(--border);
+      display: flex; gap: 6px;
+      flex-shrink: 0;
+    }
+    .chat-input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 7px 10px;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .chat-input:focus { border-color: var(--cyan); }
+    .chat-input::placeholder { color: var(--text-dim); }
+    .chat-send {
+      background: var(--cyan); border: none;
+      border-radius: 8px;
+      color: var(--text-dark);
+      padding: 7px 12px;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer;
+      transition: filter 0.15s;
+    }
+    .chat-send:hover { filter: brightness(1.1); }
+
+    /* ============================================================ BUTTONS ============================================================ */
+    .btn {
+      padding: 9px 18px;
+      border-radius: 8px; border: none;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    /* primary — buttonThemes.primary: cyan bg, black text */
+    .btn-primary { background: var(--cyan); color: var(--text-dark); }
+    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-primary:disabled { opacity: 0.38; cursor: not-allowed; filter: none; }
+
+    /* secondary — buttonThemes.secondary: dark blue bg, light text */
+    .btn-secondary { background: var(--bg-card2); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--cyan); color: var(--cyan); }
+
+    .btn-sm { padding: 6px 13px; font-size: 12px; }
+    .btn-danger { background: rgba(250,82,82,0.1); color: var(--error); border: 1px solid rgba(250,82,82,0.28); }
+    .btn-danger:hover { background: rgba(250,82,82,0.18); }
+
+    /* Validity count */
+    .validity-ok   { font-size: 12px; font-weight: 600; color: var(--green); }
+    .validity-warn { font-size: 12px; font-weight: 600; color: var(--error); }
+
+    /* ============================================================ OVERLAYS / TOAST ============================================================ */
+    #toast {
+      position: fixed; top: 74px; left: 50%; transform: translateX(-50%);
+      background: var(--bg-card2);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      padding: 8px 18px; border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      z-index: 9999; pointer-events: none;
+      opacity: 0; transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; }
+
+    #overlay-start {
+      position: fixed; inset: 0;
+      background: rgba(27,36,48,0.88);
+      backdrop-filter: blur(6px);
+      z-index: 900;
+      display: none;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 18px;
+    }
+    #overlay-start.show { display: flex; }
+    .gs-title { font-size: 42px; font-weight: 800; color: var(--cyan); letter-spacing: -1px; }
+    .gs-sub   { font-size: 15px; color: var(--text-dim); }
+    .gs-bar   { width: 220px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .gs-fill  { height: 100%; background: var(--cyan); border-radius: 2px; animation: fillBar 3.2s ease-in-out forwards; }
+    @keyframes fillBar { from { width:0 } to { width:100% } }
+
+    /* ============================================================ PROTOTYPE CONTROLS ============================================================ */
+    #proto-bar {
+      position: fixed;
+      bottom: 18px; left: 50%; transform: translateX(-50%);
+      z-index: 9998;
+      background: rgba(27,36,48,0.96);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 9px 16px;
+      display: flex; align-items: center; gap: 10px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+    }
+    .pb-label { font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+    .pb-sep   { width: 1px; height: 20px; background: var(--border); }
+    .pb-btn {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 5px 12px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 11px; font-weight: 600;
+      transition: all 0.14s;
+      user-select: none;
+    }
+    .pb-btn:hover  { border-color: rgba(142,202,230,0.5); color: var(--text); }
+    .pb-btn.active { background: var(--cyan); color: var(--text-dark); border-color: var(--cyan); }
+
+    /* ============================================================ NOTES ============================================================ */
+    #notes-section {
+      position: fixed;
+      inset: 0;
+      background: rgba(27,36,48,0.96);
+      backdrop-filter: blur(8px);
+      z-index: 800;
+      overflow-y: auto;
+      display: none;
+      padding: 48px 32px 100px;
+    }
+    #notes-section.show { display: block; }
+    .notes-title { font-size: 11px; font-weight: 700; color: var(--cyan); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; }
+    .notes-grid  { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 10px; }
+    .note {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .note-h { font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+    .note-b { font-size: 11px; color: var(--text-dim); line-height: 1.55; }
+    .note-b code { background: var(--bg-input); padding: 1px 4px; border-radius: 3px; font-size: 10px; color: var(--cyan); }
+  </style>
+</head>
+<body>
+
+<!-- =============================================================== TOAST =============================================================== -->
+<div id="toast"></div>
+
+<!-- =============================================================== GAME STARTING OVERLAY =============================================================== -->
+<div id="overlay-start">
+  <div class="gs-title">Game Starting!</div>
+  <div class="gs-sub">Both players are ready — setting up the board…</div>
+  <div class="gs-bar"><div class="gs-fill"></div></div>
+</div>
+
+<!-- =============================================================== NOTES OVERLAY =============================================================== -->
+<div id="notes-section">
+  <div class="notes-title">UX / Design Notes — Lobby Prototype</div>
+  <div class="notes-grid">
+    <div class="note">
+      <div class="note-h">Join Code in the Header</div>
+      <div class="note-b">Hidden by default (shows ••••••) to prevent shoulder surfing — if your opponent can see your screen you don't want them to grab the code and share it. Click to reveal + auto-copy. The header is the right place: it's always visible regardless of which panel state you're in, no digging required.</div>
+    </div>
+    <div class="note">
+      <div class="note-h">Board Selection Privacy (Joiner Waiting State)</div>
+      <div class="note-b">Per the design doc: before the host confirms a board, the joiner sees a waiting spinner and nothing else. This is intentional — you shouldn't be able to browse your opponent's full board library. The confirmed board is the first shared moment. The host's boards are their private collection.</div>
+    </div>
+    <div class="note">
+      <div class="note-h">Back to Board Selection (Host Only)</div>
+      <div class="note-b">The ← back arrow in the character panel header is host-only. Clicking it resets: both ready states are cleared, the joiner drops back to the waiting state. The joiner gets a system chat message saying the host went back. This prevents confusion if the joiner is already ready.</div>
+    </div>
+    <div class="note">
+      <div class="note-h">Character Disable — Host Only</div>
+      <div class="note-b">Only the host can click to disable characters. The joiner sees the same grid but cards have <code>cursor: default</code> and no hover scale effect. Disabled cards show grayscale + 0.4 opacity (matching GridCard's disabled prop) with an ✕ overlay. The joiner can see what's been disabled — both players share the same final character set.</div>
+    </div>
+    <div class="note">
+      <div class="note-h">Validity Counter and Ready Gate</div>
+      <div class="note-b">A live "X/24+ enabled ✓/⚠" counter sits in the panel header. The host's Ready button is blocked (greyed out, <code>cursor:not-allowed</code>) until ≥24 characters are enabled. The joiner can always ready up — they don't control the board. This prevents a game starting with too few characters.</div>
+    </div>
+    <div class="note">
+      <div class="note-h">Settings — Casual Mode Interaction</div>
+      <div class="note-b">When Casual is selected, the turn timer segment control is greyed out and forced to Off (it would make no sense with Casual Mode's honour-based free-form play). The joiner sees all settings read-only — they can see the settings but cannot change them. This matches the design doc's host privilege model.</div>
+    </div>
+    <div class="note">
+      <div class="note-h">Ready Flow and Game Starting Overlay</div>
+      <div class="note-b">When both players are ready a full-screen "Game Starting!" overlay appears with a progress bar (~3s). Either player can still un-ready before the bar fills (future: add a cancel button). A system chat message is added too. After the bar, the overlay closes and states reset — in production this would transition to the game route.</div>
+    </div>
+    <div class="note">
+      <div class="note-h">Tag Filter + Search</div>
+      <div class="note-b">Combined filter: tag chip narrows by type, search input narrows by name within those results. "All" resets both. Works for both host and joiner. In Tag Mode, this is especially useful for hosts deciding which characters to disable — filter by a tag, then remove less interesting ones.</div>
+    </div>
+    <div class="note">
+      <div class="note-h">Right Panel Layout (Settings → Players → Chat)</div>
+      <div class="note-b">Deliberately stacked: settings at top (stable, reference), players in middle (social context, ready state), chat at bottom taking remaining flex space. Chat persisting from lobby into game means it should feel prominent but not dominant. The chat section grows to fill available space while the other two sections stay fixed-height.</div>
+    </div>
+    <div class="note">
+      <div class="note-h">Invalid Board Handling</div>
+      <div class="note-b">Invalid boards (fewer than 24 characters) are visible in the board grid but at reduced opacity with a red "Invalid" badge and <code>cursor:not-allowed</code>. Clicking them does nothing. This lets the host see why they can't use a board without hiding it entirely. The "Confirm Board" button stays disabled if an invalid board is selected.</div>
+    </div>
+    <div class="note">
+      <div class="note-h">Reuse of Existing Components</div>
+      <div class="note-b">ContentPaper → both main panels. GridCard (item variant) → board cards + character cards, exact same bg/border/hover/disabled values. GridContainer pattern → both grids with search. FormShell footer pattern → panel footer with action buttons. AppHeader → extended with join code pill in the center slot.</div>
+    </div>
+  </div>
+</div>
+
+<!-- =============================================================== APP =============================================================== -->
+<div id="app">
+
+  <!-- HEADER -->
+  <header id="app-header">
+    <div class="logo" onclick="toast('Home — not implemented in prototype')">guess<span>.io</span></div>
+
+    <div class="header-center">
+      <div class="join-pill" onclick="toggleCode()" title="Click to reveal and copy lobby code">
+        <span class="join-label">Lobby Code</span>
+        <span class="join-code" id="join-code-val">••••••</span>
+        <span class="join-action" id="join-code-icon">👁</span>
+      </div>
+    </div>
+
+    <div class="header-user">
+      <div class="user-avatar" id="hdr-avatar" style="background:#8ecae6;">C</div>
+      <span class="user-name" id="hdr-name">CosmicPanda</span>
+      <span class="host-crown" id="hdr-crown">👑</span>
+    </div>
+  </header>
+
+  <!-- LOBBY -->
+  <div id="lobby">
+
+    <!-- LEFT PANEL (board select / characters) -->
+    <div id="left-panel"><!-- rendered by JS --></div>
+
+    <!-- RIGHT PANEL -->
+    <div id="right-panel">
+
+      <!-- SETTINGS -->
+      <div class="r-card" id="card-settings">
+        <div class="r-head">Lobby Settings</div>
+        <div class="settings-body" id="settings-body"><!-- rendered by JS --></div>
+      </div>
+
+      <!-- PLAYERS -->
+      <div class="r-card" id="card-players">
+        <div class="r-head">Players</div>
+        <div class="players-body" id="players-body"><!-- rendered by JS --></div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="r-card grow" id="card-chat">
+        <div class="r-head">Chat</div>
+        <div class="chat-body" id="chat-body"><!-- rendered by JS --></div>
+        <div class="chat-footer">
+          <input class="chat-input" id="chat-input" placeholder="Say something…" onkeydown="chatKey(event)" />
+          <button class="chat-send" onclick="sendChat()">→</button>
+        </div>
+      </div>
+
+    </div><!-- /right-panel -->
+  </div><!-- /lobby -->
+</div><!-- /app -->
+
+<!-- =============================================================== PROTOTYPE CONTROLS =============================================================== -->
+<div id="proto-bar">
+  <span class="pb-label">View</span>
+  <button class="pb-btn active" id="pb-host"   onclick="setView('host')">👑 Host</button>
+  <button class="pb-btn"        id="pb-joiner" onclick="setView('joiner')">🎮 Joiner</button>
+
+  <div class="pb-sep"></div>
+
+  <span class="pb-label">Phase</span>
+  <button class="pb-btn active" id="pb-select" onclick="setPhase('select')">Board Select</button>
+  <button class="pb-btn"        id="pb-chars"  onclick="setPhase('chars')">Characters</button>
+
+  <div class="pb-sep"></div>
+
+  <button class="pb-btn" onclick="toggleNotes()">📝 Notes</button>
+</div>
+
+<script>
+/* ================================================================
+   DATA
+================================================================ */
+const BOARDS = [
+  { id:1, name:'Pokémon Gen 1–4',  count:26, valid:true,  bg:'#1a3a5c', emoji:'⚡' },
+  { id:2, name:'Anime Heroes',     count:24, valid:true,  bg:'#3a1a4a', emoji:'⚔️' },
+  { id:3, name:'Inazuma Eleven',   count:31, valid:true,  bg:'#1a3a2a', emoji:'⚽' },
+  { id:4, name:'My Draft Board',   count:11, valid:false, bg:'#3a2a1a', emoji:'🎨' },
+];
+
+const CHARS = [
+  { id:1,  name:'Pikachu',   initial:'P', color:'#a07800', tags:['Electric'] },
+  { id:2,  name:'Charizard', initial:'C', color:'#b84010', tags:['Fire','Dragon'] },
+  { id:3,  name:'Blastoise', initial:'B', color:'#1455a0', tags:['Water'] },
+  { id:4,  name:'Venusaur',  initial:'V', color:'#256825', tags:['Grass'] },
+  { id:5,  name:'Mewtwo',    initial:'M', color:'#5a128a', tags:['Psychic','Legendary'] },
+  { id:6,  name:'Gengar',    initial:'G', color:'#3a0a7c', tags:['Ghost'] },
+  { id:7,  name:'Snorlax',   initial:'S', color:'#404858', tags:['Normal'] },
+  { id:8,  name:'Lucario',   initial:'L', color:'#153a7a', tags:['Fighting','Steel'] },
+  { id:9,  name:'Garchomp',  initial:'G', color:'#103855', tags:['Dragon','Ground'] },
+  { id:10, name:'Gardevoir', initial:'G', color:'#a01860', tags:['Psychic','Fairy'] },
+  { id:11, name:'Eevee',     initial:'E', color:'#6a4030', tags:['Normal'] },
+  { id:12, name:'Arcanine',  initial:'A', color:'#c03010', tags:['Fire'] },
+  { id:13, name:'Gyarados',  initial:'G', color:'#0c3a90', tags:['Water','Flying'] },
+  { id:14, name:'Alakazam',  initial:'A', color:'#c89000', tags:['Psychic'] },
+  { id:15, name:'Machamp',   initial:'M', color:'#a02808', tags:['Fighting'] },
+  { id:16, name:'Tyranitar', initial:'T', color:'#1a2228', tags:['Rock','Dark'] },
+  { id:17, name:'Salamence', initial:'S', color:'#1050b0', tags:['Dragon','Flying'] },
+  { id:18, name:'Togekiss',  initial:'T', color:'#c8ccf0', tags:['Fairy','Flying'] },
+  { id:19, name:'Umbreon',   initial:'U', color:'#141414', tags:['Dark'] },
+  { id:20, name:'Espeon',    initial:'E', color:'#8020a0', tags:['Psychic'] },
+  { id:21, name:'Blaziken',  initial:'B', color:'#c83808', tags:['Fire','Fighting'] },
+  { id:22, name:'Swampert',  initial:'S', color:'#1468b8', tags:['Water','Ground'] },
+  { id:23, name:'Sceptile',  initial:'S', color:'#287c28', tags:['Grass'] },
+  { id:24, name:'Rayquaza',  initial:'R', color:'#145018', tags:['Dragon','Flying','Legendary'] },
+  { id:25, name:'Dragonite', initial:'D', color:'#c87800', tags:['Dragon','Flying'] },
+  { id:26, name:'Mew',       initial:'M', color:'#d870a0', tags:['Psychic','Legendary'] },
+];
+
+const ALL_TAGS = ['All','Electric','Fire','Water','Grass','Psychic','Ghost','Normal','Fighting','Dragon','Dark','Steel','Flying','Ground','Fairy','Rock','Legendary'];
+
+/* ================================================================
+   STATE
+================================================================ */
+const S = {
+  view:        'host',     // 'host' | 'joiner'
+  phase:       'select',   // 'select' | 'chars'
+  selectedId:  null,
+  confirmed:   false,
+  disabled:    new Set(),
+  hostReady:   false,
+  joinerReady: false,
+  mode:        'tag',      // 'casual' | 'tag'
+  timer:       '3m',       // 'off' | '30s' | '1m' | '3m'
+  lives:       '3',        // '1' | '3' | 'inf'
+  codeShown:   false,
+  tagFilter:   'All',
+  search:      '',
+  starting:    false,
+  chat: [
+    { who:'PixelFox',    t:'19:41', msg:'heyyy finally lol' },
+    { who:'CosmicPanda', t:'19:42', msg:'okay which board do you want?' },
+    { who:'PixelFox',    t:'19:42', msg:'do pokémon, I know gen 1–4' },
+  ],
+};
+
+/* ================================================================
+   RENDER
+================================================================ */
+function render() {
+  renderHeader();
+  renderLeft();
+  renderSettings();
+  renderPlayers();
+  renderChat();
+}
+
+function renderHeader() {
+  const isHost = S.view === 'host';
+  document.getElementById('hdr-avatar').style.background = isHost ? '#8ecae6' : '#f48fb1';
+  document.getElementById('hdr-avatar').textContent      = isHost ? 'C' : 'P';
+  document.getElementById('hdr-name').textContent        = isHost ? 'CosmicPanda' : 'PixelFox';
+  document.getElementById('hdr-crown').style.display     = isHost ? 'inline' : 'none';
+}
+
+/* ---- LEFT PANEL ---- */
+function renderLeft() {
+  const lp = document.getElementById('left-panel');
+
+  if (S.phase === 'select') {
+    if (S.view === 'joiner') {
+      lp.innerHTML = `
+        <div class="waiting">
+          <div class="spinner"></div>
+          <div>
+            <div class="waiting-title">Host is selecting a board…</div>
+            <div class="waiting-sub">Sit tight while CosmicPanda picks a board to play on.</div>
+          </div>
+        </div>`;
+      return;
+    }
+    // Host board selection
+    const cards = BOARDS.map(b => {
+      const sel = S.selectedId === b.id ? 'selected' : '';
+      const inv = b.valid ? '' : 'invalid-board';
+      const click = b.valid ? `onclick="selectBoard(${b.id})"` : `onclick="toast('This board has fewer than 24 characters and can\\'t be used')"`;
+      return `
+        <div class="board-card ${sel} ${inv}" ${click}>
+          <div class="board-img" style="background:${b.bg};">${b.emoji}</div>
+          <div class="board-meta">
+            <div class="board-name">${b.name}</div>
+            <div class="board-row">
+              <span class="badge ${b.valid ? 'badge-valid' : 'badge-invalid'}">${b.valid ? 'Valid' : 'Invalid'}</span>
+              <span class="board-count">${b.count} chars</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    const canConfirm = S.selectedId && BOARDS.find(b => b.id === S.selectedId)?.valid;
+    const selName = S.selectedId ? `"${BOARDS.find(b=>b.id===S.selectedId).name}" selected` : 'No board selected';
+
+    lp.innerHTML = `
+      <div class="panel-top">
+        <div>
+          <div class="panel-title">Select a Board</div>
+          <div class="panel-sub">Must have at least 24 characters to be playable</div>
+        </div>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" placeholder="Search boards…" />
+      </div>
+      <div class="panel-body">
+        <div class="board-grid">${cards}</div>
+      </div>
+      <div class="panel-footer">
+        <span style="font-size:12px;color:var(--text-dim);">${selName}</span>
+        <button class="btn btn-primary btn-sm" onclick="confirmBoard()" ${canConfirm ? '' : 'disabled'}>Confirm Board</button>
+      </div>`;
+    return;
+  }
+
+  /* ---- Characters phase ---- */
+  const board    = BOARDS.find(b => b.id === S.selectedId) || BOARDS[0];
+  const isHost   = S.view === 'host';
+  const enabled  = CHARS.length - S.disabled.size;
+  const isValid  = enabled >= 24;
+
+  let filtered = CHARS;
+  if (S.tagFilter !== 'All') filtered = filtered.filter(c => c.tags.includes(S.tagFilter));
+  if (S.search)              filtered = filtered.filter(c => c.name.toLowerCase().includes(S.search.toLowerCase()));
+
+  const tagChips = ALL_TAGS.map(t =>
+    `<div class="tag-chip ${S.tagFilter===t?'active':''}" onclick="setTag('${t}')">${t}</div>`
+  ).join('');
+
+  const charCards = filtered.map(c => {
+    const dis   = S.disabled.has(c.id) ? 'disabled' : '';
+    const view  = isHost ? '' : 'viewer';
+    const click = isHost ? `onclick="toggleChar(${c.id})"` : '';
+    const xmark = S.disabled.has(c.id) ? `<div class="disabled-x">✕</div>` : '';
+    return `
+      <div class="char-card ${dis} ${view}" ${click} title="${c.name} · ${c.tags.join(', ')}">
+        <div class="char-img" style="background:${c.color};">${c.initial}${xmark}</div>
+        <div class="char-name">${c.name}</div>
+      </div>`;
+  }).join('');
+
+  const empty = filtered.length === 0
+    ? `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">No characters match this filter.</div></div>`
+    : '';
+
+  const valClass = isValid ? 'validity-ok' : 'validity-warn';
+  const valText  = isValid
+    ? `${enabled}/24+ enabled ✓`
+    : `⚠ ${enabled} enabled — need at least 24`;
+
+  const backBtn  = isHost ? `<button class="back-btn" onclick="goBack()" title="Back to board selection">←</button>` : '';
+  const footer   = isHost ? `
+    <div class="panel-footer">
+      <span class="${valClass}">${valText}</span>
+      <button class="btn btn-secondary btn-sm" onclick="resetDisabled()">Reset</button>
+    </div>` : '';
+
+  lp.innerHTML = `
+    <div class="panel-top">
+      ${backBtn}
+      <div style="flex:1;min-width:0;">
+        <div class="panel-title">${board.name}</div>
+        <div class="panel-sub">${isHost ? 'Click characters to disable them from the game' : 'Host may be adjusting the character selection'}</div>
+      </div>
+      <span class="${valClass}" style="flex-shrink:0;font-size:12px;font-weight:600;">${isValid ? `${enabled}/24+ ✓` : `⚠ ${enabled}`}</span>
+    </div>
+    <div class="search-bar">
+      <input class="search-input" id="char-search" placeholder="Search characters…" value="${S.search}" oninput="setSearch(this.value)" />
+    </div>
+    <div class="tag-strip">${tagChips}</div>
+    <div class="panel-body">
+      ${empty || `<div class="char-grid">${charCards}</div>`}
+    </div>
+    ${footer}`;
+}
+
+/* ---- SETTINGS ---- */
+function renderSettings() {
+  const isHost   = S.view === 'host';
+  const isCasual = S.mode === 'casual';
+  const ro       = isHost ? '' : 'readonly';
+
+  const modeCtrl  = seg(['Casual','Tag Mode'],['casual','tag'], S.mode, isHost ? 'setMode' : null, ro);
+  const timerCtrl = seg(['Off','30s','1m','3m'],['off','30s','1m','3m'],
+                        isCasual ? 'off' : S.timer,
+                        (isHost && !isCasual) ? 'setTimer' : null,
+                        isCasual ? 'disabled' : ro);
+  const livesCtrl = seg(['1','3','∞'],['1','3','inf'], S.lives, isHost ? 'setLives' : null, ro);
+
+  const transferBtn = isHost
+    ? `<button class="transfer-btn" onclick="toast('Host privilege transfer — not wired in prototype')">↔ Transfer Host Privileges</button>`
+    : '';
+
+  const timerLabel = isCasual
+    ? `Turn Timer <span class="s-note">(always off in Casual)</span>`
+    : 'Turn Timer';
+
+  document.getElementById('settings-body').innerHTML = `
+    <div>
+      <div class="s-label">Game Mode</div>
+      ${modeCtrl}
+    </div>
+    <div>
+      <div class="s-label">${timerLabel}</div>
+      ${timerCtrl}
+    </div>
+    <div>
+      <div class="s-label">Lives</div>
+      ${livesCtrl}
+    </div>
+    ${transferBtn}`;
+}
+
+function seg(labels, vals, active, fn, extra='') {
+  const isRo  = extra === 'readonly';
+  const isDis = extra === 'disabled';
+  const opts  = labels.map((l,i) => {
+    const v       = vals[i];
+    const isAct   = v === active;
+    const classes = ['seg-opt', isAct ? 'seg-active' : '', (isDis || isRo) ? 'seg-off' : ''].filter(Boolean).join(' ');
+    const click   = (fn && !isDis && !isRo) ? `onclick="${fn}('${v}')"` : '';
+    return `<div class="${classes}" ${click}>${l}</div>`;
+  }).join('');
+  return `<div class="seg ${isRo ? 'readonly' : ''}">${opts}</div>`;
+}
+
+/* ---- PLAYERS ---- */
+function renderPlayers() {
+  const isHost   = S.view === 'host';
+  const myReady  = isHost ? S.hostReady : S.joinerReady;
+  const inChars  = S.phase === 'chars';
+  const enabled  = CHARS.length - S.disabled.size;
+  const boardOk  = enabled >= 24 && S.confirmed;
+
+  let btnClass, btnText;
+  if (isHost && !inChars) {
+    btnClass = 'state-blocked'; btnText = 'Confirm a board first';
+  } else if (isHost && !boardOk) {
+    btnClass = 'state-blocked'; btnText = 'Need ≥24 characters enabled';
+  } else if (myReady) {
+    btnClass = 'state-on';  btnText = '✓ Ready — click to un-ready';
+  } else {
+    btnClass = 'state-go';  btnText = 'Ready Up';
+  }
+
+  document.getElementById('players-body').innerHTML = `
+    <div class="player-row">
+      <div class="p-avatar" style="background:#8ecae6;">C</div>
+      <div class="p-info">
+        <div class="p-name-row">
+          <span class="p-name">CosmicPanda</span>
+          <span class="host-badge">Host</span>
+        </div>
+        <div class="p-status">${S.hostReady ? '✓ Ready' : 'Not ready'}</div>
+      </div>
+      <div class="ready-dot ${S.hostReady ? 'on' : 'off'}"></div>
+    </div>
+    <div class="player-row">
+      <div class="p-avatar" style="background:#f48fb1;">P</div>
+      <div class="p-info">
+        <div class="p-name-row">
+          <span class="p-name">PixelFox</span>
+        </div>
+        <div class="p-status">${S.joinerReady ? '✓ Ready' : 'Not ready'}</div>
+      </div>
+      <div class="ready-dot ${S.joinerReady ? 'on' : 'off'}"></div>
+    </div>
+    <button class="ready-btn ${btnClass}" onclick="toggleReady()">${btnText}</button>`;
+}
+
+/* ---- CHAT ---- */
+function renderChat() {
+  const cb = document.getElementById('chat-body');
+  cb.innerHTML = S.chat.map(m => {
+    if (m.who === 'System') return `<div class="chat-system">— ${m.msg} —</div>`;
+    const color = m.who === 'CosmicPanda' ? '#8ecae6' : '#f48fb1';
+    return `
+      <div>
+        <div style="display:flex;align-items:baseline;gap:6px;">
+          <span class="chat-msg-name" style="color:${color};">${m.who}</span>
+          <span class="chat-msg-time">${m.t}</span>
+        </div>
+        <div class="chat-msg-text">${m.msg}</div>
+      </div>`;
+  }).join('');
+  cb.scrollTop = cb.scrollHeight;
+}
+
+/* ================================================================
+   ACTIONS
+================================================================ */
+function setView(v) {
+  S.view = v;
+  document.getElementById('pb-host').classList.toggle('active', v === 'host');
+  document.getElementById('pb-joiner').classList.toggle('active', v === 'joiner');
+  render();
+}
+
+function setPhase(p) {
+  if (p === 'chars' && !S.confirmed) {
+    // Auto-confirm board 1 for demo convenience
+    S.selectedId = 1; S.confirmed = true;
+    sysMsg('CosmicPanda confirmed "Pokémon Gen 1–4".');
+  }
+  S.phase = p;
+  document.getElementById('pb-select').classList.toggle('active', p === 'select');
+  document.getElementById('pb-chars').classList.toggle('active', p === 'chars');
+  if (p === 'select') {
+    S.confirmed = false; S.selectedId = null;
+    S.hostReady = false; S.joinerReady = false;
+  }
+  render();
+}
+
+function selectBoard(id) {
+  if (S.view !== 'host') return;
+  S.selectedId = S.selectedId === id ? null : id;
+  renderLeft();
+}
+
+function confirmBoard() {
+  if (!S.selectedId) return;
+  const b = BOARDS.find(x => x.id === S.selectedId);
+  if (!b?.valid) return;
+  S.confirmed = true; S.phase = 'chars';
+  document.getElementById('pb-select').classList.remove('active');
+  document.getElementById('pb-chars').classList.add('active');
+  sysMsg(`CosmicPanda confirmed "${b.name}".`);
+  render();
+}
+
+function goBack() {
+  S.phase = 'select'; S.confirmed = false; S.selectedId = null;
+  S.hostReady = false; S.joinerReady = false;
+  document.getElementById('pb-select').classList.add('active');
+  document.getElementById('pb-chars').classList.remove('active');
+  sysMsg('CosmicPanda went back to board selection.');
+  render();
+}
+
+function toggleChar(id) {
+  if (S.view !== 'host') return;
+  S.disabled.has(id) ? S.disabled.delete(id) : S.disabled.add(id);
+  renderLeft(); renderPlayers();
+}
+
+function resetDisabled() { S.disabled.clear(); renderLeft(); renderPlayers(); }
+
+function setSearch(v) { S.search = v; renderLeft(); }
+function setTag(t)    { S.tagFilter = t; renderLeft(); }
+
+function setMode(v)  {
+  S.mode = v;
+  if (v === 'casual') S.timer = 'off';
+  renderSettings();
+}
+function setTimer(v) { S.timer = v; renderSettings(); }
+function setLives(v) { S.lives = v; renderSettings(); }
+
+function toggleReady() {
+  const isHost  = S.view === 'host';
+  const enabled = CHARS.length - S.disabled.size;
+
+  if (isHost && S.phase !== 'chars') {
+    toast('Select and confirm a board first'); return;
+  }
+  if (isHost && enabled < 24) {
+    toast(`Need at least 24 enabled characters (currently ${enabled})`); return;
+  }
+
+  if (isHost) S.hostReady = !S.hostReady;
+  else         S.joinerReady = !S.joinerReady;
+
+  renderPlayers();
+  checkReady();
+}
+
+function checkReady() {
+  if (S.hostReady && S.joinerReady && !S.starting) {
+    S.starting = true;
+    sysMsg('Both players are ready — game starting!');
+    renderChat();
+    const ov = document.getElementById('overlay-start');
+    ov.classList.add('show');
+    setTimeout(() => {
+      ov.classList.remove('show');
+      S.starting = false; S.hostReady = false; S.joinerReady = false;
+      renderPlayers();
+    }, 3400);
+  }
+}
+
+function toggleCode() {
+  S.codeShown = !S.codeShown;
+  document.getElementById('join-code-val').textContent  = S.codeShown ? 'XK9P2M' : '••••••';
+  document.getElementById('join-code-icon').textContent = S.codeShown ? '📋' : '👁';
+  if (S.codeShown) {
+    navigator.clipboard?.writeText('XK9P2M').then(() => toast('Code copied!')).catch(() => toast('Code: XK9P2M'));
+  }
+}
+
+function sendChat() {
+  const inp    = document.getElementById('chat-input');
+  const text   = inp.value.trim();
+  if (!text) return;
+  S.chat.push({ who: S.view === 'host' ? 'CosmicPanda' : 'PixelFox', t: now(), msg: text });
+  inp.value = '';
+  renderChat();
+}
+function chatKey(e) { if (e.key === 'Enter') sendChat(); }
+
+function sysMsg(msg) { S.chat.push({ who:'System', t:now(), msg }); }
+function now() {
+  const d = new Date();
+  return `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+let _toastTm;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(_toastTm);
+  _toastTm = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function toggleNotes() {
+  document.getElementById('notes-section').classList.toggle('show');
+}
+
+/* ================================================================
+   BOOT
+================================================================ */
+render();
+</script>
+</body>
+</html>

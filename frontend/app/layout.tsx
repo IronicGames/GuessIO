@@ -1,8 +1,10 @@
 'use client';
 import '@mantine/core/styles.css';
+import '@mantine/notifications/styles.css';
 import { MantineProvider } from '@mantine/core';
 import { AppHeader } from '@components/Header/AppHeader';
 import { AuthProvider } from '@providers/auth-provider';
+import { HeaderSlotProvider } from '@providers/header-slot-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Notifications } from '@mantine/notifications';
@@ -13,29 +15,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{ margin: 0 }}>
         <QueryClientProvider client={queryClient}>
           <MantineProvider defaultColorScheme="dark">
-            <Notifications />
+            <Notifications position="top-right" limit={3} />
             <AuthProvider>
-              <div
-                style={{
-                  minHeight: '100vh',
-                  background: 'radial-gradient(#394d67 0%, #1b2430 100%)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                {/* Persistent Header */}
-                <AppHeader />
-
-                {/* Main Content */}
-                <main
+              <HeaderSlotProvider>
+                <div
                   style={{
-                    flex: 1,
-                    alignContent: 'center',
+                    minHeight: '100vh',
+                    background: 'radial-gradient(#394d67 0%, #1b2430 100%)',
+                    display: 'flex',
+                    flexDirection: 'column',
                   }}
                 >
-                  {children}
-                </main>
-              </div>
+                  {/* Persistent Header */}
+                  <AppHeader />
+
+                  {/* Main Content */}
+                  <main
+                    style={{
+                      flex: 1,
+                      alignContent: 'center',
+                    }}
+                  >
+                    {children}
+                  </main>
+                </div>
+              </HeaderSlotProvider>
             </AuthProvider>
           </MantineProvider>
         </QueryClientProvider>

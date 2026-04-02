@@ -42,7 +42,7 @@ export default function HomePage() {
         >
           <Stack w="100%" maw={500} gap="md">
             <HomePageButton href="/game/public" text="Public Match" />
-            <HomePageButton href="/game/lobby/create" text="Create Lobby" />
+            <HomePageButton href="/lobby" text="Create Lobby" />
             {/* Locked for guests — visible but explains access requirement on click */}
             <HomePageButton
               href="/boards"

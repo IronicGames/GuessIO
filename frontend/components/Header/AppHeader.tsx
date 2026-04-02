@@ -1,9 +1,10 @@
 'use client';
 
 import { GoogleIcon } from '@components/Home/GoogleIcon';
-import { Avatar, Button, Container, Group, Menu, Text, TextInput, Divider } from '@mantine/core';
+import { Avatar, Box, Button, Container, Group, Menu, Text, TextInput, Divider } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '@providers/auth-provider';
+import { useHeaderSlot } from '@providers/header-slot-provider';
 import { IconLogout, IconSettings, IconUser, IconUserPlus } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -12,6 +13,7 @@ import { buttonThemes } from '@styles/buttonThemes';
 export function AppHeader() {
   const router = useRouter();
   const { isLoggedIn, user, logout, loginWithGoogle, loginAsGuest } = useAuth();
+  const { centerSlot } = useHeaderSlot();
 
   const [guestName, setGuestName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,11 +46,18 @@ export function AppHeader() {
           <Text
             size="xl"
             fw={700}
-            style={{ cursor: 'pointer', color: '#8ecae6' }}
+            style={{ cursor: 'pointer', color: '#8ecae6', flexShrink: 0 }}
             onClick={() => router.push('/')}
           >
             GUESS.IO
           </Text>
+
+          {/* Center slot — injected by pages that need it (e.g. lobby) */}
+          {centerSlot && (
+            <Box style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+              {centerSlot}
+            </Box>
+          )}
 
           {/* Right side — three states */}
           {!isLoggedIn ? (
