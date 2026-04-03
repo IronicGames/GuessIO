@@ -8,6 +8,9 @@ interface HomePageButtonProps {
   text: string;
   alternate?: boolean;
   theme?: ButtonThemeType;
+  loading?: boolean;
+  // When provided on an unlocked button, overrides Link navigation entirely.
+  onClick?: () => void;
   // When locked, the button is visible but non-navigating.
   // Clicking fires onLockedClick so the parent can explain why.
   locked?: boolean;
@@ -19,6 +22,8 @@ export default function HomePageButton({
   text,
   alternate = false,
   theme,
+  loading = false,
+  onClick,
   locked = false,
   onLockedClick,
 }: HomePageButtonProps) {
@@ -63,9 +68,11 @@ export default function HomePageButton({
       w="100%"
       h={height}
       radius="lg"
+      loading={loading}
       color={selectedTheme.color}
       c={selectedTheme.textColor}
       variant={selectedTheme.variant}
+      onClick={onClick}
       styles={{
         root: {
           fontSize,
@@ -78,6 +85,18 @@ export default function HomePageButton({
       {text}
     </Button>
   );
+
+  // onClick override — skip Link wrapper, button handles navigation itself
+  if (onClick) {
+    if (alternate) {
+      return (
+        <Flex justify="center" w="100%">
+          {buttonContent}
+        </Flex>
+      );
+    }
+    return <>{buttonContent}</>;
+  }
 
   if (alternate) {
     return (

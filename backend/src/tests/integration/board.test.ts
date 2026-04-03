@@ -335,7 +335,7 @@ describe('Board Integration Tests', () => {
       expect(response.body.error).toBe('Board not found');
     });
 
-    it('should return 401 when requesting another user\'s board', async () => {
+    it("should return 401 when requesting another user's board", async () => {
       await request(app)
         .get(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
         .set('Cookie', [`token=${otherUserToken}`])
@@ -353,7 +353,7 @@ describe('Board Integration Tests', () => {
       boardId = board.id;
     });
 
-    it('should return 401 when user B tries to update user A\'s board', async () => {
+    it("should return 401 when user B tries to update user A's board", async () => {
       const response = await request(app)
         .put(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
         .set('Cookie', [`token=${otherUserToken}`])
@@ -363,7 +363,7 @@ describe('Board Integration Tests', () => {
       expect(response.body.error).toBeDefined();
     });
 
-    it('should return 401 when user B tries to delete user A\'s board', async () => {
+    it("should return 401 when user B tries to delete user A's board", async () => {
       const response = await request(app)
         .delete(`/api${API_ENDPOINTS.boards.byId(boardId)}`)
         .set('Cookie', [`token=${otherUserToken}`])

@@ -39,7 +39,8 @@ export default function GridCard(props: GridCardProps) {
   const [hovered, setHovered] = useState(false);
   const { disabled = false, onClick } = props;
   // selected can come from the item data (when going through ItemGrid) or as a direct prop
-  const selected = props.variant === 'item' ? (props.selected ?? props.item.selected ?? false) : false;
+  const selected =
+    props.variant === 'item' ? (props.selected ?? props.item.selected ?? false) : false;
   const badge = props.variant === 'item' ? props.item.badge : undefined;
   const isClickable = !!onClick && !disabled;
 
@@ -76,7 +77,7 @@ export default function GridCard(props: GridCardProps) {
               top: 6,
               right: 6,
               zIndex: 2,
-              backgroundColor: badge.color + '22',
+              backgroundColor: `${badge.color}22`,
               border: `1px solid ${badge.color}`,
               borderRadius: 4,
               padding: '1px 6px',

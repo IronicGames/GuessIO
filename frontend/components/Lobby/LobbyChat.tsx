@@ -3,8 +3,8 @@
 import { Box, Button, Group, Text, TextInput } from '@mantine/core';
 import { IconSend } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
-import { type ChatMessage } from '@/hooks/useLobby';
 import { buttonThemes } from '@styles/buttonThemes';
+import { type ChatMessage } from '@shared/types/lobby.types';
 
 interface LobbyChatProps {
   messages: ChatMessage[];

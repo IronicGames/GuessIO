@@ -21,7 +21,7 @@ export default function BoardsPage() {
     error,
   } = useQuery({
     queryKey: ['boards'],
-    queryFn: api.boards.getBoardsForUser,
+    queryFn: () => api.boards.getBoardsForUser(),
   });
 
   if (isLoading) return <LoadingOverlay mode="screen" status="loading" />;

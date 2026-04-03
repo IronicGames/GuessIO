@@ -3,6 +3,7 @@ export const API_ENDPOINTS = {
     profile: '/auth/profile',
     logout: '/auth/logout',
     loginAsGuest: '/auth/loginAsGuest',
+    updateName: '/auth/name',
   },
   boards: {
     root: '/boards',

@@ -127,7 +127,7 @@ function CharacterCard({
         </Card>
 
         {/* X overlay when host has disabled this character */}
-        {isHost && isDisabled && (
+        {isDisabled && (
           <Box
             style={{
               position: 'absolute',
@@ -181,7 +181,9 @@ export function CharacterToggleGrid({
       >
         <Group justify="space-between" align="center">
           <Text size="xs" fw={600} c={isValid ? '#4caf7d' : '#f5c542'}>
-            {isValid ? `${enabledCount}/${characters.length} enabled ✓` : `⚠ ${enabledCount} enabled — need 24`}
+            {isValid
+              ? `${enabledCount}/${characters.length} enabled ✓`
+              : `⚠ ${enabledCount} enabled — need 24`}
           </Text>
           {isHost && (
             <Text size="xs" c="#6b7f96">

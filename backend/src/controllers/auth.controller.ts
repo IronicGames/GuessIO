@@ -46,6 +46,7 @@ export const getUserProfile = asyncHandler(async (req: Request, res: Response) =
       name: req.user.name,
       role: req.user.role,
       profilePicture: req.user.profilePicture,
+      isGuest: true,
     } as UserProfile);
     return;
   }
@@ -66,4 +67,32 @@ export const loginAsGuest = asyncHandler(async (req: Request, res: Response) => 
   });
 
   res.json({ success: true });
+});
+
+export const updateName = asyncHandler(async (req: Request, res: Response) => {
+  const { name } = req.body as { name: string };
+  const user = req.user;
+
+  let token: string;
+  if (user.isGuest) {
+    // Guests have no DB row — just re-issue the JWT with the new name
+    token = authService.generateToken({ ...user, name });
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: config.deployment === 'production',
+      sameSite: 'lax',
+      maxAge: 90 * 24 * 60 * 60 * 1000,
+    });
+  } else {
+    // Players/admins — update DB then re-issue JWT
+    await userService.updateUserById(user.id, name);
+    token = authService.generateToken({ ...user, name });
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: config.deployment === 'production',
+      sameSite: 'lax',
+    });
+  }
+
+  res.json({ name });
 });

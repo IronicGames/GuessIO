@@ -43,10 +43,19 @@ export const api = {
       });
       return response.json();
     },
+    updateName: async (name: string): Promise<{ name: string }> => {
+      const response = await fetchWithAuth(API_ENDPOINTS.auth.updateName, {
+        method: 'PATCH',
+        body: JSON.stringify({ name }),
+      });
+      return response.json();
+    },
   },
   boards: {
-    getBoardsForUser: async (): Promise<BoardDto[]> => {
-      const response = await fetchWithAuth(API_ENDPOINTS.boards.root);
+    getBoardsForUser: async (includePublic?: boolean): Promise<BoardDto[]> => {
+      const response = await fetchWithAuth(
+        `${API_ENDPOINTS.boards.root}?includePublic=${includePublic ?? false}`,
+      );
       return response.json();
     },
     getBoard: async (boardId: string): Promise<BoardDto> => {

@@ -11,11 +11,10 @@ import { getErrorMessage } from '@lib/errors';
 import ContentPaperComponent from '@components/ContentPaper';
 import LoadingOverlay from '@components/LoadingOverlay';
 import { LobbyHeaderContent } from '@components/Lobby/LobbyHeaderContent';
-import { LobbySettings } from '@components/Lobby/LobbySettings';
+import { LobbySettingsPanel } from '@components/Lobby/LobbySettingsPanel';
 import { LobbyPlayers } from '@components/Lobby/LobbyPlayers';
 import { LobbyChat } from '@components/Lobby/LobbyChat';
 import { LobbyBoardPanel } from '@components/Lobby/LobbyBoardPanel';
-import { useRouter } from 'next/navigation';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Game Starting Overlay
@@ -41,8 +40,7 @@ function GameStartingOverlay({ visible }: { visible: boolean }) {
         const next = prev + increment;
         if (next >= 100) {
           if (intervalRef.current) clearInterval(intervalRef.current);
-          // TODO: socket.io integration — on recv 'lobby:game-starting', navigate:
-          // router.push(`/game/${gameId}`)
+          // TODO: navigate to /game/[gameId] once the game page exists and server emits the gameId
           return 100;
         }
         return next;
@@ -91,20 +89,18 @@ function GameStartingOverlay({ visible }: { visible: boolean }) {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export default function LobbyPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
-  const router = useRouter();
   const { user } = useAuth();
   const { setCenterSlot } = useHeaderSlot();
 
   // Guests can't be hosts (no boards) — skip the fetch for them
-  const canFetchBoards = !!user && !user.isGuest;
   const {
     data: boards,
     isLoading,
     error,
   } = useQuery({
     queryKey: ['boards'],
-    queryFn: api.boards.getBoardsForUser,
-    enabled: canFetchBoards,
+    queryFn: () => api.boards.getBoardsForUser(true),
+    enabled: !!user,
   });
 
   const {
@@ -112,24 +108,31 @@ export default function LobbyPage({ params }: { params: Promise<{ code: string }
     isHost,
     selectBoard,
     confirmBoard,
+    undoBoard,
     toggleCharacter,
     confirmCharacters,
     updateSettings,
     setReady,
+    setUnready,
     kickPlayer,
     transferHost,
     sendChatMessage,
-    triggerGameStarting,
   } = useLobby(code, user);
 
   // Inject lobby info into the header center slot
   useEffect(() => {
-    setCenterSlot(<LobbyHeaderContent code={code} players={lobbyState.players} />);
+    setCenterSlot(
+      <LobbyHeaderContent
+        link={`${window.location.origin}/lobby/${code}`}
+        players={lobbyState.players}
+      />,
+    );
     return () => setCenterSlot(null);
   }, [code, lobbyState.players, setCenterSlot]);
 
   // ── Guards ────────────────────────────────────────────────────
-  if (isLoading) return <LoadingOverlay mode="screen" status="loading" />;
+  if (isLoading || !lobbyState.players.some((p) => p.user.id === user?.id))
+    return <LoadingOverlay mode="screen" status="loading" />;
   if (error) return <LoadingOverlay mode="screen" status="error" text={getErrorMessage(error)} />;
 
   const currentUserId = user?.id ?? 'mock-host';
@@ -150,6 +153,7 @@ export default function LobbyPage({ params }: { params: Promise<{ code: string }
             >
               <LobbyBoardPanel
                 phase={lobbyState.phase}
+                selectedBoard={lobbyState.board}
                 isHost={isHost}
                 boards={boards ?? []}
                 selectedBoardId={lobbyState.selectedBoardId}
@@ -158,6 +162,7 @@ export default function LobbyPage({ params }: { params: Promise<{ code: string }
                 onConfirmBoard={confirmBoard}
                 onToggleCharacter={toggleCharacter}
                 onConfirmCharacters={confirmCharacters}
+                onUndoBoard={undoBoard}
               />
             </ContentPaperComponent>
 
@@ -170,7 +175,7 @@ export default function LobbyPage({ params }: { params: Promise<{ code: string }
             >
               {/* Settings */}
               <ContentPaperComponent style={{ flexShrink: 0 }}>
-                <LobbySettings
+                <LobbySettingsPanel
                   settings={lobbyState.settings}
                   isHost={isHost}
                   onChange={updateSettings}
@@ -183,10 +188,12 @@ export default function LobbyPage({ params }: { params: Promise<{ code: string }
                   players={lobbyState.players}
                   currentUserId={currentUserId}
                   isHost={isHost}
+                  gameStarting={lobbyState.gameStarting}
+                  phase={lobbyState.phase}
                   onReady={setReady}
+                  onUnready={setUnready}
                   onKick={kickPlayer}
                   onTransferHost={transferHost}
-                  onStartGame={triggerGameStarting}
                 />
               </ContentPaperComponent>
 

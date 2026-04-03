@@ -3,7 +3,8 @@ import * as boardService from '@services/board.service';
 import { asyncHandler } from '@middleware/error-handler.middleware';
 
 export const getBoardsForUser = asyncHandler(async (req: Request, res: Response) => {
-  const boards = await boardService.getBoardsForUser(req.user.id);
+  const includePublic = req.query.includePublic === 'true';
+  const boards = await boardService.getBoardsForUser(req.user.id, includePublic ?? false);
   res.json(boards);
 });
 

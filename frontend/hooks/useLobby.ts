@@ -1,98 +1,51 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { type UserProfile } from '@shared/types/user.types';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export type LobbyPhase = 'board-selection' | 'character-config' | 'waiting-for-ready';
-
-export type GameMode = 'CASUAL' | 'TAG';
-export type TurnTimer = 'OFF' | '30s' | '1m' | '3m';
-export type Lives = '1' | '3' | 'INF';
-
-export interface LobbySettings {
-  mode: GameMode;
-  turnTimer: TurnTimer;
-  lives: Lives;
-}
-
-export interface LobbyPlayer {
-  userId: string;
-  name: string;
-  profilePicture?: string;
-  isHost: boolean;
-  isConnected: boolean;
-  isReady: boolean;
-}
-
-export interface ChatMessage {
-  id: string;
-  senderName: string;
-  text: string;
-  timestamp: number;
-}
-
-export interface LobbyState {
-  code: string;
-  phase: LobbyPhase;
-  settings: LobbySettings;
-  players: LobbyPlayer[];
-  selectedBoardId: string | null;
-  disabledCharacterIds: string[];
-  chat: ChatMessage[];
-  gameStarting: boolean;
-}
+import {
+  type ChatMessage,
+  type LobbyPlayer,
+  type LobbySettings,
+  type LobbyState,
+  GameMode,
+  Lives,
+  LobbyPhase,
+  TurnTimer,
+} from '@shared/types/lobby.types';
+import { io, type Socket } from 'socket.io-client';
+import { useRouter } from 'next/navigation';
+import { useNotify } from './useNotify';
+import { type BoardDto } from '@shared/types/board.types';
 
 export interface UseLobbyReturn {
   lobbyState: LobbyState;
   isHost: boolean;
   selectBoard: (boardId: string) => void;
   confirmBoard: () => void;
+  undoBoard: () => void;
   toggleCharacter: (characterId: string) => void;
   confirmCharacters: () => void;
   updateSettings: (patch: Partial<LobbySettings>) => void;
   setReady: () => void;
+  setUnready: () => void;
   kickPlayer: (userId: string) => void;
   transferHost: (userId: string) => void;
   sendChatMessage: (text: string) => void;
-  triggerGameStarting: () => void;
 }
 
-// ─── Mock initial state ───────────────────────────────────────────────────────
+// ─── Initial state ────────────────────────────────────────────────────────────
+// Empty — server will send the real state via lobby:state immediately on join.
 
-function createMockLobbyState(user: UserProfile | null, code: string): LobbyState {
+function createInitialLobbyState(code: string): LobbyState {
   return {
     code,
-    phase: 'board-selection',
-    settings: { mode: 'CASUAL', turnTimer: 'OFF', lives: '3' },
-    players: [
-      {
-        userId: user?.id ?? 'mock-host',
-        name: user?.name ?? 'You',
-        profilePicture: user?.profilePicture,
-        isHost: true,
-        isConnected: true,
-        isReady: false,
-      },
-      {
-        userId: 'mock-opponent',
-        name: 'PixelFox42',
-        isHost: false,
-        isConnected: true,
-        isReady: false,
-      },
-    ],
+    phase: LobbyPhase.BOARD_SELECTION,
+    settings: { mode: GameMode.CASUAL, turnTimer: TurnTimer.OFF, lives: Lives.THREE },
+    players: [],
     selectedBoardId: null,
+    board: null,
     disabledCharacterIds: [],
-    chat: [
-      {
-        id: 'mock-1',
-        senderName: 'PixelFox42',
-        text: 'hey, pick a good board 👀',
-        timestamp: Date.now() - 60000,
-      },
-    ],
+    chat: [],
     gameStarting: false,
   };
 }
@@ -100,149 +53,240 @@ function createMockLobbyState(user: UserProfile | null, code: string): LobbyStat
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useLobby(code: string, user: UserProfile | null): UseLobbyReturn {
-  const [lobbyState, setLobbyState] = useState<LobbyState>(() => createMockLobbyState(user, code));
+  const router = useRouter();
+  const socketRef = useRef<Socket | null>(null);
+  const notify = useNotify();
+  // Ref so the socket effect can always call the latest notify without being
+  // in its dependency array (which would cause reconnects on every render)
+  const notifyRef = useRef(notify);
+  notifyRef.current = notify;
 
-  const isHost =
-    lobbyState.players.find((p) => p.userId === (user?.id ?? 'mock-host'))?.isHost ?? false;
+  const [lobbyState, setLobbyState] = useState<LobbyState>(() => createInitialLobbyState(code));
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // SOCKET.IO PLACEHOLDER — Connection + Join
-  // On hook mount, emit: socket.emit('lobby:join', { code })
-  // On recv 'lobby:state': setLobbyState(snapshot)
-  // On recv 'lobby:player-joined': update players array
-  // On recv 'lobby:player-left': remove player from array
-  // On recv 'lobby:host-changed': update isHost flags
-  // On recv 'lobby:kicked': router.push('/')
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const isHost = lobbyState.players.find((p) => p.user.id === (user?.id ?? ''))?.isHost ?? false;
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // SOCKET.IO PLACEHOLDER — Settings
-  // On settings change, emit: socket.emit('lobby:settings-change', { patch })
-  // On recv 'lobby:settings-updated': apply patch to lobbyState.settings
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  const updateSettings = useCallback((patch: Partial<LobbySettings>) => {
-    // TODO: replace with socket.emit('lobby:settings-change', { patch })
-    setLobbyState((prev) => ({
-      ...prev,
-      settings: { ...prev.settings, ...patch },
-    }));
-  }, []);
+  // ── Connect, join, and register all incoming event handlers ──────────
+  useEffect(() => {
+    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
+      withCredentials: true,
+      autoConnect: false,
+    });
+    socketRef.current = socket;
+    socket.connect();
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // SOCKET.IO PLACEHOLDER — Board Selection (Phase 1)
-  // On board click, emit: socket.emit('lobby:board-select', { boardId })
-  // On confirm press, emit: socket.emit('lobby:board-confirm')
-  // On recv 'lobby:board-confirmed': advance phase to 'character-config'
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // Full lobby snapshot — received on join, replaces initial state
+    socket.on('lobby:state', (state: LobbyState) => {
+      setLobbyState(state);
+    });
+
+    // A new player joined — update player list
+    socket.on('lobby:player-joined', (players: LobbyPlayer[]) => {
+      setLobbyState((prev) => ({ ...prev, players }));
+    });
+
+    // A player left or was kicked
+    socket.on('lobby:player-left', ({ userId }: { userId: string }) => {
+      setLobbyState((prev) => ({
+        ...prev,
+        players: prev.players.filter((p) => p.user.id !== userId),
+      }));
+    });
+
+    // Host privileges transferred
+    socket.on('lobby:host-changed', ({ newHostId }: { newHostId: string }) => {
+      setLobbyState((prev) => ({
+        ...prev,
+        players: prev.players.map((p) => ({ ...p, isHost: p.user.id === newHostId })),
+      }));
+    });
+
+    // Settings were changed by host — update UI on joiner's side
+    socket.on('lobby:settings-updated', (settings: LobbySettings) => {
+      setLobbyState((prev) => ({ ...prev, settings }));
+    });
+
+    // Board confirmed — advance both players to character-config phase with board data
+    socket.on(
+      'lobby:board-confirmed',
+      ({ boardId, board }: { boardId: string; board: BoardDto }) => {
+        setLobbyState((prev) => ({
+          ...prev,
+          phase: LobbyPhase.CHARACTER_CONFIG,
+          selectedBoardId: boardId,
+          board: board,
+        }));
+      },
+    );
+
+    // Host undid board selection — revert both players
+    socket.on('lobby:board-undone', () => {
+      setLobbyState((prev) => ({
+        ...prev,
+        phase: LobbyPhase.BOARD_SELECTION,
+        selectedBoardId: null,
+        board: null,
+        disabledCharacterIds: [],
+      }));
+    });
+
+    // Host toggled a character — sync to joiner's read-only grid
+    socket.on(
+      'lobby:char-toggled',
+      ({ characterId, enabled }: { characterId: string; enabled: boolean }) => {
+        setLobbyState((prev) => ({
+          ...prev,
+          disabledCharacterIds: enabled
+            ? prev.disabledCharacterIds.filter((id) => id !== characterId)
+            : prev.disabledCharacterIds.some((c) => c === characterId)
+              ? prev.disabledCharacterIds
+              : [...prev.disabledCharacterIds, characterId],
+        }));
+      },
+    );
+
+    // Host confirmed characters — both players advance to ready phase
+    socket.on('lobby:chars-confirmed', () => {
+      setLobbyState((prev) => ({ ...prev, phase: LobbyPhase.WAITING_FOR_READY }));
+    });
+
+    // A player's ready status changed
+    socket.on(
+      'lobby:player-ready',
+      ({ playerId, isReady }: { playerId: string; isReady: boolean }) => {
+        setLobbyState((prev) => ({
+          ...prev,
+          players: prev.players.map((p) => (p.user.id === playerId ? { ...p, isReady } : p)),
+        }));
+      },
+    );
+
+    // Both players ready — trigger countdown overlay
+    socket.on('lobby:game-starting', () => {
+      setLobbyState((prev) => ({ ...prev, gameStarting: true }));
+    });
+
+    // Received a chat message (from either player — server echoes back to all)
+    socket.on('lobby:chat', (message: ChatMessage) => {
+      setLobbyState((prev) => ({ ...prev, chat: [...prev.chat, message] }));
+    });
+
+    // This client was kicked — redirect home
+    socket.on('lobby:kicked', () => {
+      //TODO: show a notification that you were kicked
+      //TODO: ban kicked users on the server to prevent rejoining with multiple tabs or after refresh
+      router.push('/');
+    });
+
+    // Connection errors — show notification and return home
+    socket.on('connect_error', (err) => {
+      console.error('Socket error:', err.message);
+      notifyRef.current.error(err.message, 'Could not join lobby');
+      router.push('/');
+    });
+
+    socket.on('lobby:error', ({ message }: { message: string }) => {
+      notifyRef.current.error(message, 'Could not join lobby');
+      router.push('/');
+    });
+
+    // Tell server we're joining this lobby
+    socket.emit('lobby:join', { code });
+
+    // Cleanup: disconnect when page unmounts (triggers server disconnect handler)
+    return () => {
+      socket.disconnect();
+    };
+  }, [code, router]);
+
+  // ── Outgoing event handlers ───────────────────────────────────────
+
   const selectBoard = useCallback((boardId: string) => {
-    // TODO: replace with socket.emit('lobby:board-select', { boardId })
+    // Board selection is local only — no need to broadcast until Confirm
     setLobbyState((prev) => ({ ...prev, selectedBoardId: boardId }));
   }, []);
 
   const confirmBoard = useCallback(() => {
-    // TODO: replace with socket.emit('lobby:board-confirm')
-    setLobbyState((prev) => ({ ...prev, phase: 'character-config' }));
-  }, []);
+    const boardId = lobbyState.selectedBoardId;
+    if (!boardId) return;
+    socketRef.current?.emit('lobby:board-confirm', { code, boardId });
+  }, [code, lobbyState.selectedBoardId]);
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // SOCKET.IO PLACEHOLDER — Character Config (Phase 2)
-  // On toggle, emit: socket.emit('lobby:char-toggle', { characterId, enabled })
-  // On recv 'lobby:char-toggled': update disabledCharacterIds
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  const toggleCharacter = useCallback((characterId: string) => {
-    // TODO: replace with socket.emit('lobby:char-toggle', { characterId, enabled })
-    setLobbyState((prev) => {
-      const already = prev.disabledCharacterIds.includes(characterId);
-      return {
+  const undoBoard = useCallback(() => {
+    socketRef.current?.emit('lobby:board-undo', { code });
+  }, [code]);
+
+  const toggleCharacter = useCallback(
+    (characterId: string) => {
+      const isCurrentlyDisabled = lobbyState.disabledCharacterIds.includes(characterId);
+      socketRef.current?.emit('lobby:char-toggle', {
+        code,
+        characterId,
+        enabled: isCurrentlyDisabled,
+      });
+      setLobbyState((prev) => ({
         ...prev,
-        disabledCharacterIds: already
+        disabledCharacterIds: isCurrentlyDisabled
           ? prev.disabledCharacterIds.filter((id) => id !== characterId)
           : [...prev.disabledCharacterIds, characterId],
-      };
-    });
-  }, []);
-
-  const confirmCharacters = useCallback(() => {
-    // TODO: replace with socket.emit('lobby:characters-confirmed')
-    setLobbyState((prev) => ({ ...prev, phase: 'waiting-for-ready' }));
-  }, []);
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // SOCKET.IO PLACEHOLDER — Ready / Game Start
-  // On ready, emit: socket.emit('lobby:ready', { isReady: true })
-  // On recv 'lobby:player-ready': update that player's isReady
-  // On recv 'lobby:game-starting': set gameStarting = true
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  const setReady = useCallback(() => {
-    // TODO: replace with socket.emit('lobby:ready', { isReady: true })
-    setLobbyState((prev) => ({
-      ...prev,
-      players: prev.players.map((p) =>
-        p.userId === (user?.id ?? 'mock-host') ? { ...p, isReady: true } : p,
-      ),
-    }));
-  }, [user?.id]);
-
-  const triggerGameStarting = useCallback(() => {
-    // TODO: this is triggered by recv 'lobby:game-starting' from server
-    setLobbyState((prev) => ({ ...prev, gameStarting: true }));
-  }, []);
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // SOCKET.IO PLACEHOLDER — Chat
-  // On send, emit: socket.emit('lobby:chat', { text })
-  // On recv 'lobby:chat': append { senderName, text, timestamp } to chat
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  const sendChatMessage = useCallback(
-    (text: string) => {
-      // TODO: replace with socket.emit('lobby:chat', { text })
-      const message: ChatMessage = {
-        id: `msg-${Date.now()}`,
-        senderName: user?.name ?? 'You',
-        text,
-        timestamp: Date.now(),
-      };
-      setLobbyState((prev) => ({ ...prev, chat: [...prev.chat, message] }));
+      }));
     },
-    [user?.name],
+    [code, lobbyState.disabledCharacterIds],
   );
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // SOCKET.IO PLACEHOLDER — Host Actions
-  // Kick: emit socket.emit('lobby:kick', { userId })
-  // Transfer: emit socket.emit('lobby:transfer-host', { userId })
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  const kickPlayer = useCallback((userId: string) => {
-    // TODO: replace with socket.emit('lobby:kick', { userId })
-    setLobbyState((prev) => ({
-      ...prev,
-      players: prev.players.filter((p) => p.userId !== userId),
-    }));
-  }, []);
+  const confirmCharacters = useCallback(() => {
+    socketRef.current?.emit('lobby:chars-confirmed', { code });
+  }, [code]);
 
-  const transferHost = useCallback((userId: string) => {
-    // TODO: replace with socket.emit('lobby:transfer-host', { userId })
-    setLobbyState((prev) => ({
-      ...prev,
-      players: prev.players.map((p) => ({
-        ...p,
-        isHost: p.userId === userId,
-      })),
-    }));
-  }, []);
+  const updateSettings = useCallback(
+    (patch: Partial<LobbySettings>) => {
+      socketRef.current?.emit('lobby:settings-change', { code, patch });
+      setLobbyState((prev) => ({ ...prev, settings: { ...prev.settings, ...patch } }));
+    },
+    [code],
+  );
+
+  const setReady = useCallback(() => {
+    socketRef.current?.emit('lobby:ready', { code });
+  }, [code]);
+
+  const setUnready = useCallback(() => {
+    socketRef.current?.emit('lobby:unready', { code });
+  }, [code]);
+
+  const kickPlayer = useCallback(
+    (userId: string) => {
+      socketRef.current?.emit('lobby:kick', { code, userId });
+    },
+    [code],
+  );
+
+  const transferHost = useCallback(
+    (userId: string) => {
+      socketRef.current?.emit('lobby:transfer-host', { code, userId });
+    },
+    [code],
+  );
+
+  const sendChatMessage = useCallback(
+    (text: string) => {
+      socketRef.current?.emit('lobby:chat', { code, text });
+    },
+    [code],
+  );
 
   return {
     lobbyState,
     isHost,
     selectBoard,
     confirmBoard,
+    undoBoard,
     toggleCharacter,
     confirmCharacters,
     updateSettings,
     setReady,
+    setUnready,
     kickPlayer,
     transferHost,
     sendChatMessage,
-    triggerGameStarting,
   };
 }

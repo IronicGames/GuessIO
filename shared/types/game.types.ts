@@ -1,9 +1,6 @@
 // Mirrors Prisma enums — must be kept in sync manually
 
-export enum GameMode {
-  CASUAL = 'CASUAL',
-  TAG = 'TAG',
-}
+import { type GameMode } from './lobby.types';
 
 export enum GameResult {
   WIN = 'WIN',
@@ -23,16 +20,6 @@ export enum LogActionType {
   ASK = 'ASK',
   GUESS = 'GUESS',
   SKIP = 'SKIP',
-}
-
-// In-memory lobby settings — used by the Socket.io layer, not persisted directly
-export interface GameSettings {
-  mode: GameMode;
-  /** null = timer off; 30 | 60 | 180 = seconds per turn */
-  turnTimer: 30 | 60 | 180 | null;
-  /** 0 = infinite; 1 | 3 = finite lives */
-  lives: 0 | 1 | 3;
-  isPublic: boolean;
 }
 
 export interface GameLogEntryDto {

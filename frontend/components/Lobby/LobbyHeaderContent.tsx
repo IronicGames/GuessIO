@@ -1,11 +1,11 @@
 'use client';
 
 import { Avatar, Divider, Group, Text } from '@mantine/core';
-import { JoinCodePill } from './JoinCodePill';
-import { type LobbyPlayer } from '@/hooks/useLobby';
+import { JoinLinkPill } from './JoinLinkPill';
+import { type LobbyPlayer } from '@shared/types/lobby.types';
 
 interface LobbyHeaderContentProps {
-  code: string;
+  link: string;
   players: LobbyPlayer[];
 }
 
@@ -13,11 +13,16 @@ function PlayerChip({ player }: { player: LobbyPlayer | undefined }) {
   if (!player) return null;
   return (
     <Group gap="xs" align="center">
-      <Avatar size="sm" src={player.profilePicture} radius="xl" color="cyan">
-        {player.name?.[0]?.toUpperCase() ?? '?'}
+      <Avatar size="sm" src={player.user.profilePicture} radius="xl" color="cyan">
+        {player.user.name?.[0]?.toUpperCase() ?? '?'}
       </Avatar>
-      <Text size="sm" c={player.isConnected ? '#e6edf3' : '#6b7f96'} style={{ maxWidth: 100 }} truncate>
-        {player.name}
+      <Text
+        size="sm"
+        c={player.isConnected ? '#e6edf3' : '#6b7f96'}
+        style={{ maxWidth: 100 }}
+        truncate
+      >
+        {player.user.name}
       </Text>
       {/* Connection dot */}
       <div
@@ -33,7 +38,7 @@ function PlayerChip({ player }: { player: LobbyPlayer | undefined }) {
   );
 }
 
-export function LobbyHeaderContent({ code, players }: LobbyHeaderContentProps) {
+export function LobbyHeaderContent({ link, players }: LobbyHeaderContentProps) {
   const host = players.find((p) => p.isHost);
   const joiner = players.find((p) => !p.isHost);
 
@@ -51,7 +56,7 @@ export function LobbyHeaderContent({ code, players }: LobbyHeaderContentProps) {
         </Text>
       )}
       <Divider orientation="vertical" color="#33465f" />
-      <JoinCodePill code={code} />
+      <JoinLinkPill link={link} />
     </Group>
   );
 }

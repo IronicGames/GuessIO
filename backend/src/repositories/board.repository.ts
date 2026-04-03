@@ -40,13 +40,18 @@ export async function getBoard(id: string): Promise<BoardWithCharacters> {
   });
 }
 
-export async function getBoardsForUser(id: string): Promise<BoardWithCharacters[]> {
+export async function getBoardsForUser(
+  id: string,
+  includePublic: boolean,
+): Promise<BoardWithCharacters[]> {
   return await prisma.board.findMany({
-    where: {
-      user: {
-        id: id,
-      },
-    },
+    where: includePublic
+      ? {
+          OR: [{ user: { id } }, { isPublic: true }],
+        }
+      : {
+          user: { id },
+        },
     include: {
       image: true,
       characters: { include: { image: true, boards: true } },

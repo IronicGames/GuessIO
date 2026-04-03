@@ -10,11 +10,22 @@ import { useState } from 'react';
 
 export default function HomePage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isLoggedIn, loginAsGuest } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [createLobbyLoading, setCreateLobbyLoading] = useState(false);
 
   // Only players and admins can manage boards — guests cannot
-  const canManageBoards = user?.role === 'PLAYER' || user?.role === 'ADMIN';
+  const privilegedUser = user?.role === 'PLAYER' || user?.role === 'ADMIN';
+
+  const handleCreateLobby = async () => {
+    setCreateLobbyLoading(true);
+    try {
+      if (!isLoggedIn) await loginAsGuest();
+      router.push('/lobby');
+    } finally {
+      setCreateLobbyLoading(false);
+    }
+  };
 
   const handleManageBoardsLocked = () => {
     setAuthModalOpen(true);
@@ -42,12 +53,17 @@ export default function HomePage() {
         >
           <Stack w="100%" maw={500} gap="md">
             <HomePageButton href="/game/public" text="Public Match" />
-            <HomePageButton href="/lobby" text="Create Lobby" />
+            <HomePageButton
+              href="/lobby"
+              text="Create Lobby"
+              loading={createLobbyLoading}
+              onClick={handleCreateLobby}
+            />
             {/* Locked for guests — visible but explains access requirement on click */}
             <HomePageButton
               href="/boards"
               text="Manage Boards"
-              locked={!canManageBoards}
+              locked={!privilegedUser}
               onLockedClick={handleManageBoardsLocked}
             />
             {/* Enter lobby code */}
@@ -65,10 +81,11 @@ export default function HomePage() {
                   border: '2px solid var(--mantine-color-dark-4)',
                 },
               }}
-              onKeyDown={(e) => {
+              onKeyDown={async (e) => {
                 if (e.key === 'Enter') {
+                  if (!isLoggedIn) await loginAsGuest();
                   const code = (e.target as HTMLInputElement).value;
-                  if (code) router.push(`/lobby/${code}`);
+                  if (code) router.push(`/lobby/${code.toUpperCase().trim()}`);
                 }
               }}
             />

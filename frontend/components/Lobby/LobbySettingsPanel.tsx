@@ -1,8 +1,7 @@
 'use client';
 
 import { Box, Divider, SegmentedControl, Stack, Text } from '@mantine/core';
-import { type LobbySettings } from '@/hooks/useLobby';
-
+import { GameMode, TurnTimer, type LobbySettings } from '@shared/types/lobby.types';
 interface LobbySettingsProps {
   settings: LobbySettings;
   isHost: boolean;
@@ -16,17 +15,21 @@ const segmentStyles = {
   control: { borderColor: 'transparent' },
 };
 
-export function LobbySettings({ settings, isHost, onChange }: LobbySettingsProps) {
-  const isCasual = settings.mode === 'CASUAL';
+export function LobbySettingsPanel({ settings, isHost, onChange }: LobbySettingsProps) {
+  const isCasual = settings.mode === GameMode.CASUAL;
 
   const handleModeChange = (value: string) => {
     const mode = value as LobbySettings['mode'];
     // Casual always forces timer off
-    onChange({ mode, turnTimer: mode === 'CASUAL' ? 'OFF' : settings.turnTimer });
+    onChange({ mode, turnTimer: mode === GameMode.CASUAL ? TurnTimer.OFF : settings.turnTimer });
   };
 
   return (
-    <Stack gap="sm" p="md" style={{ pointerEvents: isHost ? 'auto' : 'none', opacity: isHost ? 1 : 0.7 }}>
+    <Stack
+      gap="sm"
+      p="md"
+      style={{ pointerEvents: isHost ? 'auto' : 'none', opacity: isHost ? 1 : 0.7 }}
+    >
       <Text size="sm" fw={600} c="#e6edf3">
         Settings
         {!isHost && (

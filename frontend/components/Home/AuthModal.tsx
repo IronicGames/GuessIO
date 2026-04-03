@@ -1,6 +1,6 @@
 'use client';
 
-import { Modal, Stack, Button, Divider, Text, Box } from '@mantine/core';
+import { Modal, Stack, Button, Text, Box } from '@mantine/core';
 import { IconBrandGoogle } from '@tabler/icons-react';
 import { useAuth } from '@providers/auth-provider';
 

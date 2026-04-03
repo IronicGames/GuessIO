@@ -5,18 +5,25 @@ import { type CharacterDto } from '@shared/types/character.types';
 import { ToImageDto } from '@shared/types/image.types';
 import { type Character, type Board, type Image } from '@prisma/client';
 
-export async function getBoardsForUser(userId: string): Promise<BoardDto[]> {
-  const boards = await boardRepository.getBoardsForUser(userId);
+export async function getBoardsForUser(
+  userId: string,
+  includePublic: boolean,
+): Promise<BoardDto[]> {
+  const boards = await boardRepository.getBoardsForUser(userId, includePublic);
   const boardDtos = boards.filter((board) => board != null).map(ToBoardDto);
   return boardDtos;
 }
 
-export async function getBoard(userId: string, boardId: string): Promise<BoardDto> {
+export async function getBoard(
+  userId: string,
+  boardId: string,
+  includePublic?: boolean,
+): Promise<BoardDto> {
   const board = await boardRepository.getBoard(boardId);
   if (!board) {
     throw new NotFoundError('Board not found');
   }
-  if (userId !== board.userId) {
+  if (!(userId === board.userId || (includePublic && board.isPublic))) {
     throw new UnauthorizedError(`Board ${boardId} does not belong to user ${userId}`);
   }
   return ToBoardDto(board);

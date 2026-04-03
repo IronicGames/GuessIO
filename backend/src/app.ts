@@ -1,4 +1,4 @@
-import { requireAuth, requireRole } from '@middleware/auth.middleware';
+import { requireAuth } from '@middleware/auth.middleware';
 import express from 'express';
 import cors from 'cors';
 import statusRoutes from './routes/status.route';
@@ -7,7 +7,6 @@ import boardRoutes from './routes/board.route';
 import { errorHandler } from './middleware/error-handler.middleware';
 import cookieParser from 'cookie-parser';
 import { config } from './utils/constants/env';
-import { Role } from '@shared/types/misc.types';
 
 const app = express();
 
@@ -23,7 +22,7 @@ app.use(express.json({ limit: '10mb' })); // base64 inflates ~33% so 5MB file â‰
 // Routes
 app.use('/api', statusRoutes); // /api/health
 app.use('/api/auth', authRoutes); // /api/auth/*
-app.use('/api/boards', requireAuth, requireRole(Role.PLAYER, Role.ADMIN), boardRoutes); // /api/boards/* (characters nested: /api/boards/:boardId/characters)
+app.use('/api/boards', requireAuth, boardRoutes); // /api/boards/* (characters nested: /api/boards/:boardId/characters)
 
 app.use(errorHandler);
 export default app;

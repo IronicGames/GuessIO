@@ -2,31 +2,31 @@
 
 import { Avatar, Box, Button, Divider, Group, Menu, Text } from '@mantine/core';
 import { IconCrown, IconDotsVertical, IconSword, IconUserX } from '@tabler/icons-react';
-import { type LobbyPlayer } from '@/hooks/useLobby';
 import { buttonThemes } from '@styles/buttonThemes';
+import { LobbyPhase, type LobbyPlayer } from '@shared/types/lobby.types';
 
 interface LobbyPlayersProps {
   players: LobbyPlayer[];
   currentUserId: string;
   isHost: boolean;
+  gameStarting: boolean;
+  phase: LobbyPhase;
   onReady: () => void;
+  onUnready: () => void;
   onKick: (userId: string) => void;
   onTransferHost: (userId: string) => void;
-  onStartGame: () => void;
 }
 
 function PlayerRow({
   player,
   isCurrentUser,
   isHost,
-  currentUserId,
   onKick,
   onTransferHost,
 }: {
   player: LobbyPlayer;
   isCurrentUser: boolean;
   isHost: boolean;
-  currentUserId: string;
   onKick: (userId: string) => void;
   onTransferHost: (userId: string) => void;
 }) {
@@ -44,23 +44,21 @@ function PlayerRow({
           }}
         />
 
-        <Avatar size="sm" src={player.profilePicture} radius="xl" color="cyan">
-          {player.name?.[0]?.toUpperCase() ?? '?'}
+        <Avatar size="sm" src={player.user.profilePicture} radius="xl" color="cyan">
+          {player.user.name?.[0]?.toUpperCase() ?? '?'}
         </Avatar>
 
         <Box style={{ minWidth: 0 }}>
           <Group gap={6} align="center" wrap="nowrap">
             <Text size="sm" c="#e6edf3" truncate>
-              {player.name}
+              {player.user.name}
               {isCurrentUser && (
                 <Text span size="xs" c="#6b7f96" ml={4}>
                   (you)
                 </Text>
               )}
             </Text>
-            {player.isHost && (
-              <IconCrown size={14} color="#f5c542" style={{ flexShrink: 0 }} />
-            )}
+            {player.isHost && <IconCrown size={14} color="#f5c542" style={{ flexShrink: 0 }} />}
           </Group>
         </Box>
       </Group>
@@ -93,7 +91,7 @@ function PlayerRow({
               <Menu.Item
                 leftSection={<IconSword size={14} />}
                 style={{ color: '#8ecae6' }}
-                onClick={() => onTransferHost(player.userId)}
+                onClick={() => onTransferHost(player.user.id)}
               >
                 Make host
               </Menu.Item>
@@ -101,7 +99,7 @@ function PlayerRow({
               <Menu.Item
                 leftSection={<IconUserX size={14} />}
                 color="red"
-                onClick={() => onKick(player.userId)}
+                onClick={() => onKick(player.user.id)}
               >
                 Kick
               </Menu.Item>
@@ -140,14 +138,14 @@ export function LobbyPlayers({
   players,
   currentUserId,
   isHost,
+  phase,
   onReady,
+  onUnready,
   onKick,
   onTransferHost,
-  onStartGame,
 }: LobbyPlayersProps) {
-  const currentPlayer = players.find((p) => p.userId === currentUserId);
-  const otherPlayers = players.filter((p) => p.userId !== currentUserId);
-  const allReady = players.length === 2 && players.every((p) => p.isReady);
+  const currentPlayer = players.find((p) => p.user.id === currentUserId);
+  const otherPlayers = players.filter((p) => p.user.id !== currentUserId);
 
   // Sort: current user first, then others
   const sortedPlayers = currentPlayer ? [currentPlayer, ...otherPlayers] : players;
@@ -166,11 +164,10 @@ export function LobbyPlayers({
         <Box style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {sortedPlayers.map((player) => (
             <PlayerRow
-              key={player.userId}
+              key={player.user.id}
               player={player}
-              isCurrentUser={player.userId === currentUserId}
+              isCurrentUser={player.user.id === currentUserId}
               isHost={isHost}
-              currentUserId={currentUserId}
               onKick={onKick}
               onTransferHost={onTransferHost}
             />
@@ -183,22 +180,17 @@ export function LobbyPlayers({
 
       <Divider color="#33465f" />
 
-      {/* Footer — ready / start */}
+      {/* Footer — ready / unready / start */}
       <Box style={{ flexShrink: 0, padding: '10px 12px' }}>
-        {allReady && isHost ? (
-          // Both players ready — host can start
+        {currentPlayer?.isReady ? (
           <Button
             fullWidth
             size="sm"
-            color={buttonThemes.primary.color}
-            c={buttonThemes.primary.textColor}
-            styles={{ root: { borderColor: buttonThemes.primary.borderColor } }}
-            onClick={() => {
-              // TODO: socket.io — emit('lobby:start-game')
-              onStartGame();
-            }}
+            variant="outline"
+            styles={{ root: { borderColor: '#33465f', color: '#6b7f96' } }}
+            onClick={onUnready}
           >
-            Start Game
+            Unready
           </Button>
         ) : currentPlayer && !currentPlayer.isReady ? (
           <Button
@@ -208,13 +200,10 @@ export function LobbyPlayers({
             c={buttonThemes.primary.textColor}
             styles={{ root: { borderColor: buttonThemes.primary.borderColor } }}
             onClick={onReady}
+            disabled={players.length < 2 || phase !== LobbyPhase.WAITING_FOR_READY}
           >
             Ready
           </Button>
-        ) : currentPlayer?.isReady && !allReady ? (
-          <Text size="xs" c="#4caf7d" ta="center">
-            ✓ You're ready — waiting for opponent
-          </Text>
         ) : null}
       </Box>
     </Box>

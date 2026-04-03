@@ -90,3 +90,11 @@ export const guestLoginSchema = z.object({
     .max(20, 'Name must not exceed 20 characters')
     .optional(),
 });
+
+export const nameUpdateSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'Name must be at least 2 characters')
+    .max(20, 'Name must not exceed 20 characters'),
+});

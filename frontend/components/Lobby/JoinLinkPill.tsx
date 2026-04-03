@@ -1,18 +1,19 @@
 'use client';
 
 import { Group, Text } from '@mantine/core';
-import { IconCopy, IconEye, IconEyeOff } from '@tabler/icons-react';
+import { IconCopy, IconLink } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
-interface JoinCodePillProps {
-  code: string;
+interface JoinLinkPillProps {
+  link: string; // full URL, e.g. https://playguess.io/lobby/ABC123
 }
 
-export function JoinCodePill({ code }: JoinCodePillProps) {
-  const [revealed, setRevealed] = useState(false);
+export function JoinLinkPill({ link }: JoinLinkPillProps) {
   const [copied, setCopied] = useState(false);
 
-  // Reset "Copied!" feedback after 1.5 seconds
+  // Extract the lobby code from the end of the URL for display
+  const displayCode = link.split('/').pop()?.toUpperCase() ?? link;
+
   useEffect(() => {
     if (!copied) return;
     const t = setTimeout(() => setCopied(false), 1500);
@@ -20,25 +21,19 @@ export function JoinCodePill({ code }: JoinCodePillProps) {
   }, [copied]);
 
   const handleClick = () => {
-    if (!revealed) {
-      setRevealed(true);
-    } else {
-      navigator.clipboard.writeText(code).then(() => setCopied(true));
-    }
+    navigator.clipboard.writeText(link).then(() => setCopied(true));
   };
-
-  const EyeIcon = revealed ? IconEyeOff : IconEye;
-  const ActionIcon = revealed ? IconCopy : null;
 
   return (
     <Group gap="xs" align="center">
       <Text size="xs" c="#6b7f96" style={{ userSelect: 'none' }}>
-        Lobby Code
+        Invite:
       </Text>
       <Group
         gap="xs"
         align="center"
         onClick={handleClick}
+        title={link}
         style={{
           borderRadius: 20,
           backgroundColor: '#2f3e55',
@@ -49,11 +44,11 @@ export function JoinCodePill({ code }: JoinCodePillProps) {
           transition: 'border-color 0.15s ease',
         }}
       >
-        <EyeIcon size={14} color="#6b7f96" />
-        <Text size="sm" fw={600} c={revealed ? '#8ecae6' : '#6b7f96'} ff="monospace">
-          {copied ? 'Copied!' : revealed ? code : '••••••'}
+        <IconLink size={14} color="#6b7f96" />
+        <Text size="sm" fw={600} c={copied ? '#4caf7d' : '#8ecae6'} ff="monospace">
+          {copied ? 'Copied!' : displayCode}
         </Text>
-        {ActionIcon && <ActionIcon size={14} color="#6b7f96" />}
+        <IconCopy size={14} color="#6b7f96" />
       </Group>
     </Group>
   );

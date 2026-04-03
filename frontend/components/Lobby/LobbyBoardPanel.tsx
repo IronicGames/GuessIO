@@ -3,7 +3,6 @@
 import { type CSSProperties } from 'react';
 import { Box, Button, Center, Group, Text } from '@mantine/core';
 import { type BoardDto } from '@shared/types/board.types';
-import { type LobbyPhase } from '@/hooks/useLobby';
 import { type GridItemData } from '@components/Board/GridCard';
 import GridContainer from '@components/Board/GridContainer';
 import LoadingOverlay from '@components/LoadingOverlay';
@@ -11,17 +10,20 @@ import { CharacterToggleGrid } from './CharacterToggleGrid';
 import { buttonThemes } from '@styles/buttonThemes';
 import { useNotify } from '@/hooks/useNotify';
 import { useRouter } from 'next/navigation';
+import { LobbyPhase } from '@shared/types/lobby.types';
 
 interface LobbyBoardPanelProps {
   phase: LobbyPhase;
   isHost: boolean;
   boards: BoardDto[];
   selectedBoardId: string | null;
+  selectedBoard: BoardDto | null;
   disabledCharacterIds: string[];
   onSelectBoard: (boardId: string) => void;
   onConfirmBoard: () => void;
   onToggleCharacter: (characterId: string) => void;
   onConfirmCharacters: () => void;
+  onUndoBoard: () => void;
 }
 
 const FOOTER_STYLE: CSSProperties = {
@@ -36,22 +38,26 @@ export function LobbyBoardPanel({
   isHost,
   boards,
   selectedBoardId,
+  selectedBoard,
   disabledCharacterIds,
   onSelectBoard,
   onConfirmBoard,
   onToggleCharacter,
   onConfirmCharacters,
+  onUndoBoard,
 }: LobbyBoardPanelProps) {
   const notify = useNotify();
   const router = useRouter();
 
-  const selectedBoard = boards.find((b) => b.id === selectedBoardId) ?? null;
-
   // ── Phase 1: Board selection ──────────────────────────────────
 
-  if (phase === 'board-selection') {
+  if (phase === LobbyPhase.BOARD_SELECTION) {
     if (!isHost) {
-      return <LoadingOverlay mode="screen" status="loading" text="Host is selecting a board…" />;
+      return (
+        <Box style={{ position: 'relative', height: '100%' }}>
+          <LoadingOverlay mode="overlay" visible={true} message="Host is selecting a board…" />
+        </Box>
+      );
     }
 
     const gridItems: GridItemData[] = boards.map((board) => {
@@ -100,7 +106,9 @@ export function LobbyBoardPanel({
             c={buttonThemes.primary.textColor}
             styles={{ root: { borderColor: buttonThemes.primary.borderColor } }}
           >
-            {selectedBoardId ? `Confirm — ${selectedBoard?.name ?? 'Board'}` : 'Select a board'}
+            {selectedBoardId
+              ? `Confirm — ${boards.find((b) => b.id === selectedBoardId)?.name ?? 'Board'}`
+              : 'Select a board'}
           </Button>
         </Box>
       </Box>
@@ -151,6 +159,11 @@ export function LobbyBoardPanel({
             </Text>
           </Box>
         </Group>
+        {isHost && (
+          <Button size="xs" variant="subtle" c="#8ecae6" onClick={onUndoBoard}>
+            Change Board
+          </Button>
+        )}
       </Box>
 
       {/* Character grid */}
@@ -164,7 +177,7 @@ export function LobbyBoardPanel({
       </Box>
 
       {/* Footer — only shown to host during character-config phase */}
-      {isHost && phase === 'character-config' && (
+      {isHost && phase === LobbyPhase.CHARACTER_CONFIG && (
         <Box style={FOOTER_STYLE}>
           <Button
             fullWidth

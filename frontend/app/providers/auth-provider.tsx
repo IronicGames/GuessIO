@@ -3,6 +3,7 @@
 import { type UserProfile } from '@shared/types/user.types';
 import { createContext, useState, type ReactNode, useEffect, useContext, useCallback } from 'react';
 import { api } from '@lib/api';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -10,6 +11,7 @@ interface AuthContextType {
   loginWithGoogle: () => void;
   loginAsGuest: (name?: string) => Promise<void>;
   logout: () => void;
+  updateName: (name: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -18,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   const refreshUser = useCallback(async () => {
     const profileData = await api.auth.getUserProfile();
@@ -48,16 +51,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [refreshUser],
   );
 
-  const logout = useCallback(() => {
-    api.auth.logout();
+  const logout = useCallback(async () => {
+    await api.auth.logout();
     setUser(null);
+    router.push('/');
   }, []);
+
+  const updateName = useCallback(
+    async (name: string) => {
+      await api.auth.updateName(name);
+      await refreshUser();
+    },
+    [refreshUser],
+  );
 
   // Render children immediately — pages handle their own loading/auth states.
   // The loading flag is exposed for consumers that need to wait (e.g. route guards).
   return (
     <AuthContext.Provider
-      value={{ user, isLoggedIn: !!user, loginWithGoogle, loginAsGuest, logout, loading }}
+      value={{
+        user,
+        isLoggedIn: !!user,
+        loginWithGoogle,
+        loginAsGuest,
+        logout,
+        updateName,
+        loading,
+      }}
     >
       {children}
     </AuthContext.Provider>
