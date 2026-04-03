@@ -105,7 +105,7 @@ describe('Board Integration Tests', () => {
         .send({ description: 'Missing name', isPublic: false })
         .expect(400);
 
-      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.error).toBe('Board name is required');
       expect(response.body.issues).toHaveLength(1);
       expect(response.body.issues[0].message).toBe('Board name is required');
     });
@@ -254,7 +254,7 @@ describe('Board Integration Tests', () => {
         .send({ description: 'Missing name' })
         .expect(400);
 
-      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.error).toBe('Board name is required');
       expect(response.body.issues).toHaveLength(1);
       expect(response.body.issues[0].message).toBe('Board name is required');
     });

@@ -13,8 +13,12 @@ export function validate(schema: ZodType, part: RequestPart = 'body') {
         code: issue.code,
       }));
 
+      // Use the first issue's message as the top-level error so getErrorMessage()
+      // on the frontend returns something actionable instead of "Validation failed".
+      const errorMessage = result.error.issues[0]?.message ?? 'Validation failed';
+
       res.status(400).json({
-        error: 'Validation failed',
+        error: errorMessage,
         issues: formattedErrors,
       });
       return;

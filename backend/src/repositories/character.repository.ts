@@ -83,3 +83,11 @@ export async function getCharacter(characterId: string): Promise<Character> {
     include: { image: true, boards: true },
   });
 }
+
+export async function getCharacterCountForBoard(boardId: string): Promise<number> {
+  const result = await prisma.board.findUnique({
+    where: { id: boardId },
+    select: { _count: { select: { characters: true } } },
+  });
+  return result?._count.characters ?? 0;
+}

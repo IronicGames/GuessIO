@@ -3,6 +3,7 @@ import * as boardService from '@services/board.service';
 import { NotFoundError } from '@errors/app-error';
 import * as userService from '@services/user.service';
 import { generateUniqueUserData } from '@tests/helpers/test-data';
+import { Role } from '@prisma/client';
 
 describe('Board Service Unit Tests', () => {
   let userId: string;
@@ -43,7 +44,7 @@ describe('Board Service Unit Tests', () => {
   describe('updateBoard', () => {
     it('should throw NotFoundError when board does not exist', async () => {
       await expect(
-        boardService.updateBoard(userId, crypto.randomUUID(), {
+        boardService.updateBoard(userId, Role.PLAYER, crypto.randomUUID(), {
           name: 'Non-existent Board',
         }),
       ).rejects.toThrow(NotFoundError);
@@ -54,7 +55,7 @@ describe('Board Service Unit Tests', () => {
         name: `Board to Update ${crypto.randomUUID()}`,
       });
 
-      const updatedId = await boardService.updateBoard(userId, boardId, {
+      const updatedId = await boardService.updateBoard(userId, Role.PLAYER, boardId, {
         name: `Updated Board ${crypto.randomUUID()}`,
         description: 'Updated description',
       });
@@ -65,9 +66,9 @@ describe('Board Service Unit Tests', () => {
 
   describe('deleteBoard', () => {
     it('should throw NotFoundError when board does not exist', async () => {
-      await expect(boardService.deleteBoard(userId, crypto.randomUUID())).rejects.toThrow(
-        NotFoundError,
-      );
+      await expect(
+        boardService.deleteBoard(userId, Role.PLAYER, crypto.randomUUID()),
+      ).rejects.toThrow(NotFoundError);
     });
 
     it('should successfully delete existing board', async () => {
@@ -75,10 +76,12 @@ describe('Board Service Unit Tests', () => {
         name: `Board to Delete ${crypto.randomUUID()}`,
       });
 
-      const deletedId = await boardService.deleteBoard(userId, boardId);
+      const deletedId = await boardService.deleteBoard(userId, Role.PLAYER, boardId);
       expect(deletedId).toBe(boardId);
 
-      await expect(boardService.deleteBoard(userId, boardId)).rejects.toThrow(NotFoundError);
+      await expect(
+        boardService.deleteBoard(userId, Role.PLAYER, boardId),
+      ).rejects.toThrow(NotFoundError);
     });
   });
 

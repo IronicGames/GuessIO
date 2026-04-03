@@ -19,7 +19,17 @@ export const stringFieldSchema = (fieldName: string, options?: { min?: number; m
 
 export const urlSchema = z.url('Invalid URL format').optional().or(z.literal(''));
 
-export const tagsSchema = z.array(z.string().trim().min(1)).optional().default([]);
+export const tagsSchema = z
+  .array(
+    z
+      .string()
+      .trim()
+      .min(1)
+      .max(50, 'Tags must not exceed 50 characters'),
+  )
+  .max(30, 'A character cannot have more than 30 tags')
+  .optional()
+  .default([]);
 
 // ============================================================================
 // ROUTE PARAMETER SCHEMAS

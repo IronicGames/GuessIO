@@ -1,6 +1,7 @@
 import { type Request, type Response } from 'express';
 import * as boardService from '@services/board.service';
 import { asyncHandler } from '@middleware/error-handler.middleware';
+import { Role } from '@prisma/client';
 
 export const getBoardsForUser = asyncHandler(async (req: Request, res: Response) => {
   const includePublic = req.query.includePublic === 'true';
@@ -30,7 +31,7 @@ export const updateBoard = asyncHandler(async (req: Request, res: Response) => {
   const { boardId } = req.params as { boardId: string };
   const { name, description, isPublic, imageUrl } = req.body;
 
-  const updatedBoard = await boardService.updateBoard(req.user.id, boardId, {
+  const updatedBoard = await boardService.updateBoard(req.user.id, req.user.role as Role, boardId, {
     name,
     description,
     isPublic,
@@ -41,6 +42,6 @@ export const updateBoard = asyncHandler(async (req: Request, res: Response) => {
 
 export const deleteBoard = asyncHandler(async (req: Request, res: Response) => {
   const { boardId } = req.params as { boardId: string };
-  const deletedBoard = await boardService.deleteBoard(req.user.id, boardId);
+  const deletedBoard = await boardService.deleteBoard(req.user.id, req.user.role as Role, boardId);
   res.json({ id: deletedBoard });
 });

@@ -3,7 +3,7 @@ import { NotFoundError, UnauthorizedError } from '@errors/app-error';
 import * as boardRepository from '@repositories/board.repository';
 import { type CharacterDto } from '@shared/types/character.types';
 import { ToImageDto } from '@shared/types/image.types';
-import { type Character, type Board, type Image } from '@prisma/client';
+import { type Character, type Board, type Image, Role } from '@prisma/client';
 
 export async function getBoardsForUser(
   userId: string,
@@ -39,6 +39,7 @@ export async function createBoard(userId: string, createBoardDto: CreateBoardDto
 
 export async function updateBoard(
   userId: string,
+  userRole: Role,
   id: string,
   updateBoardDto: UpdateBoardDto,
 ): Promise<string> {
@@ -46,7 +47,9 @@ export async function updateBoard(
   if (!board) {
     throw new NotFoundError('Board not found');
   }
-  if (userId !== board.userId) {
+  const isAdmin = userRole === Role.ADMIN;
+  const canEdit = userId === board.userId || (isAdmin && (board.isPublic || board.userId === null));
+  if (!canEdit) {
     throw new UnauthorizedError(`Board ${id} does not belong to user ${userId}`);
   }
   let updatedBoardId: string;
@@ -58,12 +61,14 @@ export async function updateBoard(
   return updatedBoardId;
 }
 
-export async function deleteBoard(userId: string, id: string): Promise<string> {
+export async function deleteBoard(userId: string, userRole: Role, id: string): Promise<string> {
   const board = await boardRepository.getBoard(id);
   if (!board) {
     throw new NotFoundError('Board not found');
   }
-  if (userId !== board.userId) {
+  const isAdmin = userRole === Role.ADMIN;
+  const canEdit = userId === board.userId || (isAdmin && (board.isPublic || board.userId === null));
+  if (!canEdit) {
     throw new UnauthorizedError(`Board ${id} does not belong to user ${userId}`);
   }
   let deletedBoardId: string;
