@@ -6,7 +6,7 @@ export interface BoardSummaryDto {
   name: string;
   description?: string;
   isPublic: boolean;
-  image: ImageDto;
+  image?: ImageDto;
   userId: string;
   createdAt: string;
   updatedAt: string;

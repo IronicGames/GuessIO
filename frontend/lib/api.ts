@@ -62,6 +62,18 @@ export const api = {
       const response = await fetchWithAuth(API_ENDPOINTS.boards.byId(boardId));
       return response.json();
     },
+    exportBoard: async (boardId: string): Promise<void> => {
+      const response = await fetchWithAuth(API_ENDPOINTS.boards.export(boardId));
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = getFilename(response) ?? 'board.guessio';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    },
     createBoard: async (createBoardDto: CreateBoardDto): Promise<{ id: string }> => {
       const response = await fetchWithAuth(API_ENDPOINTS.boards.root, {
         method: 'POST',
@@ -105,4 +117,13 @@ export const api = {
       return response.json();
     },
   },
+};
+
+const getFilename = (res: Response) => {
+  const disposition = res.headers.get('Content-Disposition');
+  if (!disposition) return null;
+
+  const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^;"']+)/i);
+
+  return match?.[1] ?? null;
 };

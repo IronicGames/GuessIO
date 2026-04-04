@@ -4,7 +4,8 @@ import {
   updateBoard,
   deleteBoard,
   getBoard,
-} from './../controllers/board.controller';
+  exportBoard,
+} from '@controllers/board.controller';
 import characterRouter from './character.route';
 import { Router } from 'express';
 import { validate } from '@middleware/validation/validation.middleware';
@@ -26,7 +27,7 @@ router.put(
   updateBoard,
 );
 router.delete('/:boardId', validate(boardIdParamSchema, 'params'), deleteBoard);
-
+router.get('/:boardId/export', validate(boardIdParamSchema, 'params'), exportBoard);
 router.use('/:boardId/characters', characterRouter);
 
 export default router;

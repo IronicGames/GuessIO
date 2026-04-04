@@ -22,6 +22,7 @@ interface BoardFormProps {
   onSubmit: (data: BoardFormData) => void;
   onCancel: () => void;
   onDelete?: () => void;
+  onExport?: () => void;
 }
 
 export default function BoardForm({
@@ -31,6 +32,7 @@ export default function BoardForm({
   onSubmit,
   onCancel,
   onDelete,
+  onExport,
 }: BoardFormProps) {
   const { user } = useAuth();
   const [name, setName] = useState(initialData?.name ?? '');
@@ -67,6 +69,7 @@ export default function BoardForm({
       onSubmit={handleSubmit}
       onCancel={onCancel}
       onDelete={onDelete ? handleDelete : undefined}
+      onExport={onExport}
       isSubmitting={isSubmitting}
       isDeleting={isDeleting}
       canSubmit={name.trim().length > 0}

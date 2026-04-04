@@ -41,6 +41,10 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
     onCharacterImported: panel.close,
   });
 
+  const handleExport = async () => {
+    await api.boards.exportBoard(boardId);
+  };
+
   if (isLoading) return <LoadingOverlay mode="screen" status="loading" />;
   if (error) return <LoadingOverlay mode="screen" status="error" text={getErrorMessage(error)} />;
 
@@ -94,6 +98,7 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
             onSubmit={(data) => mutations.updateBoard(data)}
             onCancel={() => router.push('/boards')}
             onDelete={() => mutations.deleteBoard()}
+            onExport={handleExport}
           />
         </ContentPaper>
 

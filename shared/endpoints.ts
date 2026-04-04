@@ -8,6 +8,7 @@ export const API_ENDPOINTS = {
   boards: {
     root: '/boards',
     byId: (boardId: string) => `/boards/${boardId}`,
+    export: (boardId: string) => `/boards/${boardId}/export`,
   },
   characters: {
     root: (boardId: string) => `/boards/${boardId}/characters`,

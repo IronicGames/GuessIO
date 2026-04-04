@@ -1,7 +1,9 @@
+import { createBoardZip } from './../services/board-export.service';
 import { type Request, type Response } from 'express';
 import * as boardService from '@services/board.service';
+import * as boardExportService from '@services/board-export.service';
 import { asyncHandler } from '@middleware/error-handler.middleware';
-import { Role } from '@prisma/client';
+import { type Role } from '@prisma/client';
 
 export const getBoardsForUser = asyncHandler(async (req: Request, res: Response) => {
   const includePublic = req.query.includePublic === 'true';
@@ -44,4 +46,12 @@ export const deleteBoard = asyncHandler(async (req: Request, res: Response) => {
   const { boardId } = req.params as { boardId: string };
   const deletedBoard = await boardService.deleteBoard(req.user.id, req.user.role as Role, boardId);
   res.json({ id: deletedBoard });
+});
+
+export const exportBoard = asyncHandler(async (req: Request, res: Response) => {
+  const { boardId } = req.params as { boardId: string };
+  const exportedFile = await boardExportService.createBoardZip(req.user.id, boardId);
+  res.setHeader('Content-Disposition', `attachment; filename="${exportedFile.filename}"`);
+  res.setHeader('Content-Type', 'application/zip');
+  res.end(exportedFile.bytes);
 });
