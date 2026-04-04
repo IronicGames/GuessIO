@@ -9,6 +9,8 @@ export const API_ENDPOINTS = {
     root: '/boards',
     byId: (boardId: string) => `/boards/${boardId}`,
     export: (boardId: string) => `/boards/${boardId}/export`,
+    import: () => `/boards/import`,
+    importPreview: () => `/boards/import/preview`,
   },
   characters: {
     root: (boardId: string) => `/boards/${boardId}/characters`,

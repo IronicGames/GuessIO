@@ -15,6 +15,11 @@ export class BadRequestError extends AppError {
     super(400, message);
   }
 }
+export class InvalidBoardImportError extends BadRequestError {
+  constructor() {
+    super('The file appears to be corrupted.');
+  }
+}
 
 export class UnauthorizedError extends AppError {
   constructor(message: string = 'Unauthorized') {

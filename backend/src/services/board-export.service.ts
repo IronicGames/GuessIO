@@ -40,7 +40,7 @@ export const createBoardZip = async (userId: string, boardId: string): Promise<E
         const bytes = Buffer.from(base64Data, 'base64');
         imageFiles.push({
           id: id,
-          filename: `images/${  baseName  }.${  mime2ext(mimeType)}`,
+          filename: `images/${baseName}.${mime2ext(mimeType)}`,
           bytes,
         } as ExportedFile);
       } else if (imageType === ImageType.REMOTE_URL) {
@@ -61,7 +61,7 @@ export const createBoardZip = async (userId: string, boardId: string): Promise<E
         }
         imageFiles.push({
           id: id,
-          filename: `images/${  baseName  }.${  mime2ext(contentType)}`,
+          filename: `images/${baseName}.${mime2ext(contentType)}`,
           bytes,
         } as ExportedFile);
       }
@@ -69,7 +69,6 @@ export const createBoardZip = async (userId: string, boardId: string): Promise<E
   );
   const imageMap = new Map(imageFiles.map((f) => [f.id, f.filename]));
   const boardJson = JSON.stringify({
-    version: 1,
     name: board.name,
     description: board.description,
     image: imageMap.get(board.id),
@@ -80,13 +79,12 @@ export const createBoardZip = async (userId: string, boardId: string): Promise<E
     })),
   });
   const manifestFiles: Record<string, string> = {};
-
   manifestFiles['board.json'] =
-    `sha256:${  crypto.createHash('sha256').update(boardJson).digest('hex')}`;
+    `sha256:${crypto.createHash('sha256').update(boardJson).digest('hex')}`;
 
   imageFiles.forEach((file) => {
     manifestFiles[file.filename] =
-      `sha256:${  crypto.createHash('sha256').update(file.bytes).digest('hex')}`;
+      `sha256:${crypto.createHash('sha256').update(file.bytes).digest('hex')}`;
   });
 
   const manifestJson = JSON.stringify({

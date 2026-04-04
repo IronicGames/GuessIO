@@ -6,12 +6,13 @@ import { API_ENDPOINTS } from '@shared/endpoints';
 import { ApiError } from '@lib/errors';
 
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {
+  const isFormData = options.body instanceof FormData;
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
     ...options,
     credentials: 'include',
     headers: {
       ...options.headers,
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     },
   });
   if (!response.ok) {
@@ -73,6 +74,15 @@ export const api = {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
+    },
+    importBoard: async (file: File): Promise<void> => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      await fetchWithAuth(API_ENDPOINTS.boards.import(), {
+        method: 'POST',
+        body: formData,
+      });
     },
     createBoard: async (createBoardDto: CreateBoardDto): Promise<{ id: string }> => {
       const response = await fetchWithAuth(API_ENDPOINTS.boards.root, {

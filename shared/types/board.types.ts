@@ -28,3 +28,27 @@ export interface UpdateBoardDto {
   imageUrl?: string;
   isPublic?: boolean;
 }
+
+export interface ManifestJson {
+  version: number;
+  files: Record<string, string>;
+}
+
+export interface BoardJson {
+  version: number;
+  name: string;
+  description?: string;
+  image: string;
+  characters: CharacterEntry[];
+}
+export interface CharacterEntry {
+  name: string;
+  tags: string[];
+  image: string;
+}
+
+export interface BoardImportPreview {
+  name: string;
+  characterCount: number;
+  firstImageUrl?: string;
+}

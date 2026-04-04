@@ -1,4 +1,15 @@
-import { BadRequestError } from '@backend/errors/app-error';
+import { BadRequestError, InvalidBoardImportError } from '@backend/errors/app-error';
+import {
+  manifestJsonSchema,
+  boardJsonSchema,
+} from '@backend/middleware/validation/validation.schemas';
+import { ManifestJson, BoardJson } from '@shared/types/board.types';
+import AdmZip, { IZipEntry } from 'adm-zip';
+import { config } from '@utils/constants/env';
+import crypto from 'crypto';
+import { fileTypeFromBuffer } from 'file-type';
+import { JSDOM } from 'jsdom';
+import DOMPurify from 'dompurify';
 
 export const MAX_CHARACTERS_PER_BOARD = 200;
 export const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
@@ -25,11 +36,10 @@ export function validateImageUrl(imageUrl: string | undefined | null): ImageType
   if (!imageUrl || imageUrl === '') return ImageType.NONE;
 
   if (imageUrl.startsWith('data:')) {
-    const match = imageUrl.match(/^data:(image\/(?:jpeg|png|gif|webp));base64,(.+)$/);
-    if (!match) {
-      throw new BadRequestError('Image must be a valid JPEG, PNG, GIF, or WebP');
+    const match = imageUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
+    if (!match || !match[1].startsWith('image/')) {
+      throw new BadRequestError('Image must be a valid image format');
     }
-    // base64 encodes 3 bytes as 4 chars, so decoded size ≈ length * 0.75
     const estimatedBytes = Math.floor(match[2].length * 0.75);
     if (estimatedBytes > MAX_IMAGE_SIZE_BYTES) {
       throw new BadRequestError('Image must not exceed 2MB');
@@ -53,3 +63,142 @@ export function validateImageUrl(imageUrl: string | undefined | null): ImageType
   }
   return ImageType.REMOTE_URL;
 }
+
+// ---- Validation helpers ----
+
+export const parseZip = (fileBuffer: Buffer): AdmZip => {
+  try {
+    return new AdmZip(fileBuffer);
+  } catch {
+    throw new InvalidBoardImportError();
+  }
+};
+
+export const validateUncompressedSize = (entries: IZipEntry[]): void => {
+  const uncompressedSize = entries.reduce((total, entry) => total + entry.getData().length, 0);
+  if (uncompressedSize > 25 * 1024 * 1024) {
+    throw new InvalidBoardImportError();
+  }
+};
+
+export const validateEntryNames = (entries: IZipEntry[]): void => {
+  if (entries.some((entry) => !isValidZipEntry(entry))) {
+    throw new InvalidBoardImportError();
+  }
+};
+
+export const parseAndValidateManifest = (zip: AdmZip): ManifestJson => {
+  let manifestJson: ManifestJson;
+  try {
+    manifestJson = JSON.parse(zip.readAsText('manifest.json'));
+  } catch {
+    throw new InvalidBoardImportError();
+  }
+  if (manifestJson.version !== config.export_version) {
+    throw new InvalidBoardImportError();
+  }
+  const parseResult = manifestJsonSchema.safeParse(manifestJson);
+  if (!parseResult.success) {
+    throw new InvalidBoardImportError();
+  }
+  return manifestJson;
+};
+
+export const validateFileHashes = (zip: AdmZip, manifestJson: ManifestJson): void => {
+  for (const [filename, expectedHash] of Object.entries(manifestJson.files)) {
+    const entry = zip.getEntry(filename);
+    if (!entry) {
+      throw new InvalidBoardImportError();
+    }
+    const data = entry.getData();
+    const actualHash = `sha256:${crypto.createHash('sha256').update(data).digest('hex')}`;
+    const actual = Buffer.from(actualHash, 'utf8');
+    const expected = Buffer.from(expectedHash, 'utf8');
+    if (actual.byteLength !== expected.byteLength || !crypto.timingSafeEqual(actual, expected)) {
+      throw new InvalidBoardImportError();
+    }
+  }
+};
+
+export const parseAndValidateBoard = (zip: AdmZip): BoardJson => {
+  let boardJson: BoardJson;
+  try {
+    boardJson = JSON.parse(zip.readAsText('board.json'));
+  } catch {
+    throw new InvalidBoardImportError();
+  }
+  const parseResult = boardJsonSchema.safeParse(boardJson);
+  if (!parseResult.success) {
+    throw new InvalidBoardImportError();
+  }
+  return boardJson;
+};
+
+export const validateImageNames = (images: IZipEntry[], boardJson: BoardJson): void => {
+  const actualImageNames = images.map((e) => e.entryName);
+  const expectedImageNames = [boardJson.image]
+    .concat(boardJson.characters.map((char) => char.image))
+    .filter((value): value is string => value != null);
+
+  if (
+    actualImageNames.length !== expectedImageNames.length ||
+    actualImageNames.some((name) => !expectedImageNames.includes(name)) ||
+    expectedImageNames.some((name) => !actualImageNames.includes(name))
+  ) {
+    throw new InvalidBoardImportError();
+  }
+};
+
+export const validateImageBytes = async (images: IZipEntry[]): Promise<void> => {
+  const allValid = await Promise.all(images.map(isValidImage));
+  if (!allValid.every(Boolean)) {
+    throw new InvalidBoardImportError();
+  }
+};
+
+const isValidZipEntry = (entry: AdmZip.IZipEntry): boolean => {
+  const validNamePattern = /^(board\.json|manifest\.json|images\/[a-zA-Z0-9_-]+\.[a-z0-9]+)$/;
+  return validNamePattern.test(entry.entryName) && !entry.isDirectory;
+};
+
+const isValidSvg = (bytes: Buffer): boolean => {
+  const text = bytes.toString('utf8').trimStart();
+  return text.startsWith('<svg') || text.startsWith('<?xml');
+};
+
+const isValidImage = async (image: IZipEntry): Promise<boolean> => {
+  const imageBytes = image.getData();
+  if (imageBytes.length > MAX_IMAGE_SIZE_BYTES) return false;
+
+  const ext = image.entryName.split('.').pop()?.toLowerCase();
+
+  if (ext === 'svg') return isValidSvg(imageBytes);
+
+  const type = await fileTypeFromBuffer(imageBytes);
+  if (!type || !type.mime.startsWith('image/')) return false;
+
+  // jpeg and jpg are the same format — file-type always returns 'jpg'
+  const normalizedExt = ext === 'jpeg' ? 'jpg' : ext;
+  return normalizedExt === type.ext;
+};
+
+export interface ValidatedBoardImport {
+  zip: AdmZip;
+  boardJson: BoardJson;
+  manifestJson: ManifestJson;
+  images: IZipEntry[];
+}
+
+export const validateBoardImport = async (fileBuffer: Buffer): Promise<ValidatedBoardImport> => {
+  const zip = parseZip(fileBuffer);
+  const entries = zip.getEntries();
+  validateUncompressedSize(entries);
+  validateEntryNames(entries);
+  const manifestJson = parseAndValidateManifest(zip);
+  validateFileHashes(zip, manifestJson);
+  const boardJson = parseAndValidateBoard(zip);
+  const images = entries.filter((e) => e.entryName.startsWith('images/'));
+  validateImageNames(images, boardJson);
+  await validateImageBytes(images);
+  return { zip, boardJson, manifestJson, images };
+};

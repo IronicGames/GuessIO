@@ -33,13 +33,16 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
     queryFn: () => api.boards.getBoardsForUser(),
   });
 
-  const mutations = useBoardMutations(boardId, {
-    onBoardSaved: () => router.push('/boards'),
-    onBoardDeleted: () => router.push('/boards'),
-    onCharacterSaved: panel.close,
-    onCharacterDeleted: panel.close,
-    onCharacterImported: panel.close,
-  });
+  const mutations = useBoardMutations(
+    {
+      onBoardSaved: () => router.push('/boards'),
+      onBoardDeleted: () => router.push('/boards'),
+      onCharacterSaved: panel.close,
+      onCharacterDeleted: panel.close,
+      onCharacterImported: panel.close,
+    },
+    boardId,
+  );
 
   const handleExport = async () => {
     await api.boards.exportBoard(boardId);

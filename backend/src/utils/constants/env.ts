@@ -4,6 +4,7 @@ dotenv.config({ path: '../.env', quiet: true });
 
 export const config = {
   // app_version: process.env.APP_VERSION ?? '1.0.0-dev',
+  export_version: 1,
   deployment: process.env.NODE_ENV ?? 'development',
   port: Number(process.env.PORT),
   frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:3000',

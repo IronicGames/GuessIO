@@ -6,14 +6,15 @@ import { type UpdateBoardDto } from '@shared/types/board.types';
 import { type CreateCharacterDto, type UpdateCharacterDto } from '@shared/types/character.types';
 
 interface UseBoardMutationsOptions {
-  onBoardSaved: () => void;
-  onBoardDeleted: () => void;
-  onCharacterSaved: () => void;
-  onCharacterDeleted: () => void;
-  onCharacterImported: () => void;
+  onBoardSaved?: () => void;
+  onBoardDeleted?: () => void;
+  onCharacterSaved?: () => void;
+  onCharacterDeleted?: () => void;
+  onCharacterImported?: () => void;
+  onBoardImported?: () => void;
 }
 
-export function useBoardMutations(boardId: string, options: UseBoardMutationsOptions) {
+export function useBoardMutations(options: UseBoardMutationsOptions, boardId?: string) {
   const queryClient = useQueryClient();
   const notify = useNotify();
 
@@ -22,56 +23,65 @@ export function useBoardMutations(boardId: string, options: UseBoardMutationsOpt
   const invalidateBoards = () => queryClient.invalidateQueries({ queryKey: ['boards'] });
 
   const { mutate: updateBoardMutation, isPending: isSavingBoard } = useMutation({
-    mutationFn: (dto: UpdateBoardDto) => api.boards.updateBoard(boardId, dto),
+    mutationFn: (dto: UpdateBoardDto) => api.boards.updateBoard(boardId!, dto),
     onSuccess: async () => {
       await invalidateBoards();
-      options.onBoardSaved();
+      if (options.onBoardSaved) options.onBoardSaved();
     },
     onError: (e) => notify.error(getErrorMessage(e)),
   });
 
   const { mutate: deleteBoardMutation, isPending: isDeletingBoard } = useMutation({
-    mutationFn: () => api.boards.deleteBoard(boardId),
+    mutationFn: () => api.boards.deleteBoard(boardId!),
     onSuccess: async () => {
       await invalidateBoards();
-      options.onBoardDeleted();
+      if (options.onBoardDeleted) options.onBoardDeleted();
     },
     onError: (e) => notify.error(getErrorMessage(e)),
   });
 
   const { mutate: createCharacterMutation, isPending: isCreatingCharacter } = useMutation({
-    mutationFn: (dto: CreateCharacterDto) => api.characters.createCharacter(boardId, dto),
+    mutationFn: (dto: CreateCharacterDto) => api.characters.createCharacter(boardId!, dto),
     onSuccess: async () => {
       await invalidateBoards();
-      options.onCharacterSaved();
+      if (options.onCharacterSaved) options.onCharacterSaved();
     },
     onError: (e) => notify.error(getErrorMessage(e)),
   });
 
   const { mutate: updateCharacterMutation, isPending: isSavingCharacter } = useMutation({
     mutationFn: ({ characterId, dto }: { characterId: string; dto: UpdateCharacterDto }) =>
-      api.characters.updateCharacter(boardId, characterId, dto),
+      api.characters.updateCharacter(boardId!, characterId, dto),
     onSuccess: async () => {
       await invalidateBoards();
-      options.onCharacterSaved();
+      if (options.onCharacterSaved) options.onCharacterSaved();
     },
     onError: (e) => notify.error(getErrorMessage(e)),
   });
 
   const { mutate: deleteCharacterMutation, isPending: isDeletingCharacter } = useMutation({
-    mutationFn: (characterId: string) => api.characters.deleteCharacter(boardId, characterId),
+    mutationFn: (characterId: string) => api.characters.deleteCharacter(boardId!, characterId),
     onSuccess: async () => {
       await invalidateBoards();
-      options.onCharacterDeleted();
+      if (options.onCharacterDeleted) options.onCharacterDeleted();
     },
     onError: (e) => notify.error(getErrorMessage(e)),
   });
 
   const { mutate: importCharacterMutation, isPending: isImportingCharacter } = useMutation({
-    mutationFn: (dto: CreateCharacterDto) => api.characters.createCharacter(boardId, dto),
+    mutationFn: (dto: CreateCharacterDto) => api.characters.createCharacter(boardId!, dto),
     onSuccess: async () => {
       await invalidateBoards();
-      options.onCharacterImported();
+      if (options.onCharacterImported) options.onCharacterImported();
+    },
+    onError: (e) => notify.error(getErrorMessage(e)),
+  });
+
+  const { mutate: importBoardMutation, isPending: isImportingBoard } = useMutation({
+    mutationFn: (file: File) => api.boards.importBoard(file),
+    onSuccess: async () => {
+      await invalidateBoards();
+      if (options.onBoardImported) options.onBoardImported();
     },
     onError: (e) => notify.error(getErrorMessage(e)),
   });
@@ -83,7 +93,7 @@ export function useBoardMutations(boardId: string, options: UseBoardMutationsOpt
       ? 'Saving...'
       : isDeletingBoard || isDeletingCharacter
         ? 'Deleting...'
-        : isImportingCharacter
+        : isImportingCharacter || isImportingBoard
           ? 'Importing...'
           : '';
 
@@ -93,7 +103,8 @@ export function useBoardMutations(boardId: string, options: UseBoardMutationsOpt
     isCreatingCharacter ||
     isSavingCharacter ||
     isDeletingCharacter ||
-    isImportingCharacter;
+    isImportingCharacter ||
+    isImportingBoard;
 
   return {
     updateBoard: (dto: UpdateBoardDto) => updateBoardMutation(dto),
@@ -103,6 +114,7 @@ export function useBoardMutations(boardId: string, options: UseBoardMutationsOpt
       updateCharacterMutation({ characterId, dto }),
     deleteCharacter: (characterId: string) => deleteCharacterMutation(characterId),
     importCharacter: (dto: CreateCharacterDto) => importCharacterMutation(dto),
+    importBoard: (file: File) => importBoardMutation(file),
     isPending,
     pendingLabel,
   };

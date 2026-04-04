@@ -5,7 +5,10 @@ import {
   deleteBoard,
   getBoard,
   exportBoard,
+  previewBoardImport,
+  importBoardController,
 } from '@controllers/board.controller';
+import { importRateLimit } from '@middleware/rate-limit.middleware';
 import characterRouter from './character.route';
 import { Router } from 'express';
 import { validate } from '@middleware/validation/validation.middleware';
@@ -14,9 +17,12 @@ import {
   updateBoardSchema,
   boardIdParamSchema,
 } from '@middleware/validation/validation.schemas';
+import { importUpload } from '@backend/middleware/import.middleware';
 
 const router = Router();
 
+router.post('/import/preview', importRateLimit, importUpload.single('file'), previewBoardImport);
+router.post('/import', importRateLimit, importUpload.single('file'), importBoardController);
 router.get('/', getBoardsForUser);
 router.get('/:boardId', validate(boardIdParamSchema, 'params'), getBoard);
 router.post('/', validate(createBoardSchema), createBoard);

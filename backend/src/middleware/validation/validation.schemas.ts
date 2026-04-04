@@ -20,13 +20,7 @@ export const stringFieldSchema = (fieldName: string, options?: { min?: number; m
 export const urlSchema = z.url('Invalid URL format').optional().or(z.literal(''));
 
 export const tagsSchema = z
-  .array(
-    z
-      .string()
-      .trim()
-      .min(1)
-      .max(50, 'Tags must not exceed 50 characters'),
-  )
+  .array(z.string().trim().min(1).max(50, 'Tags must not exceed 50 characters'))
   .max(30, 'A character cannot have more than 30 tags')
   .optional()
   .default([]);
@@ -60,6 +54,27 @@ export const createBoardSchema = z.object({
 });
 
 export const updateBoardSchema = createBoardSchema;
+
+export const manifestJsonSchema = z.object({
+  version: z.number().int().positive(),
+  files: z.record(z.string(), z.string()), // { "board.json": "sha256:hex", "images/x.jpg": "sha256:hex" }
+});
+
+export const boardJsonSchema = z.object({
+  name: stringFieldSchema('Board name', { min: 1, max: 100 }),
+  description: z.string().max(500).optional().nullable(),
+  image: z.string().optional().nullable(), // ZIP path or null
+  characters: z
+    .array(
+      z.object({
+        name: stringFieldSchema('Character name', { min: 1, max: 100 }),
+        tags: tagsSchema,
+        image: z.string().optional().nullable(), // ZIP path or null
+      }),
+    )
+    .min(1)
+    .max(200),
+});
 
 // ============================================================================
 // CHARACTER VALIDATION SCHEMAS
