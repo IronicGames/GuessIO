@@ -1,9 +1,9 @@
-import { IZipEntry } from 'adm-zip';
-import { BoardImportPreview, CreateBoardDto } from '@shared/types/board.types';
+import { type IZipEntry } from 'adm-zip';
+import { type BoardImportPreview, type CreateBoardDto } from '@shared/types/board.types';
 import { fileTypeFromBuffer } from 'file-type';
 import { createBoard } from '@services/board.service';
 import { createCharacter } from '@services/character.service';
-import { CreateCharacterDto } from '@shared/types/character.types';
+import { type CreateCharacterDto } from '@shared/types/character.types';
 import { validateBoardImport } from '@backend/utils/misc-validation';
 
 export const importBoard = async (userId: string, fileBuffer: Buffer): Promise<string> => {

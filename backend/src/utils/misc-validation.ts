@@ -3,13 +3,11 @@ import {
   manifestJsonSchema,
   boardJsonSchema,
 } from '@backend/middleware/validation/validation.schemas';
-import { ManifestJson, BoardJson } from '@shared/types/board.types';
-import AdmZip, { IZipEntry } from 'adm-zip';
+import { type ManifestJson, type BoardJson } from '@shared/types/board.types';
+import AdmZip, { type IZipEntry } from 'adm-zip';
 import { config } from '@utils/constants/env';
 import crypto from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
-import { JSDOM } from 'jsdom';
-import DOMPurify from 'dompurify';
 
 export const MAX_CHARACTERS_PER_BOARD = 200;
 export const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
