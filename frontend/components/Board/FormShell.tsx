@@ -13,7 +13,6 @@ interface FormShellProps {
   onSubmit: () => void;
   onCancel: () => void;
   onDelete?: () => void;
-  onExport?: () => void;
   isSubmitting?: boolean;
   isDeleting?: boolean;
   canSubmit?: boolean;
@@ -29,7 +28,6 @@ export default function FormShell({
   onSubmit,
   onCancel,
   onDelete,
-  onExport,
   isSubmitting = false,
   isDeleting = false,
   canSubmit = true,
@@ -53,20 +51,6 @@ export default function FormShell({
             <Text size="xl" fw={700} c="white">
               {title}
             </Text>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={onExport}
-              disabled={isSubmitting || isDeleting}
-              styles={{
-                root: {
-                  borderColor: buttonThemes.secondary.borderColor,
-                  color: buttonThemes.secondary.textColor,
-                },
-              }}
-            >
-              Export
-            </Button>
           </Group>
 
           {children}

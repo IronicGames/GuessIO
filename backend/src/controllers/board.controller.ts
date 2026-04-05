@@ -48,6 +48,12 @@ export const deleteBoard = asyncHandler(async (req: Request, res: Response) => {
   res.json({ id: deletedBoard });
 });
 
+export const deleteBoards = asyncHandler(async (req: Request, res: Response) => {
+  const { ids } = req.body as { ids: string[] };
+  const count = await boardService.deleteBoards(req.user.id, ids);
+  res.json({ deleted: count });
+});
+
 export const exportBoard = asyncHandler(async (req: Request, res: Response) => {
   const { boardId } = req.params as { boardId: string };
   const exportedFile = await boardExportService.createBoardZip(req.user.id, boardId);

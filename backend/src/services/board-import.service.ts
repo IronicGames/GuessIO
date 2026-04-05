@@ -2,7 +2,7 @@ import { type IZipEntry } from 'adm-zip';
 import { type BoardImportPreview, type CreateBoardDto } from '@shared/types/board.types';
 import { fileTypeFromBuffer } from 'file-type';
 import { createBoard } from '@services/board.service';
-import { createCharacter } from '@services/character.service';
+import { createCharacters } from '@services/character.service';
 import { type CreateCharacterDto } from '@shared/types/character.types';
 import { validateBoardImport } from '@backend/utils/misc-validation';
 
@@ -15,13 +15,14 @@ export const importBoard = async (userId: string, fileBuffer: Buffer): Promise<s
     imageUrl: await toImageUrl(zip.getEntry(boardJson.image)),
   } as CreateBoardDto);
 
-  for (const character of boardJson.characters) {
-    await createCharacter(importedBoardId, {
+  const characterDtos: CreateCharacterDto[] = await Promise.all(
+    boardJson.characters.map(async (character) => ({
       name: character.name,
       tags: character.tags,
       imageUrl: await toImageUrl(zip.getEntry(character.image)),
-    } as CreateCharacterDto);
-  }
+    })),
+  );
+  await createCharacters(importedBoardId, characterDtos);
 
   return importedBoardId;
 };

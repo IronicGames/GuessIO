@@ -11,9 +11,11 @@ export const API_ENDPOINTS = {
     export: (boardId: string) => `/boards/${boardId}/export`,
     import: () => `/boards/import`,
     importPreview: () => `/boards/import/preview`,
+    bulk: () => `/boards/bulk`,
   },
   characters: {
     root: (boardId: string) => `/boards/${boardId}/characters`,
     byId: (boardId: string, characterId: string) => `/boards/${boardId}/characters/${characterId}`,
+    bulk: (boardId: string) => `/boards/${boardId}/characters/bulk`,
   },
 } as const;

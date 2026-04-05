@@ -75,6 +75,23 @@ export const api = {
       a.remove();
       window.URL.revokeObjectURL(url);
     },
+    previewImport: async (
+      file: File,
+    ): Promise<{ name: string; characterCount: number; firstImageUrl?: string }> => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetchWithAuth(API_ENDPOINTS.boards.importPreview(), {
+        method: 'POST',
+        body: formData,
+      });
+      return response.json();
+    },
+    deleteBoards: async (ids: string[]): Promise<void> => {
+      await fetchWithAuth(API_ENDPOINTS.boards.bulk(), {
+        method: 'DELETE',
+        body: JSON.stringify({ ids }),
+      });
+    },
     importBoard: async (file: File): Promise<void> => {
       const formData = new FormData();
       formData.append('file', file);
@@ -125,6 +142,18 @@ export const api = {
         method: 'DELETE',
       });
       return response.json();
+    },
+    deleteCharacters: async (boardId: string, ids: string[]): Promise<void> => {
+      await fetchWithAuth(API_ENDPOINTS.characters.bulk(boardId), {
+        method: 'DELETE',
+        body: JSON.stringify({ ids }),
+      });
+    },
+    createCharacters: async (boardId: string, dtos: CreateCharacterDto[]): Promise<void> => {
+      await fetchWithAuth(API_ENDPOINTS.characters.bulk(boardId), {
+        method: 'POST',
+        body: JSON.stringify({ characters: dtos }),
+      });
     },
   },
 };

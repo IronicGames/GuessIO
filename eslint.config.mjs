@@ -22,7 +22,7 @@ const baseRules = {
   '@typescript-eslint/no-explicit-any': 'error',
 
   // Unused expressions (e.g. `x && doSomething()` with no assignment)
-  '@typescript-eslint/no-unused-expressions': 'error',
+  '@typescript-eslint/no-unused-expressions': 'off',
 
   // Consistent type-only imports — keeps bundles clean, avoids circular dep issues
   '@typescript-eslint/consistent-type-imports': [

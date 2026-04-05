@@ -55,6 +55,14 @@ export const createBoardSchema = z.object({
 
 export const updateBoardSchema = createBoardSchema;
 
+export const boardIdsSchema = z.object({
+  ids: z.array(idSchema).min(1).max(100),
+});
+
+export const characterIdsSchema = z.object({
+  ids: z.array(idSchema).min(1).max(200),
+});
+
 export const manifestJsonSchema = z.object({
   version: z.number().int().positive(),
   files: z.record(z.string(), z.string()), // { "board.json": "sha256:hex", "images/x.jpg": "sha256:hex" }
@@ -96,6 +104,10 @@ export const updateCharacterSchema = z.object({
   name: stringFieldSchema('Character name is required', { min: 1, max: 100 }),
   imageUrl: urlSchema,
   tags: tagsSchema,
+});
+
+export const createCharactersSchema = z.object({
+  characters: z.array(createCharacterSchema).min(1).max(200),
 });
 
 // ============================================================================

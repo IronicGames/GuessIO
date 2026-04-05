@@ -1,4 +1,5 @@
-import { Card, Center, Text, AspectRatio } from '@mantine/core';
+import { ActionIcon, Card, Center, Menu, Text, AspectRatio } from '@mantine/core';
+import { IconDots, IconTrash, IconDownload } from '@tabler/icons-react';
 import { type ReactNode, useState } from 'react';
 
 export interface GridItemData {
@@ -18,6 +19,13 @@ export interface ActionCardConfig {
   onClick: () => void;
 }
 
+export interface QuickAction {
+  label: string;
+  icon?: ReactNode;
+  color?: string;
+  onClick: () => void;
+}
+
 // Discriminated union — no ambiguous optional props
 type GridCardProps =
   | {
@@ -26,6 +34,8 @@ type GridCardProps =
       selected?: boolean;
       disabled?: boolean;
       onClick?: () => void;
+      quickActions?: QuickAction[];
+      selectable?: boolean;
     }
   | {
       variant: 'action';
@@ -35,6 +45,9 @@ type GridCardProps =
       onClick?: () => void;
     };
 
+// Re-export icon components so callers can use them without an extra import
+export { IconTrash, IconDownload };
+
 export default function GridCard(props: GridCardProps) {
   const [hovered, setHovered] = useState(false);
   const { disabled = false, onClick } = props;
@@ -42,7 +55,10 @@ export default function GridCard(props: GridCardProps) {
   const selected =
     props.variant === 'item' ? (props.selected ?? props.item.selected ?? false) : false;
   const badge = props.variant === 'item' ? props.item.badge : undefined;
+  const quickActions = props.variant === 'item' ? (props.quickActions ?? []) : [];
+  const selectable = props.variant === 'item' ? (props.selectable ?? false) : false;
   const isClickable = !!onClick && !disabled;
+  const showQuickActions = hovered && !selectable && quickActions.length > 0;
 
   return (
     <AspectRatio ratio={1} w="100%">
@@ -69,7 +85,47 @@ export default function GridCard(props: GridCardProps) {
           position: 'relative',
         }}
       >
-        {/* Optional status badge — used e.g. to show character count on board cards */}
+        {/* Quick actions ⋯ menu — top-left, only on hover when not in select mode */}
+        {showQuickActions && (
+          <Menu withinPortal position="bottom-start" shadow="md">
+            <Menu.Target>
+              <ActionIcon
+                size="sm"
+                variant="subtle"
+                style={{
+                  position: 'absolute',
+                  top: 4,
+                  left: 4,
+                  zIndex: 3,
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                  color: 'white',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <IconDots size={14} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown
+              styles={{ dropdown: { backgroundColor: '#2f3e55', borderColor: '#33465f' } }}
+            >
+              {quickActions.map((action) => (
+                <Menu.Item
+                  key={action.label}
+                  leftSection={action.icon}
+                  color={action.color}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    action.onClick();
+                  }}
+                >
+                  {action.label}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
+        )}
+
+        {/* Optional status badge — top-right */}
         {badge && (
           <Center
             style={{

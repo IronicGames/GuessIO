@@ -24,6 +24,19 @@ export async function createCharacter(
   return { characterId, boardId };
 }
 
+export async function createCharacters(boardId: string, dtos: CreateCharacterDto[]): Promise<void> {
+  const count = await characterRepository.getCharacterCountForBoard(boardId);
+  if (count + dtos.length > MAX_CHARACTERS_PER_BOARD) {
+    throw new BadRequestError(
+      `Adding ${dtos.length} would exceed the ${MAX_CHARACTERS_PER_BOARD} character limit`,
+    );
+  }
+  for (const dto of dtos.filter((d) => !d.characterId)) {
+    validateImageUrl(dto.imageUrl);
+  }
+  await characterRepository.createCharacters(boardId, dtos);
+}
+
 export async function updateCharacter(
   characterId: string,
   dto: UpdateCharacterDto,
@@ -54,6 +67,10 @@ export async function deleteCharacter(
   }
 
   return characterRepository.removeCharacterFromBoard(characterId, boardId);
+}
+
+export async function deleteCharacters(characterIds: string[], boardId: string): Promise<void> {
+  await characterRepository.deleteCharacters(characterIds, boardId);
 }
 
 export async function getCharacter(characterId: string): Promise<characterRepository.Character> {

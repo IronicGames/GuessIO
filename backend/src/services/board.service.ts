@@ -80,6 +80,10 @@ export async function deleteBoard(userId: string, userRole: Role, id: string): P
   return deletedBoardId;
 }
 
+export async function deleteBoards(userId: string, ids: string[]): Promise<number> {
+  return boardRepository.deleteBoards(ids, userId);
+}
+
 type BoardWithCharactersAndImage = Board & {
   characters: CharacterWithBoardsAndImage[];
   image: Image | null;

@@ -96,3 +96,10 @@ export async function deleteBoard(id: string): Promise<string> {
   });
   return deletedBoard.id;
 }
+
+export async function deleteBoards(ids: string[], userId: string): Promise<number> {
+  const result = await prisma.board.deleteMany({
+    where: { id: { in: ids }, userId },
+  });
+  return result.count;
+}

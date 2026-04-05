@@ -79,9 +79,9 @@ describe('Board Service Unit Tests', () => {
       const deletedId = await boardService.deleteBoard(userId, Role.PLAYER, boardId);
       expect(deletedId).toBe(boardId);
 
-      await expect(
-        boardService.deleteBoard(userId, Role.PLAYER, boardId),
-      ).rejects.toThrow(NotFoundError);
+      await expect(boardService.deleteBoard(userId, Role.PLAYER, boardId)).rejects.toThrow(
+        NotFoundError,
+      );
     });
   });
 

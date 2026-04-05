@@ -2,10 +2,10 @@
 
 import { Box, TextInput } from '@mantine/core';
 import { IconSearch } from '@tabler/icons-react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import ItemGrid from './ItemGrid';
 import BackButton from '@components/BackButton';
-import { type ActionCardConfig, type GridItemData } from './GridCard';
+import { type ActionCardConfig, type GridItemData, type QuickAction } from './GridCard';
 
 interface GridContainerProps {
   items: GridItemData[];
@@ -15,6 +15,12 @@ interface GridContainerProps {
   searchPlaceholder?: string;
   onItemClick?: (item: GridItemData) => void;
   colCount?: number;
+  headerAddon?: ReactNode;
+  getItemQuickActions?: (item: GridItemData) => QuickAction[];
+  selectable?: boolean;
+  selectedIds?: Set<string>;
+  onItemSelect?: (item: GridItemData) => void;
+  footer?: ReactNode;
 }
 
 export default function GridContainer({
@@ -25,6 +31,12 @@ export default function GridContainer({
   searchPlaceholder = 'Search...',
   onItemClick,
   colCount = 5,
+  headerAddon,
+  getItemQuickActions,
+  selectable = false,
+  selectedIds,
+  onItemSelect,
+  footer,
 }: GridContainerProps) {
   const [searchValue, setSearchValue] = useState('');
 
@@ -39,7 +51,7 @@ export default function GridContainer({
     lg: colCount,
   };
 
-  const showHeader = onBack || showSearch;
+  const showHeader = onBack || showSearch || headerAddon;
 
   return (
     <Box
@@ -72,6 +84,8 @@ export default function GridContainer({
               }}
             />
           )}
+
+          {headerAddon}
         </Box>
       )}
 
@@ -79,10 +93,25 @@ export default function GridContainer({
         <ItemGrid
           items={filteredItems}
           actionCards={actionCards}
-          onItemClick={onItemClick}
+          onItemClick={selectable ? onItemSelect : onItemClick}
           columns={columns}
+          getItemQuickActions={getItemQuickActions}
+          selectable={selectable}
+          selectedIds={selectedIds}
         />
       </Box>
+
+      {footer && (
+        <Box
+          style={{
+            flexShrink: 0,
+            borderTop: '1px solid #33465f',
+            paddingTop: 12,
+          }}
+        >
+          {footer}
+        </Box>
+      )}
     </Box>
   );
 }

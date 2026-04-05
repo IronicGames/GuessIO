@@ -32,10 +32,18 @@ export function useBoardMutations(options: UseBoardMutationsOptions, boardId?: s
   });
 
   const { mutate: deleteBoardMutation, isPending: isDeletingBoard } = useMutation({
-    mutationFn: () => api.boards.deleteBoard(boardId!),
+    mutationFn: (id?: string) => api.boards.deleteBoard(id ?? boardId!),
     onSuccess: async () => {
       await invalidateBoards();
       if (options.onBoardDeleted) options.onBoardDeleted();
+    },
+    onError: (e) => notify.error(getErrorMessage(e)),
+  });
+
+  const { mutate: deleteBoardsMutation, isPending: isDeletingBoards } = useMutation({
+    mutationFn: (ids: string[]) => api.boards.deleteBoards(ids),
+    onSuccess: async () => {
+      await invalidateBoards();
     },
     onError: (e) => notify.error(getErrorMessage(e)),
   });
@@ -68,15 +76,6 @@ export function useBoardMutations(options: UseBoardMutationsOptions, boardId?: s
     onError: (e) => notify.error(getErrorMessage(e)),
   });
 
-  const { mutate: importCharacterMutation, isPending: isImportingCharacter } = useMutation({
-    mutationFn: (dto: CreateCharacterDto) => api.characters.createCharacter(boardId!, dto),
-    onSuccess: async () => {
-      await invalidateBoards();
-      if (options.onCharacterImported) options.onCharacterImported();
-    },
-    onError: (e) => notify.error(getErrorMessage(e)),
-  });
-
   const { mutate: importBoardMutation, isPending: isImportingBoard } = useMutation({
     mutationFn: (file: File) => api.boards.importBoard(file),
     onSuccess: async () => {
@@ -86,14 +85,39 @@ export function useBoardMutations(options: UseBoardMutationsOptions, boardId?: s
     onError: (e) => notify.error(getErrorMessage(e)),
   });
 
-  // Derive a human-readable label for whichever mutation is currently running.
-  // The page uses this to show a contextual overlay message.
+  // Bulk create: drag-in images — no extra callback
+  const { mutate: createCharactersMutation, isPending: isCreatingCharacters } = useMutation({
+    mutationFn: (dtos: CreateCharacterDto[]) => api.characters.createCharacters(boardId!, dtos),
+    onSuccess: async () => {
+      await invalidateBoards();
+    },
+    onError: (e) => notify.error(getErrorMessage(e)),
+  });
+
+  // Bulk import: import panel — fires onCharacterImported
+  const { mutate: importCharactersMutation, isPending: isImportingCharacters } = useMutation({
+    mutationFn: (dtos: CreateCharacterDto[]) => api.characters.createCharacters(boardId!, dtos),
+    onSuccess: async () => {
+      await invalidateBoards();
+      if (options.onCharacterImported) options.onCharacterImported();
+    },
+    onError: (e) => notify.error(getErrorMessage(e)),
+  });
+
+  const { mutate: deleteCharactersMutation, isPending: isDeletingCharacters } = useMutation({
+    mutationFn: (ids: string[]) => api.characters.deleteCharacters(boardId!, ids),
+    onSuccess: async () => {
+      await invalidateBoards();
+    },
+    onError: (e) => notify.error(getErrorMessage(e)),
+  });
+
   const pendingLabel =
-    isSavingBoard || isSavingCharacter || isCreatingCharacter
+    isSavingBoard || isSavingCharacter || isCreatingCharacter || isCreatingCharacters
       ? 'Saving...'
-      : isDeletingBoard || isDeletingCharacter
+      : isDeletingBoard || isDeletingCharacter || isDeletingBoards || isDeletingCharacters
         ? 'Deleting...'
-        : isImportingCharacter || isImportingBoard
+        : isImportingBoard || isImportingCharacters
           ? 'Importing...'
           : '';
 
@@ -103,18 +127,24 @@ export function useBoardMutations(options: UseBoardMutationsOptions, boardId?: s
     isCreatingCharacter ||
     isSavingCharacter ||
     isDeletingCharacter ||
-    isImportingCharacter ||
-    isImportingBoard;
+    isImportingBoard ||
+    isCreatingCharacters ||
+    isDeletingBoards ||
+    isDeletingCharacters ||
+    isImportingCharacters;
 
   return {
     updateBoard: (dto: UpdateBoardDto) => updateBoardMutation(dto),
-    deleteBoard: () => deleteBoardMutation(),
+    deleteBoard: (id?: string) => deleteBoardMutation(id),
     createCharacter: (dto: CreateCharacterDto) => createCharacterMutation(dto),
     updateCharacter: (characterId: string, dto: UpdateCharacterDto) =>
       updateCharacterMutation({ characterId, dto }),
     deleteCharacter: (characterId: string) => deleteCharacterMutation(characterId),
-    importCharacter: (dto: CreateCharacterDto) => importCharacterMutation(dto),
     importBoard: (file: File) => importBoardMutation(file),
+    createCharacters: (dtos: CreateCharacterDto[]) => createCharactersMutation(dtos),
+    importCharacters: (dtos: CreateCharacterDto[]) => importCharactersMutation(dtos),
+    deleteBoards: (ids: string[]) => deleteBoardsMutation(ids),
+    deleteCharacters: (ids: string[]) => deleteCharactersMutation(ids),
     isPending,
     pendingLabel,
   };

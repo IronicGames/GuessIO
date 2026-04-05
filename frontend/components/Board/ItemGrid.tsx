@@ -1,5 +1,5 @@
 import { SimpleGrid } from '@mantine/core';
-import GridCard, { type ActionCardConfig, type GridItemData } from './GridCard';
+import GridCard, { type ActionCardConfig, type GridItemData, type QuickAction } from './GridCard';
 
 interface ItemGridProps {
   items: GridItemData[];
@@ -8,6 +8,9 @@ interface ItemGridProps {
   actionCards?: ActionCardConfig[];
   onItemClick?: (item: GridItemData) => void;
   columns?: number | Record<string, number>;
+  getItemQuickActions?: (item: GridItemData) => QuickAction[];
+  selectable?: boolean;
+  selectedIds?: Set<string>;
 }
 
 export default function ItemGrid({
@@ -15,9 +18,12 @@ export default function ItemGrid({
   actionCards = [],
   onItemClick,
   columns = { base: 2, sm: 3, md: 4, lg: 5 },
+  getItemQuickActions,
+  selectable = false,
+  selectedIds,
 }: ItemGridProps) {
   return (
-    <SimpleGrid cols={columns} spacing="md">
+    <SimpleGrid cols={columns} spacing="md" p="lg">
       {/* Action cards always render first */}
       {actionCards.map((card) => (
         <GridCard
@@ -32,7 +38,15 @@ export default function ItemGrid({
 
       {/* Item cards */}
       {items.map((item) => (
-        <GridCard key={item.id} variant="item" item={item} onClick={() => onItemClick?.(item)} />
+        <GridCard
+          key={item.id}
+          variant="item"
+          item={item}
+          quickActions={getItemQuickActions?.(item)}
+          selectable={selectable}
+          selected={selectedIds?.has(item.id)}
+          onClick={() => onItemClick?.(item)}
+        />
       ))}
     </SimpleGrid>
   );

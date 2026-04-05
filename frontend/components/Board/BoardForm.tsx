@@ -1,6 +1,16 @@
 'use client';
 
-import { Stack, Textarea, TextInput, SegmentedControl, Text, Box } from '@mantine/core';
+import {
+  Stack,
+  Textarea,
+  TextInput,
+  SegmentedControl,
+  Text,
+  Box,
+  Modal,
+  Group,
+  Button,
+} from '@mantine/core';
 import { IconLock, IconWorld } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Role } from '@shared/types/misc.types';
@@ -22,7 +32,6 @@ interface BoardFormProps {
   onSubmit: (data: BoardFormData) => void;
   onCancel: () => void;
   onDelete?: () => void;
-  onExport?: () => void;
 }
 
 export default function BoardForm({
@@ -32,7 +41,6 @@ export default function BoardForm({
   onSubmit,
   onCancel,
   onDelete,
-  onExport,
 }: BoardFormProps) {
   const { user } = useAuth();
   const [name, setName] = useState(initialData?.name ?? '');
@@ -41,6 +49,7 @@ export default function BoardForm({
   const [isPublic, setIsPublic] = useState(initialData?.isPublic ?? false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -51,95 +60,124 @@ export default function BoardForm({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!onDelete) return;
-    if (!confirm('Are you sure you want to delete this board? This cannot be undone.')) return;
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    setDeleteModalOpen(false);
     setIsDeleting(true);
     try {
-      await onDelete();
+      await onDelete!();
     } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <FormShell
-      title={title}
-      onBack={onBack}
-      onSubmit={handleSubmit}
-      onCancel={onCancel}
-      onDelete={onDelete ? handleDelete : undefined}
-      onExport={onExport}
-      isSubmitting={isSubmitting}
-      isDeleting={isDeleting}
-      canSubmit={name.trim().length > 0}
-      submitText={initialData ? 'Save' : 'Create'}
-    >
-      <ImageUploadSection value={imageUrl} onChange={setImageUrl} />
-
-      <TextInput
-        placeholder="Board name..."
-        required
-        size="lg"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
+    <>
+      <Modal
+        opened={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Delete Board"
+        centered
+        size="sm"
         styles={{
-          input: { backgroundColor: '#1f2a3a', borderColor: '#33465f', color: 'white' },
+          content: { backgroundColor: '#2f3e55' },
+          header: { backgroundColor: '#2f3e55' },
+          title: { color: 'white', fontWeight: 600 },
         }}
-      />
+      >
+        <Text size="sm" c="dimmed">
+          This cannot be undone. All characters will be detached from this board.
+        </Text>
+        <Group justify="flex-end" mt="md">
+          <Button variant="subtle" c="dimmed" onClick={() => setDeleteModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button color="red" onClick={confirmDelete} loading={isDeleting}>
+            Delete Board
+          </Button>
+        </Group>
+      </Modal>
+      <FormShell
+        title={title}
+        onBack={onBack}
+        onSubmit={handleSubmit}
+        onCancel={onCancel}
+        onDelete={onDelete ? handleDelete : undefined}
+        isSubmitting={isSubmitting}
+        isDeleting={isDeleting}
+        canSubmit={name.trim().length > 0}
+        submitText={initialData ? 'Save' : 'Create'}
+      >
+        <ImageUploadSection value={imageUrl} onChange={setImageUrl} />
 
-      <Textarea
-        placeholder="Describe your board..."
-        size="lg"
-        rows={4}
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        styles={{
-          input: { backgroundColor: '#1f2a3a', borderColor: '#33465f', color: 'white' },
-        }}
-      />
+        <TextInput
+          placeholder="Board name..."
+          required
+          size="lg"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          styles={{
+            input: { backgroundColor: '#1f2a3a', borderColor: '#33465f', color: 'white' },
+          }}
+        />
 
-      {user?.role === Role.ADMIN && (
-        <Box>
-          <SegmentedControl
-            fullWidth
-            value={isPublic ? 'public' : 'private'}
-            onChange={(val) => setIsPublic(val === 'public')}
-            data={[
-              {
-                value: 'private',
-                label: (
-                  <Stack gap={4} align="center" py={4}>
-                    <IconLock size={16} />
-                    <Text size="xs">Private</Text>
-                  </Stack>
-                ),
-              },
-              {
-                value: 'public',
-                label: (
-                  <Stack gap={4} align="center" py={4}>
-                    <IconWorld size={16} />
-                    <Text size="xs">Public</Text>
-                  </Stack>
-                ),
-              },
-            ]}
-            styles={{
-              root: {
-                backgroundColor: '#1f2a3a',
-                border: '1px solid #33465f',
-              },
-              indicator: {
-                backgroundColor: isPublic ? '#2d6a4f' : '#2f3e55',
-              },
-              label: {
-                color: 'white',
-              },
-            }}
-          />
-        </Box>
-      )}
-    </FormShell>
+        <Textarea
+          placeholder="Describe your board..."
+          size="lg"
+          rows={4}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          styles={{
+            input: { backgroundColor: '#1f2a3a', borderColor: '#33465f', color: 'white' },
+          }}
+        />
+
+        {user?.role === Role.ADMIN && (
+          <Box>
+            <SegmentedControl
+              fullWidth
+              value={isPublic ? 'public' : 'private'}
+              onChange={(val) => setIsPublic(val === 'public')}
+              data={[
+                {
+                  value: 'private',
+                  label: (
+                    <Stack gap={4} align="center" py={4}>
+                      <IconLock size={16} />
+                      <Text size="xs">Private</Text>
+                    </Stack>
+                  ),
+                },
+                {
+                  value: 'public',
+                  label: (
+                    <Stack gap={4} align="center" py={4}>
+                      <IconWorld size={16} />
+                      <Text size="xs">Public</Text>
+                    </Stack>
+                  ),
+                },
+              ]}
+              styles={{
+                root: {
+                  backgroundColor: '#1f2a3a',
+                  border: '1px solid #33465f',
+                },
+                indicator: {
+                  backgroundColor: isPublic ? '#2d6a4f' : '#2f3e55',
+                },
+                label: {
+                  color: 'white',
+                },
+              }}
+            />
+          </Box>
+        )}
+      </FormShell>
+    </>
   );
 }
