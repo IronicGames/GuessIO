@@ -23,7 +23,7 @@ in public games.
 | Frontend         | Next.js (App Router), React, Mantine UI v7, TypeScript, TanStack Query |
 | Backend          | Express.js, Prisma ORM, PostgreSQL                                     |
 | Auth             | Google OAuth + guest mode; JWT in httpOnly cookies                     |
-| Real-time        | Socket.io — integrated, lobby system complete                          |
+| Real-time        | Socket.io — lobby + game, fully integrated                             |
 | Image storage    | AWS S3 _(base64 through Express as a temporary stopgap)_               |
 | Frontend hosting | AWS Amplify                                                            |
 | Backend hosting  | AWS EC2 t3.micro                                                       |
@@ -62,9 +62,13 @@ npm run docker:up
 cd backend
 cp .env.example .env   # fill in DB credentials and secrets
 npm install
-npx prisma migrate dev
+npx prisma migrate dev --name init
 npm run dev
 ```
+
+> **Migration note (dev only):** While the schema is actively changing pre-launch,
+> nuke and re-run rather than adding incremental migrations:
+> `rm -rf prisma/migrations && npx prisma migrate dev --name init`
 
 Runs on `http://localhost:8080`.
 
@@ -130,44 +134,45 @@ npm run dev   # from repo root — starts DB + backend + frontend
 ## What's built
 
 - Google OAuth login + guest mode (auto-guest-login on Create Lobby)
-- Guest and player name editing from the header (JWT re-issued, DB updated for
-  players)
+- Guest and player name editing from the header
 - Board management — create, edit, delete, image upload (base64 stopgap)
 - Character management — name, image, tags; many-to-many boards; import flow
-- Full board management UI
+- Board export / import (`.guessio` ZIP format with manifest + integrity check)
 - Auth flow with session persistence and upgrade prompts
 - **Private lobby — fully working end to end:**
-  - Create lobby → navigate → join (10s grace period handles navigation
-    reconnect)
-  - Join via lobby link (single-click copy) or code input on home page
+  - Create lobby → navigate → join (10s grace period handles navigation reconnect)
+  - Join via lobby link or code input on home page
   - Three phases: board selection → character config → waiting for ready
-  - Board confirm broadcasts full board data to both players over socket
-  - Character toggle grid with tag filter; min 24 enabled required to proceed
-  - Settings (mode / turn timer / lives) sync in real time; locked for joiner
-  - Ready / Unready; game starting overlay fires on both clients simultaneously
-  - Auto host transfer on disconnect; kick / transfer host
-  - Chat with 200-char server-side cap; auto-scroll
-  - Player chips + connection dots + invite pill in header
+  - Settings (mode / turn timer / lives) sync in real time
+  - Ready / Unready; 3-second countdown overlay navigates both clients to game
+  - Auto host transfer on disconnect; kick / transfer host; in-lobby chat
+- **Casual Mode gameplay — fully working end to end:**
+  - Both players secretly pick a character from the 24 drawn for the game
+  - Turn-based: DECIDE (ask or guess?) → SUBMIT → END_TURN → repeat
+  - Cross-offs are frontend-only (intentional — not persisted)
+  - Wrong guess deducts a life; correct guess or lives exhausted ends the game
+  - Game over screen shows win/lose/draw with reason label
+  - Disconnect handling: 10s grace → auto-skip turn; 5 consecutive skips → opponent wins
+  - Reconnect resets the skip counter and cancels the skip timer
+  - "Pick random" picks a secret character for you
 - Backend test suite (72 tests)
 
-## What's being built / in progress
+## What's in progress
 
-- **Game starting navigation** — countdown overlay works; navigates nowhere
-  until game page exists
+- **Gameplay — Tag Mode** — phase structure built; only the ASK resolver is missing
+  (pick a tag → server answers yes/no based on opponent's character)
+- **Turn timer / game timer** — stubs exist in the UI; no logic yet
+- **Game log read API** — DB writes work; no read endpoint, so the Game Log tab is empty
 - **Image upload via S3** — base64 through Express works but is a stopgap
 
 ## What's to be built for v1
 
-In this order:
-
-1. **DB schema: GameInstance + GameLogEntry** — must exist before any gameplay
-   code
-2. **Gameplay — Casual Mode** — phase-based turns, cross-offs, timers,
-   disconnect handling
-3. **Gameplay — Tag Mode** — collapsible tags list, tag selection, auto-answer
-4. **Public matchmaking** — always Tag Mode with fixed settings
+1. **Tag Mode ASK resolver** — `game:submit-ask` server handler + tag-pick UI in `GameActionPanel`
+2. **Turn timer + game timer** — countdown per turn, 30-min game → draw
+3. **Game log read API** — `GET /api/game/:id/log`, wire into game page
+4. **Public matchmaking** — always Tag Mode, fixed settings, random board selection
 5. **S3 image upload** — swap out base64 stopgap
-6. **One premade board + pipeline** — needed for public matchmaking
+6. **One premade board + pipeline** — needed for public matchmaking (Tag Mode requires tagged characters)
 7. **Profile, settings, donation, ToS pages** — launch blockers
 
 See [CLAUDE.md](CLAUDE.md) for full project context, conventions, and build

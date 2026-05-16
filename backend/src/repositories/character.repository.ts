@@ -87,26 +87,28 @@ export async function getCharacter(characterId: string): Promise<Character> {
 export async function createCharacters(boardId: string, dtos: CreateCharacterDto[]): Promise<void> {
   const toConnect = dtos.filter((d) => d.characterId).map((d) => d.characterId!);
   const toCreate = dtos.filter((d) => !d.characterId);
-  await prisma.$transaction([
-    ...(toConnect.length > 0
-      ? [
-          prisma.board.update({
-            where: { id: boardId },
-            data: { characters: { connect: toConnect.map((id) => ({ id })) } },
-          }),
-        ]
-      : []),
-    ...toCreate.map((dto) =>
-      prisma.character.create({
-        data: {
-          name: dto.name!,
-          tags: dto.tags,
-          image: dto.imageUrl ? { create: { imageUrl: dto.imageUrl } } : undefined,
-          boards: { connect: { id: boardId } },
-        },
-      }),
-    ),
-  ]);
+  await prisma.$transaction(
+    async (tx) => {
+      if (toConnect.length > 0) {
+        await tx.board.update({
+          where: { id: boardId },
+          data: { characters: { connect: toConnect.map((id) => ({ id })) } },
+        });
+      }
+      for (const dto of toCreate) {
+        await tx.character.create({
+          data: {
+            name: dto.name!,
+            tags: dto.tags,
+            image: dto.imageUrl ? { create: { imageUrl: dto.imageUrl } } : undefined,
+            boards: { connect: { id: boardId } },
+          },
+        });
+      }
+    },
+    // Avoids timeout when importing large boards with many characters
+    { timeout: 30_000 },
+  );
 }
 
 export async function deleteCharacters(characterIds: string[], boardId: string): Promise<void> {

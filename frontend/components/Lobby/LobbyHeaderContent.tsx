@@ -3,13 +3,14 @@
 import { Avatar, Divider, Group, Text } from '@mantine/core';
 import { JoinLinkPill } from './JoinLinkPill';
 import { type LobbyPlayer } from '@shared/types/lobby.types';
+import { GamePlayerState } from '@shared/types/game-state.types';
 
 interface LobbyHeaderContentProps {
   link: string;
-  players: LobbyPlayer[];
+  players: LobbyPlayer[] | GamePlayerState[]; // either LobbyPlayer or GamePlayerState is fine since we only read user and isConnected
 }
 
-function PlayerChip({ player }: { player: LobbyPlayer | undefined }) {
+function PlayerChip({ player }: { player: LobbyPlayer | GamePlayerState | undefined }) {
   if (!player) return null;
   return (
     <Group gap="xs" align="center">

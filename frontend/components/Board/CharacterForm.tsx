@@ -36,6 +36,8 @@ export default function CharacterForm({
   const [tags, setTags] = useState<string[]>(initialData?.tags ?? []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  // TODO: Remove this when we are sure about Tag Mode
+  const enabled = false;
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -83,7 +85,7 @@ export default function CharacterForm({
       />
 
       {/* Tags are admin-only for now */}
-      {user?.role === Role.ADMIN && (
+      {enabled && user?.role === Role.ADMIN && (
         <TagsInput
           placeholder="Add tags..."
           size="lg"

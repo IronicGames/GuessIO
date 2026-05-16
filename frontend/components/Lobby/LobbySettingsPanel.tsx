@@ -17,7 +17,8 @@ const segmentStyles = {
 
 export function LobbySettingsPanel({ settings, isHost, onChange }: LobbySettingsProps) {
   const isCasual = settings.mode === GameMode.CASUAL;
-
+  // TODO: Remove this when we are sure about Tag Mode
+  const disabled = true;
   const handleModeChange = (value: string) => {
     const mode = value as LobbySettings['mode'];
     // Casual always forces timer off
@@ -50,6 +51,7 @@ export function LobbySettingsPanel({ settings, isHost, onChange }: LobbySettings
           size="sm"
           value={settings.mode}
           onChange={handleModeChange}
+          disabled={disabled}
           data={[
             { label: 'Casual', value: 'CASUAL' },
             { label: 'Tag', value: 'TAG' },

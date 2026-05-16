@@ -165,7 +165,8 @@ export function CharacterToggleGrid({
 
   const enabledCount = characters.length - disabledCharacterIds.length;
   const isValid = enabledCount >= 24;
-
+  // TODO: Remove this when we are sure about Tag Mode
+  const enabled = false;
   return (
     <Box style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Tag filter + validity counter */}
@@ -187,11 +188,11 @@ export function CharacterToggleGrid({
           </Text>
           {isHost && (
             <Text size="xs" c="#6b7f96">
-              Click to toggle
+              Click to disable characters
             </Text>
           )}
         </Group>
-        {allTags.length > 0 && (
+        {enabled && allTags.length > 0 && (
           <TagFilter tags={allTags} activeTag={activeTag} onSelect={setActiveTag} />
         )}
       </Box>

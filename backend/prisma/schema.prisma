@@ -139,10 +139,11 @@ model GameInstance {
   player1       User?   @relation("GameInstancePlayer1", fields: [player1UserId], references: [id], onDelete: SetNull)
   player2       User?   @relation("GameInstancePlayer2", fields: [player2UserId], references: [id], onDelete: SetNull)
 
-  // Outcome
-  result          GameResult
-  resultReason    GameResultReason @map("result_reason")
-  winnerIsPlayer1 Boolean?         @map("winner_is_player1") // null = draw/abandoned
+  // Outcome — null while game is in progress, set on game end
+  result          GameResult?
+  resultReason    GameResultReason? @map("result_reason")
+  winnerIsPlayer1 Boolean?          @map("winner_is_player1") // null = draw/abandoned/in-progress
+  completedAt     DateTime?         @map("completed_at")      // null = game in progress
 
   log GameLogEntry[]
 

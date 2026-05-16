@@ -20,6 +20,7 @@ import { type BoardDto } from '@shared/types/board.types';
 export interface UseLobbyReturn {
   lobbyState: LobbyState;
   isHost: boolean;
+  gameId: string | null; // set when lobby:game-ready fires — triggers navigation to game page
   selectBoard: (boardId: string) => void;
   confirmBoard: () => void;
   undoBoard: () => void;
@@ -62,6 +63,7 @@ export function useLobby(code: string, user: UserProfile | null): UseLobbyReturn
   notifyRef.current = notify;
 
   const [lobbyState, setLobbyState] = useState<LobbyState>(() => createInitialLobbyState(code));
+  const [gameId, setGameId] = useState<string | null>(null);
 
   const isHost = lobbyState.players.find((p) => p.user.id === (user?.id ?? ''))?.isHost ?? false;
 
@@ -160,9 +162,15 @@ export function useLobby(code: string, user: UserProfile | null): UseLobbyReturn
       },
     );
 
-    // Both players ready — trigger countdown overlay
+    // Both players ready — trigger countdown overlay on both clients
     socket.on('lobby:game-starting', () => {
       setLobbyState((prev) => ({ ...prev, gameStarting: true }));
+    });
+
+    // Game is ready — fired after the 3s countdown once the DB record is created
+    // GameStartingOverlay watches for this and navigates to /game/[gameId]
+    socket.on('lobby:game-ready', ({ gameId: id }: { gameId: string }) => {
+      setGameId(id);
     });
 
     // Received a chat message (from either player — server echoes back to all)
@@ -277,6 +285,7 @@ export function useLobby(code: string, user: UserProfile | null): UseLobbyReturn
   return {
     lobbyState,
     isHost,
+    gameId,
     selectBoard,
     confirmBoard,
     undoBoard,

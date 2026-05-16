@@ -149,7 +149,8 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
         .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
         .map((c) => ({ id: c.id, name: c.name, imageUrl: c.image?.imageUrl, tags: c.tags }))
     : [];
-
+  // TODO: Remove this when we are sure about Tag Mode
+  const enabled = false;
   const allTags = [...new Set(characterItems.flatMap((c) => c.tags ?? []))].sort();
 
   const filteredCharacterItems = selectedTag
@@ -304,7 +305,7 @@ export default function EditBoardPage({ params }: { params: Promise<{ boardId: s
 
             {panel.view === 'grid' && (
               <Box style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                {allTags.length > 0 && (
+                {enabled && allTags.length > 0 && (
                   <ScrollArea type="auto" style={{ flexShrink: 0 }} px="lg" pt="sm">
                     <Group gap="xs" wrap="nowrap" pb="xs">
                       {allTags.map((tag) => (

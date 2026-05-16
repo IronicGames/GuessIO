@@ -2,7 +2,11 @@ import type { Server, Socket } from 'socket.io';
 import type { UserProfile } from '@shared/types/user.types';
 import { lobbies, generateCode, scheduleLobbyDelete, cancelLobbyDelete } from './lobby-store';
 import { GameMode, Lives, LobbyPhase, type LobbyState, TurnTimer } from '@shared/types/lobby.types';
+import { GamePhase } from '@shared/types/game-state.types';
+import type { ActiveGameState } from '@shared/types/game-state.types';
 import { getBoard } from '@services/board.service';
+import { drawCharacters, storeGame } from './game-store';
+import prisma from '@backend/lib/prisma';
 
 export function registerLobbyHandlers(io: Server, socket: Socket) {
   const user = socket.data.user as UserProfile;
@@ -137,11 +141,17 @@ export function registerLobbyHandlers(io: Server, socket: Socket) {
     if (
       lobby.players.length === 2 &&
       lobby.players.every((p) => p.isReady) &&
-      lobby.phase === LobbyPhase.WAITING_FOR_READY
+      lobby.phase === LobbyPhase.WAITING_FOR_READY &&
+      !lobby.gameStarting
     ) {
       lobby.gameStarting = true;
+      // Signal clients to start the 3-second countdown overlay
       io.to(code).emit('lobby:game-starting');
-      // TODO: after countdown, create the GameInstance in the DB and emit the gameId
+
+      // After the countdown, create the DB record and navigate both clients to the game
+      setTimeout(() => {
+        void startGame(io, code, lobby);
+      }, 3000);
     }
   });
 
@@ -212,4 +222,95 @@ export function registerLobbyHandlers(io: Server, socket: Socket) {
 
 function isHost(lobby: LobbyState, userId: string): boolean {
   return lobby.players.find((p) => p.user.id === userId)?.isHost ?? false;
+}
+
+// ── Game start ────────────────────────────────────────────────────────────────
+// Called after the 3-second countdown. Creates the GameInstance DB record, builds
+// the in-memory ActiveGameState, joins both sockets to the game room, then emits
+// lobby:game-ready with the gameId so both clients can navigate to /game/[gameId].
+
+async function startGame(io: Server, code: string, lobby: LobbyState): Promise<void> {
+  try {
+    if (lobby.players.length !== 2) {
+      io.to(code).emit('lobby:error', {
+        message: 'Game cancelled — a player disconnected during the countdown.',
+      });
+      return;
+    }
+
+    const [p1, p2] = lobby.players;
+    const settings = lobby.settings;
+
+    const instance = await prisma.gameInstance.create({
+      data: {
+        boardId: lobby.selectedBoardId,
+        boardName: lobby.board!.name,
+        mode: settings.mode,
+        turnTimer: parseTurnTimer(settings.turnTimer),
+        lives: parseLives(settings.lives),
+        isPublic: false,
+        player1UserId: p1.user.isGuest ? null : p1.user.id,
+        player1Name: p1.user.name,
+        player2UserId: p2.user.isGuest ? null : p2.user.id,
+        player2Name: p2.user.name,
+        // result, resultReason, winnerIsPlayer1, completedAt left null — game in progress
+      },
+    });
+
+    const drawnCharacterIds = drawCharacters(lobby.board!, lobby.disabledCharacterIds);
+    const livesCount = parseLives(settings.lives);
+
+    const gameState: ActiveGameState = {
+      gameId: instance.id,
+      lobbyCode: code,
+      phase: GamePhase.CHARACTER_SELECTION,
+      settings,
+      board: lobby.board!,
+      drawnCharacterIds,
+      players: lobby.players.map((p, i) => ({
+        user: p.user,
+        socketId: p.socketId,
+        isConnected: p.isConnected,
+        isPlayer1: i === 0,
+        livesRemaining: livesCount,
+        hasChosen: false,
+        timesDisconnected: 0,
+        isHost: p.isHost,
+      })),
+      currentTurnIsPlayer1: true, // host (player 1) goes first
+      turnNumber: 1,
+      currentAction: null,
+      chat: [...lobby.chat], // seed from lobby chat history
+      result: null,
+      resultReason: null,
+      winnerIsPlayer1: null,
+    };
+
+    storeGame(gameState);
+
+    // Move both player sockets into the game room
+    for (const player of lobby.players) {
+      io.in(player.socketId).socketsJoin(instance.id);
+    }
+
+    // Signal both clients to navigate — lobby:game-starting started the countdown,
+    // lobby:game-ready delivers the gameId once the game is actually ready
+    io.to(code).emit('lobby:game-ready', { gameId: instance.id });
+  } catch (err) {
+    console.error('Failed to start game:', err);
+    io.to(code).emit('lobby:error', { message: 'Failed to start game. Please try again.' });
+  }
+}
+
+function parseTurnTimer(t: TurnTimer): number | null {
+  if (t === TurnTimer.THIRTY_SECONDS) return 30;
+  if (t === TurnTimer.ONE_MINUTE) return 60;
+  if (t === TurnTimer.THREE_MINUTES) return 180;
+  return null; // TurnTimer.OFF
+}
+
+function parseLives(l: Lives): number {
+  if (l === Lives.ONE) return 1;
+  if (l === Lives.THREE) return 3;
+  return 0; // Lives.INFINITE — stored as 0 in DB convention
 }

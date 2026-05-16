@@ -1,11 +1,13 @@
 'use client';
 
 import { use, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation'; // used inside GameStartingOverlay
 import { useQuery } from '@tanstack/react-query';
 import { Box, Flex, Group, Progress, Stack, Text, Title } from '@mantine/core';
 import { useAuth } from '@providers/auth-provider';
 import { useHeaderSlot } from '@providers/header-slot-provider';
 import { useLobby } from '@/hooks/useLobby';
+import { useNotify } from '@/hooks/useNotify';
 import { api } from '@lib/api';
 import { getErrorMessage } from '@lib/errors';
 import ContentPaperComponent from '@components/ContentPaper';
@@ -18,11 +20,20 @@ import { LobbyBoardPanel } from '@components/Lobby/LobbyBoardPanel';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Game Starting Overlay
-// Shown when lobbyState.gameStarting = true
+// Shown when lobbyState.gameStarting = true.
+// Navigates to /game/[gameId] when the countdown finishes and gameId is available.
+// lobby:game-starting fires immediately (starts countdown).
+// lobby:game-ready fires after ~3s once the DB record is created (delivers gameId).
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function GameStartingOverlay({ visible }: { visible: boolean }) {
+function GameStartingOverlay({ visible, gameId }: { visible: boolean; gameId: string | null }) {
+  const router = useRouter();
+  const notify = useNotify();
+  const notifyRef = useRef(notify);
+  notifyRef.current = notify;
   const [progress, setProgress] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const gameIdRef = useRef(gameId);
+  gameIdRef.current = gameId; // always up to date without re-running the effect
 
   useEffect(() => {
     if (!visible) {
@@ -34,23 +45,27 @@ function GameStartingOverlay({ visible }: { visible: boolean }) {
     const DURATION_MS = 3000;
     const TICK_MS = 50;
     const increment = (100 / DURATION_MS) * TICK_MS;
+    let current = 0;
 
     intervalRef.current = setInterval(() => {
-      setProgress((prev) => {
-        const next = prev + increment;
-        if (next >= 100) {
-          if (intervalRef.current) clearInterval(intervalRef.current);
-          // TODO: navigate to /game/[gameId] once the game page exists and server emits the gameId
-          return 100;
+      current += increment;
+      if (current >= 100) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setProgress(100);
+        if (gameIdRef.current) {
+          router.push(`/game/${gameIdRef.current}`);
+        } else {
+          notifyRef.current.error('Game failed to start. Please try again.', 'Error');
         }
-        return next;
-      });
+      } else {
+        setProgress(current);
+      }
     }, TICK_MS);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [visible]);
+  }, [visible, router]);
 
   if (!visible) return null;
 
@@ -106,6 +121,7 @@ export default function LobbyPage({ params }: { params: Promise<{ code: string }
   const {
     lobbyState,
     isHost,
+    gameId,
     selectBoard,
     confirmBoard,
     undoBoard,
@@ -139,7 +155,7 @@ export default function LobbyPage({ params }: { params: Promise<{ code: string }
 
   return (
     <>
-      <GameStartingOverlay visible={lobbyState.gameStarting} />
+      <GameStartingOverlay visible={lobbyState.gameStarting} gameId={gameId} />
 
       <Flex justify="center" p="md">
         <Stack gap="md" w={{ base: '100%', sm: '95%', lg: '90%' }} style={{ maxWidth: 1400 }}>
