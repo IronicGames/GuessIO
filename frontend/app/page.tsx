@@ -52,7 +52,7 @@ export default function HomePage() {
           px={{ base: 'md', sm: 'lg' }}
         >
           <Stack w="100%" maw={500} gap="md">
-            <HomePageButton href="/game/public" text="Public Match" />
+            <HomePageButton text="Public Match" comingSoon />
             <HomePageButton
               href="/lobby"
               text="Create Lobby"

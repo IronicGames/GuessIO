@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { buttonThemes, type ButtonThemeType } from '@styles/buttonThemes';
 
 interface HomePageButtonProps {
-  href: string;
+  href?: string;
   text: string;
   alternate?: boolean;
   theme?: ButtonThemeType;
@@ -15,6 +15,8 @@ interface HomePageButtonProps {
   // Clicking fires onLockedClick so the parent can explain why.
   locked?: boolean;
   onLockedClick?: () => void;
+  // Grayed out with "Coming soon" sub-label — completely non-interactive.
+  comingSoon?: boolean;
 }
 
 export default function HomePageButton({
@@ -26,6 +28,7 @@ export default function HomePageButton({
   onClick,
   locked = false,
   onLockedClick,
+  comingSoon = false,
 }: HomePageButtonProps) {
   const selectedTheme = theme
     ? buttonThemes[theme]
@@ -37,6 +40,37 @@ export default function HomePageButton({
 
   const fontSize = alternate ? 'clamp(1rem, 3vw, 1.75rem)' : 'clamp(1.5rem, 4vw, 2.5rem)';
 
+  const dimmedStyles = {
+    root: {
+      fontSize,
+      fontWeight: 600,
+      backgroundColor: '#1f2a3a',
+      borderColor: '#33465f',
+      borderWidth: 2,
+      color: '#6b7f96',
+      opacity: 0.75,
+    },
+  };
+
+  if (comingSoon) {
+    return (
+      <Button
+        w="100%"
+        h={height}
+        radius="lg"
+        style={{ pointerEvents: 'none' }}
+        styles={{ root: { ...dimmedStyles.root, cursor: 'default' } }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+          <span>{text}</span>
+          <span style={{ fontSize: '0.45em', fontWeight: 400, letterSpacing: '0.08em', color: '#4a5d73' }}>
+            COMING SOON
+          </span>
+        </div>
+      </Button>
+    );
+  }
+
   if (locked) {
     return (
       <Button
@@ -45,18 +79,7 @@ export default function HomePageButton({
         radius="lg"
         onClick={onLockedClick}
         leftSection={<IconLock size={20} />}
-        styles={{
-          root: {
-            fontSize,
-            fontWeight: 600,
-            backgroundColor: '#1f2a3a',
-            borderColor: '#33465f',
-            borderWidth: 2,
-            color: '#6b7f96',
-            cursor: 'pointer',
-            opacity: 0.75,
-          },
-        }}
+        styles={{ root: { ...dimmedStyles.root, cursor: 'pointer' } }}
       >
         {text}
       </Button>
@@ -101,12 +124,18 @@ export default function HomePageButton({
   if (alternate) {
     return (
       <Flex justify="center" w="100%">
-        <Link href={href} style={{ width: '50%', display: 'block' }}>
-          {buttonContent}
-        </Link>
+        {href ? (
+          <Link href={href} style={{ width: '50%', display: 'block' }}>
+            {buttonContent}
+          </Link>
+        ) : (
+          buttonContent
+        )}
       </Flex>
     );
   }
+
+  if (!href) return <>{buttonContent}</>;
 
   return (
     <Link href={href} style={{ width: '100%', display: 'block' }}>

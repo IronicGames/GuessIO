@@ -73,10 +73,21 @@ export const updateName = asyncHandler(async (req: Request, res: Response) => {
   const { name } = req.body as { name: string };
   const user = req.user;
 
+  // Build a clean payload — never spread req.user directly since jwt.verify()
+  // injects `iat` and `exp` onto the decoded object, which would conflict with
+  // generateToken's own expiresIn option.
+  const payload: UserProfile = {
+    id: user.id,
+    name,
+    role: user.role,
+    isGuest: user.isGuest,
+    profilePicture: user.profilePicture,
+  };
+
   let token: string;
   if (user.isGuest) {
     // Guests have no DB row — just re-issue the JWT with the new name
-    token = authService.generateToken({ ...user, name });
+    token = authService.generateToken(payload);
     res.cookie('token', token, {
       httpOnly: true,
       secure: config.deployment === 'production',
@@ -86,7 +97,7 @@ export const updateName = asyncHandler(async (req: Request, res: Response) => {
   } else {
     // Players/admins — update DB then re-issue JWT
     await userService.updateUserById(user.id, name);
-    token = authService.generateToken({ ...user, name });
+    token = authService.generateToken(payload);
     res.cookie('token', token, {
       httpOnly: true,
       secure: config.deployment === 'production',
