@@ -9,8 +9,10 @@ import { type GameLogEntryDto, LogActionType } from '@shared/types/game.types';
 
 interface GameChatLogProps {
   messages: ChatMessage[];
-  log: GameLogEntryDto[];     // empty until game logic writes log entries
+  log: GameLogEntryDto[];
   currentUserName: string;
+  player1Name: string;
+  player2Name: string;
   onSend: (text: string) => void;
 }
 
@@ -18,9 +20,8 @@ function formatTime(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-// Formats a single game log entry as a human-readable string
-function formatLogEntry(entry: GameLogEntryDto, currentUserName: string): string {
-  const actor = entry.playerIsPlayer1 ? 'Player 1' : 'Player 2'; // TODO: use actual name when available
+function formatLogEntry(entry: GameLogEntryDto, player1Name: string, player2Name: string): string {
+  const actor = entry.playerIsPlayer1 ? player1Name : player2Name;
   const turnPrefix = `Turn ${entry.turnNumber}: ${actor}`;
 
   if (entry.actionType === LogActionType.ASK) {
@@ -42,17 +43,25 @@ function formatLogEntry(entry: GameLogEntryDto, currentUserName: string): string
   return `${turnPrefix} took an action`;
 }
 
-function GameLogRow({ entry, currentUserName }: { entry: GameLogEntryDto; currentUserName: string }) {
+function GameLogRow({
+  entry,
+  player1Name,
+  player2Name,
+}: {
+  entry: GameLogEntryDto;
+  player1Name: string;
+  player2Name: string;
+}) {
   return (
     <Box mb={4}>
       <Text fz="xs" c="#6b7f96">
-        {formatLogEntry(entry, currentUserName)}
+        {formatLogEntry(entry, player1Name, player2Name)}
       </Text>
     </Box>
   );
 }
 
-export function GameChatLog({ messages, log, currentUserName, onSend }: GameChatLogProps) {
+export function GameChatLog({ messages, log, currentUserName, player1Name, player2Name, onSend }: GameChatLogProps) {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const logEndRef = useRef<HTMLDivElement>(null);
@@ -173,7 +182,7 @@ export function GameChatLog({ messages, log, currentUserName, onSend }: GameChat
           </Text>
         ) : (
           log.map((entry) => (
-            <GameLogRow key={entry.id} entry={entry} currentUserName={currentUserName} />
+            <GameLogRow key={entry.id} entry={entry} player1Name={player1Name} player2Name={player2Name} />
           ))
         )}
         <div ref={logEndRef} />

@@ -6,16 +6,24 @@ import {
   GamePlayerState,
   TurnAction,
 } from '@shared/types/game-state.types';
-import { GameMode, Lives, type ChatMessage } from '@shared/types/lobby.types';
+import { GameMode, Lives, parseTurnTimer, type ChatMessage } from '@shared/types/lobby.types';
 import {
   games,
   cancelGameDelete,
   scheduleGameDelete,
   cancelAutoSkip,
   scheduleAutoSkip,
+  scheduleGameTimer,
+  scheduleTurnTimer,
+  cancelTurnTimer,
+  cancelGameTimer,
 } from './game-store';
-import { GameResult, GameResultReason } from '@shared/types/game.types';
-import { LogActionType } from '@prisma/client';
+import {
+  GameResult,
+  GameResultReason,
+  LogActionType,
+  type GameLogEntryDto,
+} from '@shared/types/game.types';
 import prisma from '@backend/lib/prisma';
 
 // Server-side secrets — never included in ActiveGameState broadcasts.
@@ -24,6 +32,29 @@ const gameSecrets = new Map<
   string,
   { player1CharacterId: string | null; player2CharacterId: string | null }
 >();
+
+// ── Log entry builder ─────────────────────────────────────────────────────────
+// Constructs a GameLogEntryDto locally so we can push to the in-memory log and
+// emit to clients without waiting on the DB write (which is fire-and-forget).
+function buildLogEntry(
+  gameId: string,
+  turnNumber: number,
+  playerIsPlayer1: boolean,
+  actionType: LogActionType,
+  subject?: string | null,
+  result?: string | null,
+): GameLogEntryDto {
+  return {
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    gameInstanceId: gameId,
+    turnNumber,
+    playerIsPlayer1,
+    actionType,
+    subject: subject ?? null,
+    result: result ?? null,
+  };
+}
 
 export function registerGameHandlers(io: Server, socket: Socket) {
   const user = socket.data.user as UserProfile;
@@ -102,6 +133,18 @@ export function registerGameHandlers(io: Server, socket: Socket) {
     socket.join(gameId);
     player.socketId = socket.id;
     player.isConnected = true;
+
+    if (game.players.every((p) => p.isConnected) && !game.gameTimerExpiresAt) {
+      scheduleGameTimer(gameId, () =>
+        endGame(gameId, GameResult.DRAW, GameResultReason.TIMEOUT, null, io),
+      );
+      // Notify the player already in the room that the game timer has started.
+      // The joining player gets it via the game:state snapshot below.
+      socket.to(gameId).emit('game:game-timer-started', {
+        gameTimerExpiresAt: game.gameTimerExpiresAt,
+      });
+    }
+
     player.timesDisconnected = 0;
     cancelAutoSkip(gameId);
 
@@ -153,7 +196,13 @@ export function registerGameHandlers(io: Server, socket: Socket) {
       io.to(gameId).emit('game:player-chosen', { playerId: user.id });
       if (game.players.every((p) => p.hasChosen)) {
         game.phase = GamePhase.DECIDE;
-        io.to(gameId).emit('game:phase-changed', { phase: GamePhase.DECIDE });
+        scheduleTurnTimer(gameId, parseTurnTimer(game.settings.turnTimer), () =>
+          doTurnTimerSkip(gameId, io),
+        );
+        io.to(gameId).emit('game:phase-changed', {
+          phase: GamePhase.DECIDE,
+          turnTimerExpiresAt: game.turnTimerExpiresAt,
+        });
         maybeScheduleAutoSkip(gameId, io);
       }
     },
@@ -172,7 +221,13 @@ export function registerGameHandlers(io: Server, socket: Socket) {
     }
     game.currentAction = action;
     game.phase = GamePhase.SUBMIT;
-    io.to(gameId).emit('game:phase-changed', { phase: GamePhase.SUBMIT, currentAction: action });
+    cancelTurnTimer(gameId);
+    game.turnTimerExpiresAt = null;
+    io.to(gameId).emit('game:phase-changed', {
+      phase: GamePhase.SUBMIT,
+      currentAction: action,
+      turnTimerExpiresAt: null,
+    });
   });
 
   // ── SUBMIT ASK ────────────────────────────────────────────────────────────
@@ -185,6 +240,10 @@ export function registerGameHandlers(io: Server, socket: Socket) {
     if (!game) return;
     const player = validatePlayer(game);
     if (!player || !isCurrentTurn(game, player)) return;
+
+    const entry = buildLogEntry(gameId, game.turnNumber, player.isPlayer1, LogActionType.ASK);
+    game.log.push(entry);
+    io.to(gameId).emit('game:log-entry', entry);
     void prisma.gameLogEntry.create({
       data: {
         gameInstanceId: gameId,
@@ -195,8 +254,12 @@ export function registerGameHandlers(io: Server, socket: Socket) {
         result: null,
       },
     });
+
     game.phase = GamePhase.END_TURN;
-    io.to(gameId).emit('game:phase-changed', { phase: GamePhase.END_TURN });
+    io.to(gameId).emit('game:phase-changed', {
+      phase: GamePhase.END_TURN,
+      turnTimerExpiresAt: null,
+    });
   });
 
   // ── SUBMIT GUESS ──────────────────────────────────────────────────────────
@@ -223,6 +286,16 @@ export function registerGameHandlers(io: Server, socket: Socket) {
       const charName =
         game.board.characters.find((c) => c.id === characterId)?.name || 'Unknown Character';
 
+      const entry = buildLogEntry(
+        gameId,
+        game.turnNumber,
+        player.isPlayer1,
+        LogActionType.GUESS,
+        charName,
+        isCorrect ? 'Correct' : 'Wrong',
+      );
+      game.log.push(entry);
+      io.to(gameId).emit('game:log-entry', entry);
       void prisma.gameLogEntry.create({
         data: {
           gameInstanceId: gameId,
@@ -255,6 +328,7 @@ export function registerGameHandlers(io: Server, socket: Socket) {
           players: game.players, // updated lives
           guessResult: 'Wrong',
           guessedCharacterId: characterId,
+          turnTimerExpiresAt: null,
         });
       }
     },
@@ -271,11 +345,15 @@ export function registerGameHandlers(io: Server, socket: Socket) {
     game.currentTurnIsPlayer1 = !game.currentTurnIsPlayer1;
     game.currentAction = null;
     game.phase = GamePhase.DECIDE;
+    scheduleTurnTimer(gameId, parseTurnTimer(game.settings.turnTimer), () =>
+      doTurnTimerSkip(gameId, io),
+    );
     io.to(gameId).emit('game:phase-changed', {
       phase: GamePhase.DECIDE,
       currentTurnIsPlayer1: game.currentTurnIsPlayer1,
       turnNumber: game.turnNumber,
       currentAction: null,
+      turnTimerExpiresAt: game.turnTimerExpiresAt,
     });
     maybeScheduleAutoSkip(gameId, io);
   });
@@ -327,6 +405,8 @@ async function endGame(
   const game = games.get(gameId);
   if (!game) return;
 
+  cancelGameTimer(gameId);
+  cancelTurnTimer(gameId);
   game.result = result;
   game.resultReason = resultReason;
   game.winnerIsPlayer1 = winnerIsPlayer1;
@@ -367,9 +447,62 @@ function maybeScheduleAutoSkip(gameId: string, io: Server): void {
       void doAutoSkip(gameId, io);
     });
   }
-  // If they're connected, do nothing — no timer needed
+  // If they're connected, do nothing — the turn timer handles their timeout
 }
 
+// ── Turn timer expiry for CONNECTED players ───────────────────────────────────
+// Called when the per-turn countdown reaches zero and the active player is still
+// connected (they just didn't act in time). Disconnected player timeouts are handled
+// by doAutoSkip via the 10s grace period, which fires before this for any turn timer.
+function doTurnTimerSkip(gameId: string, io: Server): void {
+  const game = games.get(gameId);
+  if (!game || game.phase !== GamePhase.DECIDE) return;
+
+  const currentPlayer = game.players.find((p) => p.isPlayer1 === game.currentTurnIsPlayer1);
+  // If player is disconnected, doAutoSkip (10s grace) handles it — don't double-skip
+  if (!currentPlayer || !currentPlayer.isConnected) return;
+
+  const entry = buildLogEntry(
+    gameId,
+    game.turnNumber,
+    currentPlayer.isPlayer1,
+    LogActionType.SKIP,
+  );
+  game.log.push(entry);
+  io.to(gameId).emit('game:log-entry', entry);
+  void prisma.gameLogEntry.create({
+    data: {
+      gameInstanceId: gameId,
+      turnNumber: game.turnNumber,
+      playerIsPlayer1: currentPlayer.isPlayer1,
+      actionType: LogActionType.SKIP,
+      subject: null,
+      result: null,
+    },
+  });
+
+  game.turnNumber += 1;
+  game.currentTurnIsPlayer1 = !game.currentTurnIsPlayer1;
+  game.currentAction = null;
+
+  scheduleTurnTimer(gameId, parseTurnTimer(game.settings.turnTimer), () =>
+    doTurnTimerSkip(gameId, io),
+  );
+
+  io.to(gameId).emit('game:phase-changed', {
+    phase: GamePhase.DECIDE,
+    currentTurnIsPlayer1: game.currentTurnIsPlayer1,
+    turnNumber: game.turnNumber,
+    currentAction: null,
+    turnTimerExpiresAt: game.turnTimerExpiresAt,
+  });
+
+  maybeScheduleAutoSkip(gameId, io);
+}
+
+// ── Disconnect auto-skip for DISCONNECTED players ─────────────────────────────
+// Called after the 10s grace period when a player hasn't reconnected.
+// Increments timesDisconnected and ends the game after 5 consecutive skips.
 async function doAutoSkip(gameId: string, io: Server): Promise<void> {
   const game = games.get(gameId);
   if (!game || game.phase !== GamePhase.DECIDE) return; // game ended or phase changed
@@ -377,7 +510,14 @@ async function doAutoSkip(gameId: string, io: Server): Promise<void> {
   const currentPlayer = game.players.find((p) => p.isPlayer1 === game.currentTurnIsPlayer1);
   if (!currentPlayer || currentPlayer.isConnected) return; // they reconnected in time
 
-  // Log the skip
+  const entry = buildLogEntry(
+    gameId,
+    game.turnNumber,
+    currentPlayer.isPlayer1,
+    LogActionType.SKIP,
+  );
+  game.log.push(entry);
+  io.to(gameId).emit('game:log-entry', entry);
   void prisma.gameLogEntry.create({
     data: {
       gameInstanceId: gameId,
@@ -410,12 +550,17 @@ async function doAutoSkip(gameId: string, io: Server): Promise<void> {
   game.currentAction = null;
   // phase stays DECIDE
 
+  scheduleTurnTimer(gameId, parseTurnTimer(game.settings.turnTimer), () =>
+    doTurnTimerSkip(gameId, io),
+  );
+
   io.to(gameId).emit('game:phase-changed', {
     phase: GamePhase.DECIDE,
     currentTurnIsPlayer1: game.currentTurnIsPlayer1,
     turnNumber: game.turnNumber,
     currentAction: null,
     players: game.players, // includes updated timesDisconnected
+    turnTimerExpiresAt: game.turnTimerExpiresAt,
   });
 
   // If the opponent is also disconnected, check again

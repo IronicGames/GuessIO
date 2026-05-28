@@ -1,8 +1,18 @@
-import { Box, Divider, Group, Image, Paper, Stack, Text } from '@mantine/core';
+'use client';
+
+import { Divider, Group, Image, Paper, Stack, Text } from '@mantine/core';
 import { IconHeart, IconHeartBroken } from '@tabler/icons-react';
 import { type CharacterDto } from '@shared/types/character.types';
 import { type LobbySettings, Lives } from '@shared/types/lobby.types';
 import { type GamePlayerState, GamePhase } from '@shared/types/game-state.types';
+import { useCountdown } from '@/hooks/useCountdown';
+
+function formatMs(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
 
 interface GameInfoProps {
   players: GamePlayerState[];
@@ -13,6 +23,8 @@ interface GameInfoProps {
   turnNumber: number;
   currentTurnIsPlayer1: boolean;
   settings: LobbySettings;
+  turnTimerExpiresAt: string | null;
+  gameTimerExpiresAt: string | null;
 }
 
 function LivesDisplay({ remaining, infinite }: { remaining: number; infinite: boolean }) {
@@ -42,8 +54,12 @@ export function GameInfo({
   turnNumber,
   currentTurnIsPlayer1,
   settings,
+  turnTimerExpiresAt,
+  gameTimerExpiresAt,
 }: GameInfoProps) {
   const isMyTurn = currentTurnIsPlayer1 === isPlayer1;
+  const turnRemaining = useCountdown(turnTimerExpiresAt);
+  const gameRemaining = useCountdown(gameTimerExpiresAt);
   const isInfinite = settings.lives === Lives.INFINITE;
 
   const me = players.find((p) => p.isPlayer1 === isPlayer1);
@@ -141,11 +157,34 @@ export function GameInfo({
 
       <Divider color="#33465f" />
 
-      {/* Timer stubs */}
-      <Box>
-        {/* TODO: turn timer — countdown for the active player's turn (settings.turnTimer) */}
-        {/* TODO: game timer — 30-minute total; draw when it reaches zero */}
-      </Box>
+      {/* Timers — only rendered when at least one is active */}
+      {(turnRemaining !== null || gameRemaining !== null) && (
+        <>
+          <Divider color="#33465f" />
+          <Stack gap={4}>
+            {turnRemaining !== null && (
+              <Group justify="space-between" align="center">
+                <Text fz="xs" c="#6b7f96" fw={500}>
+                  {isMyTurn ? 'Your turn' : 'Their turn'}
+                </Text>
+                <Text fz="sm" fw={700} c={turnRemaining < 10_000 ? '#fa5252' : '#e6edf3'}>
+                  {formatMs(turnRemaining)}
+                </Text>
+              </Group>
+            )}
+            {gameRemaining !== null && (
+              <Group justify="space-between" align="center">
+                <Text fz="xs" c="#6b7f96" fw={500}>
+                  Game
+                </Text>
+                <Text fz="sm" fw={600} c={gameRemaining < 60_000 ? '#fa5252' : '#6b7f96'}>
+                  {formatMs(gameRemaining)}
+                </Text>
+              </Group>
+            )}
+          </Stack>
+        </>
+      )}
     </Stack>
   );
 }

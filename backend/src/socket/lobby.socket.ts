@@ -1,7 +1,15 @@
 import type { Server, Socket } from 'socket.io';
 import type { UserProfile } from '@shared/types/user.types';
 import { lobbies, generateCode, scheduleLobbyDelete, cancelLobbyDelete } from './lobby-store';
-import { GameMode, Lives, LobbyPhase, type LobbyState, TurnTimer } from '@shared/types/lobby.types';
+import {
+  GameMode,
+  Lives,
+  LobbyPhase,
+  type LobbyState,
+  parseLives,
+  parseTurnTimer,
+  TurnTimer,
+} from '@shared/types/lobby.types';
 import { GamePhase } from '@shared/types/game-state.types';
 import type { ActiveGameState } from '@shared/types/game-state.types';
 import { getBoard } from '@services/board.service';
@@ -284,8 +292,10 @@ async function startGame(io: Server, code: string, lobby: LobbyState): Promise<v
       result: null,
       resultReason: null,
       winnerIsPlayer1: null,
+      turnTimerExpiresAt: null,
+      gameTimerExpiresAt: null,
+      log: [],
     };
-
     storeGame(gameState);
 
     // Move both player sockets into the game room
@@ -300,17 +310,4 @@ async function startGame(io: Server, code: string, lobby: LobbyState): Promise<v
     console.error('Failed to start game:', err);
     io.to(code).emit('lobby:error', { message: 'Failed to start game. Please try again.' });
   }
-}
-
-function parseTurnTimer(t: TurnTimer): number | null {
-  if (t === TurnTimer.THIRTY_SECONDS) return 30;
-  if (t === TurnTimer.ONE_MINUTE) return 60;
-  if (t === TurnTimer.THREE_MINUTES) return 180;
-  return null; // TurnTimer.OFF
-}
-
-function parseLives(l: Lives): number {
-  if (l === Lives.ONE) return 1;
-  if (l === Lives.THREE) return 3;
-  return 0; // Lives.INFINITE — stored as 0 in DB convention
 }

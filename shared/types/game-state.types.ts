@@ -2,7 +2,7 @@ import { type UserProfile } from './user.types';
 import { type BoardDto } from './board.types';
 import { type LobbySettings } from './lobby.types';
 import { type ChatMessage } from './lobby.types';
-import { type GameResult, type GameResultReason } from './game.types';
+import { type GameResult, type GameResultReason, type GameLogEntryDto } from './game.types';
 
 // ─── Phase & action enums ─────────────────────────────────────────────────────
 
@@ -49,9 +49,13 @@ export interface ActiveGameState {
   turnNumber: number;
   currentAction: TurnAction | null; // set in DECIDE phase, cleared on turn advance
   chat: ChatMessage[]; // seeded from lobby chat on game creation
+  turnTimerExpiresAt: string | null; // ISO string timestamp, set when turn timer starts, null if no timer active
+  gameTimerExpiresAt: string | null; // ISO string timestamp, set when game timer starts, null if no timer active
 
   // Result fields — null while game is in progress, set on GAME_OVER
   result: GameResult | null;
   resultReason: GameResultReason | null;
   winnerIsPlayer1: boolean | null;
+
+  log: GameLogEntryDto[]; // append-only; seeded on join for reconnects
 }

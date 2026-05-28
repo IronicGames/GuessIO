@@ -25,6 +25,7 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
     isPlayer1,
     isMyTurn,
     yourCharacterId,
+    log,
     selectCharacter,
     chooseAction,
     submitAsk,
@@ -138,7 +139,7 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
             h={{ base: 'auto', md: '82vh' }}
             style={{ minWidth: 260, display: 'flex', flexDirection: 'column' }}
           >
-            {/* Game info — turn indicator, lives, your character, timer stubs */}
+            {/* Game info — turn indicator, lives, your character, timers */}
             <ContentPaperComponent style={{ flexShrink: 0 }}>
               <GameInfo
                 players={gameState.players}
@@ -149,6 +150,8 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
                 turnNumber={gameState.turnNumber}
                 currentTurnIsPlayer1={gameState.currentTurnIsPlayer1}
                 settings={gameState.settings}
+                turnTimerExpiresAt={gameState.turnTimerExpiresAt}
+                gameTimerExpiresAt={gameState.gameTimerExpiresAt}
               />
             </ContentPaperComponent>
 
@@ -186,8 +189,10 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
             <ContentPaperComponent style={{ flex: 1, minHeight: 220 }}>
               <GameChatLog
                 messages={gameState.chat}
-                log={[]} // TODO: wire up when GameLogEntry reads are implemented
+                log={log}
                 currentUserName={user?.name ?? 'You'}
+                player1Name={gameState.players.find((p) => p.isPlayer1)?.user.name ?? 'Player 1'}
+                player2Name={gameState.players.find((p) => !p.isPlayer1)?.user.name ?? 'Player 2'}
                 onSend={sendChatMessage}
               />
             </ContentPaperComponent>

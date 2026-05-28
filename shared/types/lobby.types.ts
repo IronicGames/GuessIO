@@ -27,7 +27,7 @@ export enum Lives {
 
 export interface LobbySettings {
   mode: GameMode;
-  turnTimer: TurnTimer;
+  turnTimer: TurnTimer | null;
   lives: Lives;
 }
 
@@ -56,4 +56,17 @@ export interface LobbyState {
   disabledCharacterIds: string[];
   chat: ChatMessage[];
   gameStarting: boolean;
+}
+
+export function parseTurnTimer(t: TurnTimer | null): number | null {
+  if (t === TurnTimer.THIRTY_SECONDS) return 30 * 1000;
+  if (t === TurnTimer.ONE_MINUTE) return 60 * 1000;
+  if (t === TurnTimer.THREE_MINUTES) return 180 * 1000;
+  return null; // TurnTimer.OFF
+}
+
+export function parseLives(l: Lives): number {
+  if (l === Lives.ONE) return 1;
+  if (l === Lives.THREE) return 3;
+  return 0; // Lives.INFINITE — stored as 0 in DB convention
 }

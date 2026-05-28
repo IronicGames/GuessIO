@@ -12,6 +12,7 @@ import {
 } from '@shared/types/game-state.types';
 import { type ChatMessage, GameMode, Lives, TurnTimer } from '@shared/types/lobby.types';
 import { type BoardDto } from '@shared/types/board.types';
+import { type GameLogEntryDto } from '@shared/types/game.types';
 import { useNotify } from './useNotify';
 
 // ─── Initial state ────────────────────────────────────────────────────────────
@@ -33,6 +34,9 @@ function createInitialGameState(gameId: string): ActiveGameState {
     result: null,
     resultReason: null,
     winnerIsPlayer1: null,
+    turnTimerExpiresAt: null,
+    gameTimerExpiresAt: null,
+    log: [],
   };
 }
 
@@ -43,6 +47,7 @@ export interface UseGameReturn {
   isPlayer1: boolean;
   isMyTurn: boolean;
   yourCharacterId: string | null; // secret — received personally via game:your-character
+  log: GameLogEntryDto[];
   selectCharacter: (characterId: string) => void;
   chooseAction: (action: TurnAction) => void;
   submitAsk: () => void;
@@ -62,15 +67,11 @@ export function useGame(gameId: string, user: UserProfile | null): UseGameReturn
   const notifyRef = useRef(notify);
   notifyRef.current = notify;
 
-  const [gameState, setGameState] = useState<ActiveGameState>(() =>
-    createInitialGameState(gameId),
-  );
-
-  // The player's own secret character — received only by them, never in shared state
+  const [gameState, setGameState] = useState<ActiveGameState>(() => createInitialGameState(gameId));
   const [yourCharacterId, setYourCharacterId] = useState<string | null>(null);
+  const [log, setLog] = useState<GameLogEntryDto[]>([]);
 
-  const isPlayer1 =
-    gameState.players.find((p) => p.user.id === user?.id)?.isPlayer1 ?? false;
+  const isPlayer1 = gameState.players.find((p) => p.user.id === user?.id)?.isPlayer1 ?? false;
 
   // During CHARACTER_SELECTION both players are simultaneously active, not turn-based.
   // isMyTurn is only meaningful from DECIDE onwards.
@@ -88,6 +89,7 @@ export function useGame(gameId: string, user: UserProfile | null): UseGameReturn
     // Full game state snapshot — received on join, replaces initial state
     socket.on('game:state', (state: ActiveGameState) => {
       setGameState(state);
+      setLog(state.log); // seed log for reconnects
     });
 
     // Personal event — only this player sees their chosen character
@@ -99,9 +101,7 @@ export function useGame(gameId: string, user: UserProfile | null): UseGameReturn
     socket.on('game:player-chosen', ({ playerId }: { playerId: string }) => {
       setGameState((prev) => ({
         ...prev,
-        players: prev.players.map((p) =>
-          p.user.id === playerId ? { ...p, hasChosen: true } : p,
-        ),
+        players: prev.players.map((p) => (p.user.id === playerId ? { ...p, hasChosen: true } : p)),
       }));
     });
 
@@ -114,9 +114,7 @@ export function useGame(gameId: string, user: UserProfile | null): UseGameReturn
     socket.on('game:player-disconnected', ({ userId }: { userId: string }) => {
       setGameState((prev) => ({
         ...prev,
-        players: prev.players.map((p) =>
-          p.user.id === userId ? { ...p, isConnected: false } : p,
-        ),
+        players: prev.players.map((p) => (p.user.id === userId ? { ...p, isConnected: false } : p)),
       }));
     });
 
@@ -136,6 +134,16 @@ export function useGame(gameId: string, user: UserProfile | null): UseGameReturn
     // Chat message received (from either player — server echoes to both)
     socket.on('game:chat', (message: ChatMessage) => {
       setGameState((prev) => ({ ...prev, chat: [...prev.chat, message] }));
+    });
+
+    // New game log entry — appended in real-time as actions happen
+    socket.on('game:log-entry', (entry: GameLogEntryDto) => {
+      setLog((prev) => [...prev, entry]);
+    });
+
+    // Game timer started — broadcast to the player already in the room when the second joins
+    socket.on('game:game-timer-started', ({ gameTimerExpiresAt }: { gameTimerExpiresAt: string }) => {
+      setGameState((prev) => ({ ...prev, gameTimerExpiresAt }));
     });
 
     // Validation errors — show notification, stay in game
@@ -212,6 +220,7 @@ export function useGame(gameId: string, user: UserProfile | null): UseGameReturn
     isPlayer1,
     isMyTurn,
     yourCharacterId,
+    log,
     selectCharacter,
     chooseAction,
     submitAsk,

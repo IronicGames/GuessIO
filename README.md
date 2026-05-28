@@ -155,25 +155,25 @@ npm run dev   # from repo root — starts DB + backend + frontend
   - Disconnect handling: 10s grace → auto-skip turn; 5 consecutive skips → opponent wins
   - Reconnect resets the skip counter and cancels the skip timer
   - "Pick random" picks a secret character for you
+  - Turn timer (30s / 1m / 3m / off) — counts down in GameInfo; auto-advances turn on expiry for connected players
+  - Game timer (30 min) — global clock visible to both players; ends in draw on expiry; turns red in final 60s
+  - Game log tab — real-time running history of all actions; seeds correctly on reconnect
 - Backend test suite (72 tests)
 
 ## What's in progress
 
 - **Gameplay — Tag Mode** — phase structure built; only the ASK resolver is missing
   (pick a tag → server answers yes/no based on opponent's character)
-- **Turn timer / game timer** — stubs exist in the UI; no logic yet
-- **Game log read API** — DB writes work; no read endpoint, so the Game Log tab is empty
 - **Image upload via S3** — base64 through Express works but is a stopgap
 
 ## What's to be built for v1
 
 1. **Tag Mode ASK resolver** — `game:submit-ask` server handler + tag-pick UI in `GameActionPanel`
-2. **Turn timer + game timer** — countdown per turn, 30-min game → draw
-3. **Game log read API** — `GET /api/game/:id/log`, wire into game page
-4. **Public matchmaking** — always Tag Mode, fixed settings, random board selection
-5. **S3 image upload** — swap out base64 stopgap
-6. **One premade board + pipeline** — needed for public matchmaking (Tag Mode requires tagged characters)
-7. **Profile, settings, donation, ToS pages** — launch blockers
+2. **Public matchmaking** — always Tag Mode, fixed settings, random board selection
+3. **S3 image upload** — swap out base64 stopgap
+4. **One premade board + pipeline** — needed for public matchmaking (Tag Mode requires tagged characters)
+5. **Profile, settings, donation, ToS pages** — launch blockers
+6. **Game log REST API** — `GET /api/game/:id/log` for historical viewing on the profile page (real-time in-game delivery is already done)
 
 See [CLAUDE.md](CLAUDE.md) for full project context, conventions, and build
 decisions.

@@ -1,3 +1,4 @@
+import { expect } from 'vitest';
 import { type ActiveGameState } from '@shared/types/game-state.types';
 import { type BoardDto } from '@shared/types/board.types';
 
@@ -16,9 +17,15 @@ const AUTO_SKIP_WAIT_MS = 10_000; // 10 seconds to reconnect before turn is skip
 // skipped turns, so we need more time for the player to reconnect.
 const GAME_DELETE_GRACE_MS = 30_000; // 30 seconds
 
+const gameTimers = new Map<string, NodeJS.Timeout>();
+const GAME_MAX_DURATION_MS = 1800000; // 30 minutes — if a game hits this, it will be automatically ended in a draw to prevent stale games from lingering indefinitely. Note that this is not a hard limit — if both players are AFK for the entire game, the timer won't start until the game actually starts, so the total time from creation to deletion could be up to 60 minutes in that case. This is a tradeoff to avoid accidentally deleting games that haven't actually started yet but have been waiting for players to join.
+const turnTimers = new Map<string, NodeJS.Timeout>();
+
 export function scheduleGameDelete(gameId: string): void {
   cancelGameDelete(gameId);
   cancelAutoSkip(gameId);
+  cancelGameTimer(gameId);
+  cancelTurnTimer(gameId);
   deleteTimers.set(
     gameId,
     setTimeout(() => {
@@ -60,6 +67,7 @@ export function scheduleAutoSkip(gameId: string, callback: () => void): void {
     gameId,
     setTimeout(() => {
       skipTimers.delete(gameId);
+      cancelTurnTimer(gameId);
       callback();
     }, AUTO_SKIP_WAIT_MS),
   );
@@ -70,5 +78,70 @@ export function cancelAutoSkip(gameId: string): void {
   if (timer !== undefined) {
     clearTimeout(timer);
     skipTimers.delete(gameId);
+  }
+}
+
+export function scheduleGameTimer(gameId: string, onExpire: () => void): void {
+  cancelGameTimer(gameId); // reset if one's already running
+  const game = games.get(gameId);
+  if (game) {
+    game.gameTimerExpiresAt = new Date(Date.now() + GAME_MAX_DURATION_MS).toISOString(); // 30 minutes from now
+    storeGame(game);
+  }
+
+  gameTimers.set(
+    gameId,
+    setTimeout(() => {
+      gameTimers.delete(gameId);
+      onExpire();
+    }, GAME_MAX_DURATION_MS),
+  ); // 30 minutes
+}
+
+export function cancelGameTimer(gameId: string): void {
+  const timer = gameTimers.get(gameId);
+  if (timer !== undefined) {
+    clearTimeout(timer);
+    const game = games.get(gameId);
+    if (game) {
+      game.gameTimerExpiresAt = null;
+      storeGame(game);
+    }
+    gameTimers.delete(gameId);
+  }
+}
+
+export function scheduleTurnTimer(
+  gameId: string,
+  durationMs: number | null,
+  onExpire: () => void,
+): void {
+  if (durationMs === null) return; // no timer for this game
+  cancelTurnTimer(gameId);
+  const game = games.get(gameId);
+  if (game) {
+    game.turnTimerExpiresAt = new Date(Date.now() + durationMs).toISOString();
+    storeGame(game);
+  }
+
+  turnTimers.set(
+    gameId,
+    setTimeout(() => {
+      turnTimers.delete(gameId);
+      onExpire();
+    }, durationMs),
+  );
+}
+
+export function cancelTurnTimer(gameId: string): void {
+  const timer = turnTimers.get(gameId);
+  if (timer !== undefined) {
+    clearTimeout(timer);
+    const game = games.get(gameId);
+    if (game) {
+      game.turnTimerExpiresAt = null;
+      storeGame(game);
+    }
+    turnTimers.delete(gameId);
   }
 }
