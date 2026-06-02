@@ -171,6 +171,7 @@ const isValidImage = async (image: IZipEntry): Promise<boolean> => {
 
   if (ext === 'svg') return isValidSvg(imageBytes);
 
+  // @ts-ignore — file-type is ESM-only; dynamic import works at runtime despite moduleResolution: node
   const { fileTypeFromBuffer } = await import('file-type');
   const type = await fileTypeFromBuffer(imageBytes);
   if (!type || !type.mime.startsWith('image/')) return false;

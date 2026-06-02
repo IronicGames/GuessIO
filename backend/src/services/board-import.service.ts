@@ -47,6 +47,7 @@ const toImageUrl = async (image: IZipEntry | null): Promise<string | undefined> 
     return `data:image/svg+xml;base64,${base64}`;
   }
 
+  // @ts-ignore — file-type is ESM-only; dynamic import works at runtime despite moduleResolution: node
   const { fileTypeFromBuffer } = await import('file-type');
   const type = await fileTypeFromBuffer(imageBytes);
   if (!type) return;
