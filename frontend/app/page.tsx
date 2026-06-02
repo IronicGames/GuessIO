@@ -6,7 +6,7 @@ import HomePageButton from '@components/Home/HomePageButton';
 import { Stack, TextInput, Container, Flex } from '@mantine/core';
 import { useAuth } from '@providers/auth-provider';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 
 export default function HomePage() {
   const router = useRouter();
@@ -40,7 +40,9 @@ export default function HomePage() {
         onClose={() => setAuthModalOpen(false)}
       />
 
-      <AuthErrorNotification />
+      <Suspense>
+        <AuthErrorNotification />
+      </Suspense>
 
       <Container size="sm" h="100%" py="xl">
         <Flex
