@@ -7,7 +7,6 @@ import { type ManifestJson, type BoardJson } from '@shared/types/board.types';
 import AdmZip, { type IZipEntry } from 'adm-zip';
 import { config } from '@utils/constants/env';
 import crypto from 'crypto';
-import { fileTypeFromBuffer } from 'file-type';
 
 export const MAX_CHARACTERS_PER_BOARD = 200;
 export const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
@@ -172,6 +171,7 @@ const isValidImage = async (image: IZipEntry): Promise<boolean> => {
 
   if (ext === 'svg') return isValidSvg(imageBytes);
 
+  const { fileTypeFromBuffer } = await import('file-type');
   const type = await fileTypeFromBuffer(imageBytes);
   if (!type || !type.mime.startsWith('image/')) return false;
 

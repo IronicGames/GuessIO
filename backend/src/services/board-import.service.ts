@@ -1,6 +1,5 @@
 import { type IZipEntry } from 'adm-zip';
 import { type BoardImportPreview, type CreateBoardDto } from '@shared/types/board.types';
-import { fileTypeFromBuffer } from 'file-type';
 import { createBoard } from '@services/board.service';
 import { createCharacters } from '@services/character.service';
 import { type CreateCharacterDto } from '@shared/types/character.types';
@@ -48,6 +47,7 @@ const toImageUrl = async (image: IZipEntry | null): Promise<string | undefined> 
     return `data:image/svg+xml;base64,${base64}`;
   }
 
+  const { fileTypeFromBuffer } = await import('file-type');
   const type = await fileTypeFromBuffer(imageBytes);
   if (!type) return;
   const base64 = imageBytes.toString('base64');
