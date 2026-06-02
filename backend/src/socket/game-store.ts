@@ -1,4 +1,3 @@
-import { expect } from 'vitest';
 import { type ActiveGameState } from '@shared/types/game-state.types';
 import { type BoardDto } from '@shared/types/board.types';
 

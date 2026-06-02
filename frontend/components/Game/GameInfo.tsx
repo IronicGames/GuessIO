@@ -160,7 +160,6 @@ export function GameInfo({
       {/* Timers — only rendered when at least one is active */}
       {(turnRemaining !== null || gameRemaining !== null) && (
         <>
-          <Divider color="#33465f" />
           <Stack gap={4}>
             {turnRemaining !== null && (
               <Group justify="space-between" align="center">

@@ -134,7 +134,7 @@ npm run dev   # from repo root — starts DB + backend + frontend
 ## What's built
 
 - Google OAuth login + guest mode (auto-guest-login on Create Lobby)
-- Guest and player name editing from the header
+- Inline name editing from the header for both guests and full accounts (same UX as the guest name input — no modal)
 - Board management — create, edit, delete, image upload (base64 stopgap)
 - Character management — name, image, tags; many-to-many boards; import flow
 - Board export / import (`.guessio` ZIP format with manifest + integrity check)
@@ -160,6 +160,8 @@ npm run dev   # from repo root — starts DB + backend + frontend
   - Game log tab — real-time running history of all actions; seeds correctly on reconnect
 - Backend test suite (72 tests)
 
+- Public Match button visible on home page with "Coming soon" indicator (non-interactive)
+
 ## What's in progress
 
 - **Gameplay — Tag Mode** — phase structure built; only the ASK resolver is missing
@@ -168,12 +170,13 @@ npm run dev   # from repo root — starts DB + backend + frontend
 
 ## What's to be built for v1
 
-1. **Tag Mode ASK resolver** — `game:submit-ask` server handler + tag-pick UI in `GameActionPanel`
-2. **Public matchmaking** — always Tag Mode, fixed settings, random board selection
-3. **S3 image upload** — swap out base64 stopgap
-4. **One premade board + pipeline** — needed for public matchmaking (Tag Mode requires tagged characters)
-5. **Profile, settings, donation, ToS pages** — launch blockers
-6. **Game log REST API** — `GET /api/game/:id/log` for historical viewing on the profile page (real-time in-game delivery is already done)
+1. **S3 image upload** — swap out base64 stopgap; biggest technical liability before real users
+2. **Donation button** — not built
+3. **ToS / Privacy Policy pages** — not built
+4. **Admin panel UI** — backend guards exist; no frontend
+5. **Tag Mode ASK resolver** — `game:submit-ask` server handler + tag-pick UI (post-v1 candidate)
+6. **Public matchmaking** — depends on Tag Mode (post-v1 candidate)
+7. **Game log REST API** — `GET /api/game/:id/log` for when the profile page gets built
 
 See [CLAUDE.md](CLAUDE.md) for full project context, conventions, and build
 decisions.
