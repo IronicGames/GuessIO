@@ -67,7 +67,7 @@ export function LobbySettingsPanel({ settings, isHost, onChange }: LobbySettings
         <SegmentedControl
           fullWidth
           size="sm"
-          value={settings.turnTimer}
+          value={settings.turnTimer ?? undefined}
           onChange={(v) => onChange({ turnTimer: v as LobbySettings['turnTimer'] })}
           disabled={isCasual}
           data={[
