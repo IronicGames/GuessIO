@@ -9,7 +9,7 @@ export const config = {
   port: Number(process.env.PORT),
   frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:3000',
   backendUrl: process.env.BACKEND_URL ?? 'http://localhost:8080',
-  databaseUrl: `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}?schema=public`,
+  databaseUrl: `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DB}`,
   prismaSchemePath: 'prisma/schema.prisma',
   prismaMigrationsPath: 'prisma/migrations',
   googleClientId: `${process.env.GOOGLE_CLIENT_ID}`,
