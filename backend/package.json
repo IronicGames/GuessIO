@@ -11,7 +11,7 @@
     "start:all": "npm run docker:up && npm run dev",
     "start:all:debug": "npm run docker:up && npm run debug",
     "docker:up": "cd .. && docker-compose up -d",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "test": "vitest",
     "test:run": "vitest run",
     "db:studio": "prisma studio",
