@@ -47,7 +47,7 @@ in public games.
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - Docker Desktop (for local PostgreSQL)
 
 ### 1. Start the database
@@ -56,23 +56,32 @@ in public games.
 npm run docker:up
 ```
 
-### 2. Backend
+### 2. Shared package
+
+The backend depends on compiled shared types. Build shared first:
+
+```bash
+cd shared
+npx tsc
+```
+
+### 3. Backend
 
 ```bash
 cd backend
 cp .env.example .env   # fill in DB credentials and secrets
 npm install
 npx prisma migrate dev --name init
+npx prisma generate
 npm run dev
 ```
 
-> **Migration note (dev only):** While the schema is actively changing pre-launch,
-> nuke and re-run rather than adding incremental migrations:
-> `rm -rf prisma/migrations && npx prisma migrate dev --name init`
+> **Migration note:** Production data now exists. Use additive migrations — do NOT delete
+> `prisma/migrations` or reset the database. For a fresh local setup, `migrate dev --name init` is fine.
 
 Runs on `http://localhost:8080`.
 
-### 3. Frontend
+### 4. Frontend
 
 ```bash
 cd frontend
@@ -97,6 +106,9 @@ server root — Socket.io connects there, not to the REST base.
 ```bash
 npm run dev   # from repo root — starts DB + backend + frontend
 ```
+
+> Note: `npm run dev` does not rebuild the shared package. If you change anything in `shared/`,
+> run `cd shared && npx tsc` before restarting the backend.
 
 ---
 
@@ -128,6 +140,13 @@ npm run dev   # from repo root — starts DB + backend + frontend
 | Command       | What it does             |
 | ------------- | ------------------------ |
 | `npm run dev` | Start Next.js dev server |
+
+---
+
+## Status
+
+**Live at [playguess.io](https://playguess.io)** — deployed to AWS (Amplify + EC2 + RDS) in June 2026.
+The full game is playable end-to-end: guest login, board management, private lobbies, and Casual Mode gameplay.
 
 ---
 
